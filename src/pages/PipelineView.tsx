@@ -584,7 +584,7 @@ export default function PipelineView() {
         async () => {
           if (!acc.trim()) {
             setMeltyRunning(false);
-            toast.error("Melty Voice Pass returned no content.");
+            toast.error("Voice Pass returned no content.");
             return;
           }
           const { scriptBody, changeLog } = splitMeltyVoicePassOutput(acc);
@@ -597,12 +597,12 @@ export default function PipelineView() {
           await refetchOutputs();
           setMeltyRunning(false);
           setMeltyStream("");
-          toast.success("Melty Voice Pass saved. It will now feed the Anti AI Cleanup.");
+          toast.success("Voice Pass saved. It will now feed the Anti AI Cleanup.");
         },
       );
     } catch (err: any) {
       setMeltyRunning(false);
-      toast.error(err.message || "Melty Voice Pass failed");
+      toast.error(err.message || "Voice Pass failed");
     }
   };
 
@@ -1012,13 +1012,13 @@ export default function PipelineView() {
                     <div className="space-y-3 p-4 rounded-md border border-border bg-secondary/30">
                       <div>
                         <h4 className="text-sm font-semibold text-foreground">
-                          Melty Voice Pass
+                          Voice Pass
                           <span className="ml-2 text-[10px] uppercase tracking-wide text-muted-foreground">
                             Step 1 of 2
                           </span>
                         </h4>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Injects Melty's personality, reactive beats, and fan-coded voice into the
+                          Applies the host persona's personality, reactive beats, and voice into the
                           full script draft. Saved separately; the Anti AI Cleanup below will use this
                           output as its input once it exists.
                         </p>
@@ -1032,12 +1032,12 @@ export default function PipelineView() {
                         {meltyRunning ? (
                           <>
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            Running Melty Voice Pass...
+                            Running Voice Pass...
                           </>
                         ) : (
                           <>
                             <Wand2 className="w-3.5 h-3.5" />
-                            {meltyVoicePassContent ? "Re-run Melty Voice Pass" : "Run Melty Voice Pass"}
+                            {meltyVoicePassContent ? "Re-run Voice Pass" : "Run Voice Pass"}
                           </>
                         )}
                       </Button>
@@ -1049,7 +1049,7 @@ export default function PipelineView() {
                           {meltyStream}
                           <div className="flex items-center gap-2 mt-2 text-primary">
                             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                            Streaming Melty Voice Pass... will save when complete.
+                            Streaming Voice Pass... will save when complete.
                           </div>
                         </div>
                       )}
@@ -1057,14 +1057,14 @@ export default function PipelineView() {
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
                             <p className="text-[11px] text-muted-foreground">
-                              Melty Voice Pass output (saved). Will feed the Anti AI Cleanup below.
+                              Voice Pass output (saved). Will feed the Anti AI Cleanup below.
                             </p>
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => {
                                 navigator.clipboard.writeText(meltyVoicePassContent);
-                                toast.success("Copied Melty Voice Pass output");
+                                toast.success("Copied Voice Pass output");
                               }}
                               className="gap-1.5 text-xs h-7"
                             >
@@ -1089,7 +1089,7 @@ export default function PipelineView() {
                           </span>
                         </h4>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Runs the {meltyVoicePassContent ? "saved Melty Voice Pass" : "saved Full Script"}{" "}
+                          Runs the {meltyVoicePassContent ? "saved Voice Pass" : "saved Full Script"}{" "}
                           through the Anti AI document. Saves the result as a separate Anti-AI Output —
                           the original Full Script is never modified.
                         </p>
@@ -1166,7 +1166,7 @@ export default function PipelineView() {
                         <h4 className="text-sm font-semibold text-foreground">Passage Rewrite</h4>
                         <p className="text-xs text-muted-foreground mt-1">
                           Paste a hook, transition, paragraph, or section. Uses Script Writing,
-                          Anti AI, and Melty guidance together. Returns the revised passage only and
+                          Anti AI, and voice guidance together. Returns the revised passage only and
                           never saves automatically.
                         </p>
                       </div>
