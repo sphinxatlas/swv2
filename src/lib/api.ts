@@ -74,7 +74,7 @@ export const PIPELINE_STEPS: {
   },
 ];
 
-export async function uploadSourceFile(file: File, fileType: "book" | "transcript" | "instructions" | "lexicon" | "competitor_analysis" | "host_persona" | "anti_ai_guide" | "melty_voice_pass") {
+export async function uploadSourceFile(file: File, fileType: "book" | "transcript" | "instructions" | "lexicon" | "competitor_analysis" | "host_persona" | "anti_ai_guide" | "melty_voice_pass", channelId: string) {
   const storagePath = `${fileType}/${Date.now()}-${file.name}`;
 
   const { error: uploadError } = await supabase.storage
@@ -91,6 +91,7 @@ export async function uploadSourceFile(file: File, fileType: "book" | "transcrip
       storage_path: storagePath,
       file_size: file.size,
       status: "uploaded",
+      channel_id: channelId,
     })
     .select()
     .single();
@@ -108,9 +109,9 @@ export async function processFile(fileId: string) {
   return response.data;
 }
 
-export async function deleteSourceFile(fileId: string, storagePath: string) {
+export async function deleteSourceFile(fileId: string, storagePath: string, channelId: string) {
   await supabase.storage.from("source-files").remove([storagePath]);
-  const { error } = await supabase.from("source_files").delete().eq("id", fileId);
+  const { error } = await supabase.from("source_files").delete().eq("id", fileId).eq("channel_id", channelId);
   if (error) throw error;
 }
 
@@ -124,6 +125,7 @@ export async function renameSourceFile(
   oldStoragePath: string,
   oldName: string,
   newName: string,
+  channelId: string,
 ): Promise<{ name: string; storage_path: string }> {
   const trimmed = newName.trim();
   if (!trimmed) throw new Error("Filename cannot be empty");
@@ -159,7 +161,8 @@ export async function renameSourceFile(
   const { error: updateErr } = await supabase
     .from("source_files")
     .update({ name: trimmed, storage_path: newStoragePath })
-    .eq("id", fileId);
+    .eq("id", fileId)
+    .eq("channel_id", channelId);
 
   if (updateErr) {
     // Roll back storage rename.
@@ -173,10 +176,11 @@ export async function renameSourceFile(
   return { name: trimmed, storage_path: newStoragePath };
 }
 
-export async function getSourceFiles() {
+export async function getSourceFiles(channelId: string) {
   const { data, error } = await supabase
     .from("source_files")
     .select("*")
+    .eq("channel_id", channelId)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data;
@@ -202,10 +206,11 @@ export async function getSourceFileDownloadUrl(storagePath: string, expiresInSec
   return data.signedUrl;
 }
 
-export async function getTopicBriefs() {
+export async function getTopicBriefs(channelId: string) {
   const { data, error } = await supabase
     .from("topic_briefs")
     .select("*")
+    .eq("channel_id", channelId)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data;
@@ -231,10 +236,11 @@ export interface CreateBriefInput {
   priority_sources?: string[];
 }
 
-export async function createTopicBrief(input: CreateBriefInput) {
+export async function createTopicBrief(input: CreateBriefInput, channelId: string) {
   const payload = {
     ...input,
     description: input.angle_note ?? "",
+    channel_id: channelId,
   };
   const { data, error } = await supabase
     .from("topic_briefs")
@@ -245,7 +251,7 @@ export async function createTopicBrief(input: CreateBriefInput) {
   return data;
 }
 
-export async function updateTopicBrief(id: string, input: Partial<CreateBriefInput>) {
+export async function updateTopicBrief(id: string, input: Partial<CreateBriefInput>, channelId: string) {
   const payload: any = { ...input };
   if (Object.prototype.hasOwnProperty.call(input, "angle_note")) {
     payload.description = input.angle_note ?? "";
@@ -254,29 +260,32 @@ export async function updateTopicBrief(id: string, input: Partial<CreateBriefInp
     .from("topic_briefs")
     .update(payload)
     .eq("id", id)
+    .eq("channel_id", channelId)
     .select()
     .single();
   if (error) throw error;
   return data;
 }
 
-export async function deleteTopicBrief(id: string) {
-  const { error } = await supabase.from("topic_briefs").delete().eq("id", id);
+export async function deleteTopicBrief(id: string, channelId: string) {
+  const { error } = await supabase.from("topic_briefs").delete().eq("id", id).eq("channel_id", channelId);
   if (error) throw error;
 }
 
 // Duplicate an existing Topic Brief: copies all input fields and linked transcripts,
 // but never copies pipeline outputs, evidence, creative_brief feedback/approval, or generated fields.
-export async function duplicateTopicBrief(briefId: string) {
+export async function duplicateTopicBrief(briefId: string, channelId: string) {
   const { data: original, error: fetchErr } = await supabase
     .from("topic_briefs")
     .select("*")
     .eq("id", briefId)
+    .eq("channel_id", channelId)
     .single();
   if (fetchErr) throw fetchErr;
   if (!original) throw new Error("Brief not found");
 
   const insertPayload: any = {
+    channel_id: channelId,
     title: `${original.title} (copy)`,
     description: original.description ?? "",
     angle_note: original.angle_note,
@@ -574,10 +583,11 @@ export async function streamGenerateStep(
 }
 
 // ── Format Reference Transcripts ──
-export async function getFormatReferenceTranscripts() {
+export async function getFormatReferenceTranscripts(channelId: string) {
   const { data, error } = await supabase
     .from('format_reference_transcripts')
     .select('*')
+    .eq('channel_id', channelId)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data || [];
@@ -587,29 +597,31 @@ export async function saveFormatReferenceTranscript(input: {
   channel_name: string;
   video_title: string;
   transcript: string;
-}) {
+}, channelId: string) {
   const { data, error } = await supabase
     .from('format_reference_transcripts')
-    .insert(input)
+    .insert({ ...input, channel_id: channelId })
     .select()
     .single();
   if (error) throw error;
   return data;
 }
 
-export async function deleteFormatReferenceTranscript(id: string) {
+export async function deleteFormatReferenceTranscript(id: string, channelId: string) {
   const { error } = await supabase
     .from('format_reference_transcripts')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('channel_id', channelId);
   if (error) throw error;
 }
 
 // ── Brief Topic Transcripts ──
-export async function getBriefTopicTranscripts() {
+export async function getBriefTopicTranscripts(channelId: string) {
   const { data, error } = await supabase
     .from('brief_topic_transcripts')
     .select('*')
+    .eq('channel_id', channelId)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data || [];
@@ -619,7 +631,7 @@ export async function saveBriefTopicTranscript(input: {
   channel_name: string;
   video_title: string;
   transcript: string;
-}) {
+}, channelId: string) {
   const charCount = input.transcript.length;
   const estimatedTokens = Math.max(1, Math.round(charCount / 4));
   const { data, error } = await supabase
@@ -628,6 +640,7 @@ export async function saveBriefTopicTranscript(input: {
       ...input,
       char_count: charCount,
       estimated_tokens: estimatedTokens,
+      channel_id: channelId,
     })
     .select()
     .single();
@@ -635,11 +648,12 @@ export async function saveBriefTopicTranscript(input: {
   return data;
 }
 
-export async function deleteBriefTopicTranscript(id: string) {
+export async function deleteBriefTopicTranscript(id: string, channelId: string) {
   const { error } = await supabase
     .from('brief_topic_transcripts')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('channel_id', channelId);
   if (error) throw error;
 }
 
@@ -659,10 +673,11 @@ export interface AlternativeSource {
   script_strength?: 'strong' | 'useful' | 'limited' | null;
 }
 
-export async function getAlternativeSources(): Promise<AlternativeSource[]> {
+export async function getAlternativeSources(channelId: string): Promise<AlternativeSource[]> {
   const { data, error } = await supabase
     .from('alternative_sources')
     .select('*')
+    .eq('channel_id', channelId)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data || []) as AlternativeSource[];
@@ -675,7 +690,7 @@ export async function saveAlternativeSource(input: {
   source_author?: string | null;
   url?: string | null;
   notes?: string | null;
-}): Promise<AlternativeSource> {
+}, channelId: string): Promise<AlternativeSource> {
   const charCount = input.content.length;
   const estimatedTokens = Math.max(1, Math.round(charCount / 4));
   const { data, error } = await supabase
@@ -689,6 +704,7 @@ export async function saveAlternativeSource(input: {
       notes: input.notes ?? null,
       char_count: charCount,
       estimated_tokens: estimatedTokens,
+      channel_id: channelId,
     })
     .select()
     .single();
@@ -696,38 +712,42 @@ export async function saveAlternativeSource(input: {
   return data as AlternativeSource;
 }
 
-export async function deleteAlternativeSource(id: string): Promise<void> {
+export async function deleteAlternativeSource(id: string, channelId: string): Promise<void> {
   const { error } = await supabase
     .from('alternative_sources')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('channel_id', channelId);
   if (error) throw error;
 }
 
 // ── Script Strength (quality tagging, user-controlled) ──
 export type ScriptStrength = 'strong' | 'useful' | 'limited' | null;
 
-export async function updateAlternativeSourceStrength(id: string, strength: ScriptStrength): Promise<void> {
+export async function updateAlternativeSourceStrength(id: string, strength: ScriptStrength, channelId: string): Promise<void> {
   const { error } = await supabase
     .from('alternative_sources')
     .update({ script_strength: strength })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('channel_id', channelId);
   if (error) throw error;
 }
 
-export async function updateBriefTopicTranscriptStrength(id: string, strength: ScriptStrength): Promise<void> {
+export async function updateBriefTopicTranscriptStrength(id: string, strength: ScriptStrength, channelId: string): Promise<void> {
   const { error } = await supabase
     .from('brief_topic_transcripts')
     .update({ script_strength: strength })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('channel_id', channelId);
   if (error) throw error;
 }
 
-export async function updateSourceFileStrength(id: string, strength: ScriptStrength): Promise<void> {
+export async function updateSourceFileStrength(id: string, strength: ScriptStrength, channelId: string): Promise<void> {
   const { error } = await supabase
     .from('source_files')
     .update({ script_strength: strength })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('channel_id', channelId);
   if (error) throw error;
 }
 
@@ -789,11 +809,12 @@ export async function getBriefTopicTranscriptLinks(briefId: string) {
 export async function updateBriefCreativeBriefFields(briefId: string, updates: {
   creative_brief_feedback?: string;
   creative_brief_approved?: boolean;
-}) {
+}, channelId: string) {
   const { error } = await supabase
     .from('topic_briefs')
     .update(updates)
-    .eq('id', briefId);
+    .eq('id', briefId)
+    .eq('channel_id', channelId);
   if (error) throw error;
 }
 
