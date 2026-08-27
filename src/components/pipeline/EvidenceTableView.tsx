@@ -56,7 +56,6 @@ function buildFields(sideA: string | null, sideB: string | null): FieldDef[] {
     { key: "evidence_type", label: "Evidence Type" },
     { key: "why_this_matters", label: "Why This Matters" },
     ...axisFields,
-    { key: "lexicon_support", label: "Lexicon Support" },
     { key: "secondary_source_support", label: "Secondary Source Support" },
     { key: "exact_quote", label: "Micro-Quote" },
     { key: "paraphrase", label: "Paraphrase" },
@@ -121,7 +120,6 @@ export function EvidenceTableView({ rows, libraryFileNames, onSetApproval }: Pro
           r.book_evidence,
           r.movie_evidence,
           r.difference_note,
-          r.lexicon_support,
           r.exact_quote,
           r.paraphrase,
         ]
@@ -168,7 +166,6 @@ export function EvidenceTableView({ rows, libraryFileNames, onSetApproval }: Pro
       book_evidence: axisEnabled ? row.book_evidence : null,
       movie_evidence: axisEnabled ? row.movie_evidence : null,
       difference_note: axisEnabled ? row.difference_note : null,
-      lexicon_support: row.lexicon_support,
       exact_quote: row.exact_quote,
       paraphrase: row.paraphrase,
       why_this_matters: null,

@@ -15,7 +15,7 @@ export default function SourceLibrary() {
 
   const books = files.filter((f) => f.file_type === "book");
   const transcripts = files.filter((f) => f.file_type === "transcript");
-  const lexicon = files.filter((f) => f.file_type === "lexicon");
+  
   const instructions = files.filter((f) => f.file_type === "instructions" || f.file_type === "script_strategy");
   const antiAiGuide = files.filter((f) => f.file_type === "anti_ai_guide");
   const competitorAnalysis = files.filter((f) => f.file_type === "competitor_analysis");
@@ -61,15 +61,6 @@ export default function SourceLibrary() {
             onRefresh={refetch}
           />
 
-          <FileUploadCard
-            fileType="lexicon"
-            title="📖 Reference Library"
-            description="Upload supporting reference files (.txt) such as encyclopaedias, glossaries, timelines, or compiled summaries. Used for context, chronology, and discovery only — never as a primary source."
-            accept=".txt"
-            files={lexicon}
-            onRefresh={refetch}
-            badge="Secondary Reference"
-          />
 
           <FileUploadCard
             fileType="instructions"

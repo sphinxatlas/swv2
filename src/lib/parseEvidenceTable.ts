@@ -9,7 +9,6 @@ export interface EvidencePointDraft {
   book_evidence: string | null;
   movie_evidence: string | null;
   difference_note: string | null;
-  lexicon_support: string | null;
   exact_quote: string | null;
   paraphrase: string | null;
   why_this_matters: string | null;
@@ -28,8 +27,6 @@ const FIELD_MAP: Record<string, keyof EvidencePointDraft | "why_this_matters"> =
   "contrast": "difference_note",
   "difference": "difference_note",
   "difference note": "difference_note",
-  "lexicon support": "lexicon_support",
-  "lexicon": "lexicon_support",
   "secondary source support": "secondary_source_support",
   "micro-quote": "exact_quote",
   "micro quote": "exact_quote",
@@ -97,7 +94,6 @@ export function parseEvidenceTable(markdown: string): EvidencePointDraft[] {
     let source_type = "book";
     if (/both/.test(sourceTypeRaw)) source_type = "both";
     else if (/movie|film/.test(sourceTypeRaw)) source_type = "movie";
-    else if (/lexicon/.test(sourceTypeRaw)) source_type = "lexicon";
     else if (/commentary|secondary|transcript/.test(sourceTypeRaw)) source_type = "commentary";
     else if (/book/.test(sourceTypeRaw)) source_type = "book";
 
@@ -121,7 +117,6 @@ export function parseEvidenceTable(markdown: string): EvidencePointDraft[] {
       book_evidence: fields.book_evidence || null,
       movie_evidence: fields.movie_evidence || null,
       difference_note: fields.difference_note || null,
-      lexicon_support: fields.lexicon_support || null,
       exact_quote: fields.exact_quote || null,
       paraphrase: fields.paraphrase || null,
       why_this_matters: (fields as any).why_this_matters || null,
@@ -206,7 +201,6 @@ export function formatPointAsText(p: EvidencePointDraft, index: number): string 
   if (p.book_evidence) lines.push(`Book Evidence: ${p.book_evidence}`);
   if (p.movie_evidence) lines.push(`Movie Evidence: ${p.movie_evidence}`);
   if (p.difference_note) lines.push(`Contrast: ${p.difference_note}`);
-  if (p.lexicon_support) lines.push(`Lexicon Support: ${p.lexicon_support}`);
   if (p.exact_quote) lines.push(`Micro-Quote: ${p.exact_quote}`);
   if (p.paraphrase) lines.push(`Paraphrase: ${p.paraphrase}`);
   if (p.why_this_matters) lines.push(`Why This Matters: ${p.why_this_matters}`);

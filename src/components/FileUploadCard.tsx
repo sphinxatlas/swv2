@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useChannel } from "@/contexts/ChannelContext";
 
 interface FileUploadCardProps {
-  fileType: "book" | "transcript" | "instructions" | "lexicon" | "competitor_analysis" | "host_persona" | "anti_ai_guide" | "melty_voice_pass";
+  fileType: "book" | "transcript" | "instructions" | "competitor_analysis" | "host_persona" | "anti_ai_guide" | "melty_voice_pass";
   title: string;
   description: string;
   accept?: string;
