@@ -30,6 +30,7 @@ import {
 import { Plus, Trash2, ArrowRight, FileText, GitCompare, Clock, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useChannel } from "@/contexts/ChannelContext";
 
 const blankForm = (): CreateBriefInput => ({
   title: "",
@@ -125,6 +126,7 @@ function InlineTranscriptForm({ label, onSave, onCancel }: InlineTranscriptFormP
 
 export default function TopicBriefs() {
   const navigate = useNavigate();
+  const { channelId } = useChannel();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<CreateBriefInput>(blankForm());
   const [creating, setCreating] = useState(false);
@@ -156,20 +158,24 @@ export default function TopicBriefs() {
   const [showTopicAdd, setShowTopicAdd] = useState(false);
 
   const { data: briefs = [], refetch } = useQuery({
-    queryKey: ["topic-briefs"],
-    queryFn: getTopicBriefs,
+    queryKey: ["topic-briefs", channelId],
+    queryFn: () => getTopicBriefs(channelId!),
+    enabled: !!channelId,
   });
   const { data: formatRefs = [], refetch: refetchFormatRefs } = useQuery({
-    queryKey: ["format-references"],
-    queryFn: getFormatReferenceTranscripts,
+    queryKey: ["format-references", channelId],
+    queryFn: () => getFormatReferenceTranscripts(channelId!),
+    enabled: !!channelId,
   });
   const { data: topicTranscripts = [], refetch: refetchTopicTranscripts } = useQuery({
-    queryKey: ["topic-transcripts"],
-    queryFn: getBriefTopicTranscripts,
+    queryKey: ["topic-transcripts", channelId],
+    queryFn: () => getBriefTopicTranscripts(channelId!),
+    enabled: !!channelId,
   });
   const { data: alternativeSources = [] } = useQuery({
-    queryKey: ["alternative-sources"],
-    queryFn: getAlternativeSources,
+    queryKey: ["alternative-sources", channelId],
+    queryFn: () => getAlternativeSources(channelId!),
+    enabled: !!channelId,
   });
 
   const updateForm = (key: keyof CreateBriefInput, value: any) =>
@@ -211,10 +217,10 @@ export default function TopicBriefs() {
       };
       let briefId: string;
       if (editingBriefId) {
-        const updated = await updateTopicBrief(editingBriefId, payload);
+        const updated = await updateTopicBrief(editingBriefId, payload, channelId!);
         briefId = updated.id;
       } else {
-        const created = await createTopicBrief(payload);
+        const created = await createTopicBrief(payload, channelId!);
         briefId = created.id;
       }
       await linkFormatReferencesToBrief(briefId, selectedFormatIds);
@@ -235,7 +241,7 @@ export default function TopicBriefs() {
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteTopicBrief(id);
+      await deleteTopicBrief(id, channelId!);
       toast.success("Brief deleted");
       refetch();
     } catch (err: any) {
@@ -245,7 +251,7 @@ export default function TopicBriefs() {
 
   const handleDuplicate = async (id: string) => {
     try {
-      const created: any = await duplicateTopicBrief(id);
+      const created: any = await duplicateTopicBrief(id, channelId!);
       toast.success("Brief duplicated — review and edit before running");
       refetch();
       // Open the form in edit mode, prefilled with the cloned brief so the
@@ -497,7 +503,7 @@ export default function TopicBriefs() {
                     label="New Format Reference"
                     onCancel={() => setShowFormatAdd(false)}
                     onSave={async (input) => {
-                      const created = await saveFormatReferenceTranscript(input);
+                      const created = await saveFormatReferenceTranscript(input, channelId!);
                       await refetchFormatRefs();
                       setSelectedFormatIds((prev) => prev.length < 2 ? [...prev, created.id] : prev);
                       setShowFormatAdd(false);
@@ -540,7 +546,7 @@ export default function TopicBriefs() {
                     label="New HP Topic Transcript"
                     onCancel={() => setShowTopicAdd(false)}
                     onSave={async (input) => {
-                      const created = await saveBriefTopicTranscript(input);
+                      const created = await saveBriefTopicTranscript(input, channelId!);
                       await refetchTopicTranscripts();
                       setSelectedTopicIds((prev) => [...prev, created.id]);
                       setShowTopicAdd(false);

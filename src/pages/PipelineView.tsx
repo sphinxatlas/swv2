@@ -50,6 +50,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useChannel } from "@/contexts/ChannelContext";
 
 type ActiveStep = PipelineStepType;
 
@@ -124,6 +125,7 @@ function splitMeltyVoicePassOutput(text: string): { scriptBody: string; changeLo
 
 export default function PipelineView() {
   const { briefId } = useParams<{ briefId: string }>();
+  const { channelId, setChannelId } = useChannel();
   const [activeStep, setActiveStep] = useState<ActiveStep>("creative_brief");
   const [generating, setGenerating] = useState(false);
   const [streamContent, setStreamContent] = useState("");
@@ -174,6 +176,13 @@ export default function PipelineView() {
     enabled: !!briefId,
   });
 
+  // Opening a brief by URL moves the app to that brief's channel.
+  useEffect(() => {
+    if (brief?.channel_id && channelId && brief.channel_id !== channelId) {
+      setChannelId(brief.channel_id);
+    }
+  }, [brief?.channel_id, channelId, setChannelId]);
+
   const { data: outputs = [], refetch: refetchOutputs } = useQuery({
     queryKey: ["pipeline-outputs", briefId],
     queryFn: () => getPipelineOutputs(briefId!),
@@ -187,8 +196,9 @@ export default function PipelineView() {
   });
 
   const { data: sourceFiles = [] } = useQuery({
-    queryKey: ["source-files-all"],
-    queryFn: getSourceFiles,
+    queryKey: ["source-files-all", channelId],
+    queryFn: () => getSourceFiles(channelId!),
+    enabled: !!channelId,
   });
   const libraryFileNames = sourceFiles.map((f: any) => f.name);
 
@@ -294,7 +304,7 @@ export default function PipelineView() {
     if (!briefId) return;
     setApproving(true);
     try {
-      await updateBriefCreativeBriefFields(briefId, {
+      await updateBriefCreativeBriefFields(briefId, channelId!, {
         creative_brief_feedback: feedbackText,
         creative_brief_approved: true,
       });
@@ -318,7 +328,7 @@ export default function PipelineView() {
     // edge function picks it up on read, then clear the field locally.
     if (activeStep === "creative_brief" && feedbackText.trim()) {
       try {
-        await updateBriefCreativeBriefFields(briefId, {
+        await updateBriefCreativeBriefFields(briefId, channelId!, {
           creative_brief_feedback: feedbackText.trim(),
         });
         await refetchBrief();

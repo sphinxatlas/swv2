@@ -1,6 +1,8 @@
 import { Library, ScrollText, Sparkles, Feather, BookOpen } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useChannel } from "@/contexts/ChannelContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const navItems = [
   { to: "/", label: "Source Library", icon: Library },
@@ -10,6 +12,7 @@ const navItems = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const { channels, channelId, setChannelId, loading } = useChannel();
 
   return (
     <aside className="w-64 border-r border-border bg-sidebar flex flex-col h-screen sticky top-0">
@@ -49,8 +52,19 @@ export function AppSidebar() {
 
       <div className="p-4 border-t border-border">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <BookOpen className="w-3.5 h-3.5 text-gold/70" />
-          <span>Harry Potter Universe</span>
+          <BookOpen className="w-3.5 h-3.5 text-gold/70 shrink-0" />
+          <Select value={channelId ?? undefined} onValueChange={setChannelId} disabled={loading || channels.length === 0}>
+            <SelectTrigger className="h-7 flex-1 text-xs border-0 bg-transparent px-1 focus:ring-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {channels.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </aside>
