@@ -139,13 +139,13 @@ Every secondary source (Commentary Transcripts, Brief Topic Transcripts, Alterna
 
 Reliability hierarchy for backing a claim:
 - Tier 1 primary sources (books + film transcripts) — strongest backing
-- [STRONG] secondary — can supplement canon, can stand in where the primary sources are missing
+- [STRONG] secondary — can supplement the primary sources, can stand in where the primary sources are missing
 - [USEFUL] / [UNSET] — can support framing; needs [STRONG] or primary sources to back specific claims
 - [LIMITED] — inspiration only; needs [STRONG] or primary sources to back any specific claim
 
 Failure mode: a [STRONG] source treated identically to a [LIMITED] source means the tagging system is being ignored. Differentiate.
 
-TIER 4 — WRITING GUIDANCE ONLY (never evidence, never canon):
+TIER 4 — WRITING GUIDANCE ONLY (never evidence, never the primary sources):
 - Script Instructions & Strategy = output behavior, writing constraints, hook quality, pacing, rehooks, argument structure, retention
 - Used only for tone, structure, hook, pacing, writing behavior
 - Never used as primary source evidence
@@ -281,9 +281,9 @@ ${COMMENTARY_TRANSCRIPTS_FRAMING_INSTRUCTION}
 EVIDENCE CATEGORIZATION (CRITICAL — DO NOT FLATTEN):
 The Evidence Table must clearly separate four kinds of points. Group them under labeled subsections in this order:
 
-1. CANON SUPPORTED CLAIMS — require Tier 1 book or movie transcript support. Confidence: High/Medium based on source clarity.
+1. SOURCE-SUPPORTED CLAIMS — require Tier 1 book or movie transcript support. Confidence: High/Medium based on source clarity.
 2. ADAPTATION CONTRASTS — book vs movie differences. Use book and movie transcript evidence where possible.
-3. INTERPRETIVE / THEORY ANGLES — do NOT require direct primary source confirmation. Check that the theory is plausible, interesting, logically coherent, and not obviously contradicted by canon. Clearly label as theory / interpretation / speculative angle. Note what primary source detail, scene, omission, contradiction, or pattern makes the theory worth considering.
+3. INTERPRETIVE / THEORY ANGLES — do NOT require direct primary source confirmation. Check that the theory is plausible, interesting, logically coherent, and not obviously contradicted by the primary sources. Clearly label as theory / interpretation / speculative angle. Note what primary source detail, scene, omission, contradiction, or pattern makes the theory worth considering.
 4. SPECULATION / CONSPIRACY STYLE IDEAS — fan-aware, speculative readings. Label clearly as speculation. Must still be grounded in some primary source detail or pattern, even if interpretive.
 
 Do not remove interesting theory based material just because it cannot be fully proven.
@@ -1271,7 +1271,7 @@ ALTERNATIVE SOURCES (SECONDARY) RULES:
 - The block titled "## Alternative Sources (SECONDARY, NON-PRIMARY)" contains pasted Reddit threads, forum comments, blog posts, fan articles, wiki extracts, and similar non-primary source material the creator selected for this brief.
 - Mine this block for: fan debate signals, repeated viewer complaints, audience emotional language, common objections, the expected surface answer most viewers assume, the surprising deeper answer fans rarely reach, underdeveloped angles, and what fans already say too often (so the video can avoid repeating it).
 - Use those signals when filling: Viewer Click Question, Expected Answer, Surprising Actual Answer, Hook Shape, What To Avoid, Fairness Move, Emotional Arc, and Video Engine. The Creative Brief should feel sharpened by real audience tension, not floating in a vacuum.
-- Alternative sources cannot supply {{SUBJECT_LABEL}} facts. Any factual claim about canon must come from books, film transcripts, or other approved primary sources. Fan claims from alternative sources can inspire angles or objections, but must be verified against the primary sources before being treated as evidence.
+- Alternative sources cannot supply {{SUBJECT_LABEL}} facts. Any factual claim must come from the primary sources approved for this channel. Fan claims from alternative sources can inspire angles or objections, but must be verified against the primary sources before being treated as evidence.
 
 Generate the Creative Brief in this EXACT format:
 
@@ -1431,7 +1431,7 @@ New conclusions or angles that emerge ONLY when the selected source signals are 
 
 ## 7. Recommended Use in Evidence Table
 Candidate claims or evidence routes for the Evidence Table to consider. Bullet list. Each item MUST be labeled with one of:
-- [Canon-supported] — already confirmed by Insights & Research / canon
+- [Source-supported] — already confirmed by Insights & Research / primary sources
 - [Needs validation] — interesting but unverified against the primary sources
 - [Theory / interpretation] — defensible reading, not provable
 - [Audience signal only] — useful framing or objection, not a factual claim
@@ -3115,7 +3115,7 @@ If any answer reveals overreliance, revise toward a more original, primary-sourc
     // Full Script source precedence: SEP controls; Creative Brief is directional only.
     if (stepType === "full_script") {
       systemPrompt += `\n\nSOURCE PRECEDENCE (BINDING): The Script Evidence Pack is the CONTROLLING source for argument route, beat sequence, evidence, source-grounded claims, fan objections, repetition control, and hook/payoff execution. The Creative Brief is DIRECTIONAL ONLY: title promise, thesis direction, tone, emotional arc, intended payoff. If they conflict, follow the Script Evidence Pack. Do not import Creative Brief sentences verbatim. Do not restate the thesis using Creative Brief phrasing more than once. Treat the Creative Brief as a compass, not as script copy. If an Angle Check appears in context via the Script Evidence Pack's framing, the SEP already encodes its contention — do not revert to Creative Brief thesis phrasing.`;
-      systemPrompt += `\n\nANTI-INVENTION RULE (BINDING):\nThe Script Evidence Pack contains every primary source claim, scene, quote, and evidence point that the Full Script is permitted to use. You may not introduce any of the following if they are not present in the Script Evidence Pack:\n- Specific scenes from books or films\n- Direct or paraphrased quotes\n- Canon facts about characters, events, or settings\n- Specific moments framed as evidence\n- References to deleted scenes, behind-the-scenes material, or interviews\n\nIf a beat in the Script Evidence Pack is thin or has weak evidence, write the beat with the evidence available. Do not fill the gap by adding scenes, quotes, or details that are not in the Pack. If a beat genuinely cannot be written from the Pack alone, generate the beat as written and add a single bracketed flag at that point in the script: [FLAG: insufficient evidence in Pack].\n\nThe Source Material Excerpts section provided in the user message exists only as context. You may not introduce any claim from those excerpts that is not also present in the Script Evidence Pack. The Script Evidence Pack is the only source of permitted content.\n\nThis rule applies regardless of how natural, plausible, or argumentatively useful an additional claim might seem.`;
+      systemPrompt += `\n\nANTI-INVENTION RULE (BINDING):\nThe Script Evidence Pack contains every primary source claim, scene, quote, and evidence point that the Full Script is permitted to use. You may not introduce any of the following if they are not present in the Script Evidence Pack:\n- Specific scenes from books or films\n- Direct or paraphrased quotes\n- Primary source facts about characters, events, or settings\n- Specific moments framed as evidence\n- References to deleted scenes, behind-the-scenes material, or interviews\n\nIf a beat in the Script Evidence Pack is thin or has weak evidence, write the beat with the evidence available. Do not fill the gap by adding scenes, quotes, or details that are not in the Pack. If a beat genuinely cannot be written from the Pack alone, generate the beat as written and add a single bracketed flag at that point in the script: [FLAG: insufficient evidence in Pack].\n\nThe Source Material Excerpts section provided in the user message exists only as context. You may not introduce any claim from those excerpts that is not also present in the Script Evidence Pack. The Script Evidence Pack is the only source of permitted content.\n\nThis rule applies regardless of how natural, plausible, or argumentatively useful an additional claim might seem.`;
       systemPrompt += `\n\nNO META-COMMENTARY RULE (BINDING — HARD):\nThe script is viewer-facing copy. The viewer must NEVER see any reference to the script's own research process, evidence pipeline, or source availability. Specifically, you must NOT:\n- Mention the evidence pack, Script Evidence Pack, source library, retrieval, transcripts, books-vs-films coverage gaps, or what sources were or were not available.\n- Say anything like "I can't prove this part", "the transcript doesn't show", "evidence is limited here", "the books don't confirm", "we don't have a scene for this", or any equivalent acknowledgement of a gap in the source material.\n- Reference the pipeline, the model, the system, instructions, or limitations of any kind.\n\nIf a beat lacks the evidence to make the comparison or claim it was meant to make, you have exactly three permitted moves: (1) work around the gap silently using whatever evidence IS available, (2) narrow the claim to what can actually be supported, or (3) omit the beat entirely and continue.\n\n[FLAG: ...] markers and any other bracketed flags are INTERNAL ONLY and must NEVER appear in the script output. This OVERRIDES the earlier instruction to insert [FLAG: insufficient evidence in Pack] — do not insert that marker or any equivalent. Handle gaps silently using the three moves above.`;
     }
 
@@ -3199,7 +3199,7 @@ If any answer reveals overreliance, revise toward a more original, primary-sourc
     // ─────────────────────────────────────────────────────────────────────
     const topicTranscriptUserBlock =
       stepType === "selected_source_analysis" && topicTranscripts.length > 0
-        ? `\n\n## Brief-Specific Topic Transcripts (THEORY, ANGLE, AND RESEARCH LEADS — not Tier 1 primary sources)\nTreat these as theory/angle/interpretation input. Factual primary source claims still require Tier 1 book or movie transcript support. Theories may be used if plausible, coherent, and not obviously contradicted by canon. Frame theories honestly as theories.\n\n` +
+        ? `\n\n## Brief-Specific Topic Transcripts (THEORY, ANGLE, AND RESEARCH LEADS — not Tier 1 primary sources)\nTreat these as theory/angle/interpretation input. Factual primary source claims still require Tier 1 book or movie transcript support. Theories may be used if plausible, coherent, and not obviously contradicted by the primary sources. Frame theories honestly as theories.\n\n` +
           truncateTopicTranscripts(topicTranscripts, "ssa")
             .map((r: any) => `### "${r.video_title}" by ${r.channel_name} ${qualityTag(r.script_strength)}\n${r.transcript}`)
             .join("\n\n---\n\n")
