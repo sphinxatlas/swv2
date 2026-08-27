@@ -28,7 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useChannel } from "@/contexts/ChannelContext";
 
 const QUALITY_HELPER_TEXT =
-  "Quality tagging is set by you, not by the AI. Strong = trusted research, absorbed and used freely. Useful = framing only; specific claims need STRONG or canon backup. Limited = inspiration only; specific claims need STRONG or canon backup. Sources are never named in the script.";
+  "Quality tagging is set by you, not by the AI. Strong = trusted research, absorbed and used freely. Useful = framing only; specific claims need STRONG or primary source backup. Limited = inspiration only; specific claims need STRONG or primary source backup. Sources are never named in the script.";
 
 function QualitySelect({
   value,
@@ -151,10 +151,10 @@ function TranscriptSection({ section }: { section: Section }) {
 
   const label =
     section === "format"
-      ? "Non-HP videos used for argument structure and angle positioning only. Never used for Harry Potter content."
-      : "HP videos covering similar topics to your videos. Used as research leads and supplementary knowledge per brief. Never cited directly in scripts.";
+      ? "Videos from a different subject, used for argument structure and angle positioning only. Never used as a source of content for your videos."
+      : "Videos covering similar topics to your videos. Used as research leads and supplementary knowledge per brief. Never cited directly in scripts.";
 
-  const addLabel = section === "format" ? "Add Format Reference" : "Add HP Topic Transcript";
+  const addLabel = section === "format" ? "Add Format Reference" : "Add Topic Transcript";
 
   const handleSave = async (input: { channel_name: string; video_title: string; transcript: string }) => {
     setBusy(true);
@@ -192,7 +192,7 @@ function TranscriptSection({ section }: { section: Section }) {
     URL.revokeObjectURL(url);
   };
 
-  const sectionLabel = section === "format" ? "Format Reference" : "HP Topic Transcript";
+  const sectionLabel = section === "format" ? "Format Reference" : "Topic Transcript";
 
   return (
     <div>
@@ -384,9 +384,9 @@ function AlternativeSourcesSection() {
   return (
     <div>
       <p className="text-xs text-muted-foreground mb-4">
-        Paste any non-canon source text here, such as Reddit threads, YouTube comments, blogs,
+        Paste any source text that is not a primary source here, such as Reddit threads, YouTube comments, blogs,
         forums, websites, meme research, or fan discussions. These sources help with audience
-        insight, humor, fandom language, and angle inspiration. They are not treated as canon.
+        insight, humor, fandom language, and angle inspiration. They are not treated as primary sources.
       </p>
       <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
         <strong>{QUALITY_HELPER_TEXT}</strong>
@@ -408,7 +408,7 @@ function AlternativeSourcesSection() {
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder='e.g., "r/HarryPotter — Snape redemption mega thread"'
+              placeholder='e.g., "Reddit megathread on this topic"'
               className="bg-secondary border-border mt-1"
             />
           </div>
@@ -471,7 +471,7 @@ function AlternativeSourcesSection() {
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder='e.g., "Use for fandom humor and inside jokes, not canon evidence."'
+              placeholder='e.g., "Use for audience humor and inside jokes, not as evidence."'
               rows={2}
               className="bg-secondary border-border resize-none mt-1 text-xs"
             />
@@ -581,7 +581,7 @@ function AlternativeSourcesSection() {
             { label: "Date added", value: new Date(viewing.created_at).toLocaleString() },
             { label: "Length", value: `${(viewing.content || "").length.toLocaleString()} chars` },
             { label: "Notes", value: viewing.notes || "—" },
-            { label: "Category", value: "Alternative Source (non-canon)" },
+            { label: "Category", value: "Alternative Source (not a primary source)" },
           ]}
           content={viewing.content || ""}
           fallbackDownloadName={`${viewing.title}.txt`}
@@ -599,14 +599,14 @@ export default function TranscriptLibrary() {
           <h1 className="text-2xl font-mono font-bold text-foreground mb-2">Secondary Source Library</h1>
           <p className="text-sm text-muted-foreground">
             Reusable secondary sources for angle research, creative transfer, and topic briefs.
-            Canon still comes from the main Source Library.
+            Primary sources still come from the main Source Library.
           </p>
         </div>
 
         <Tabs defaultValue="format">
           <TabsList>
             <TabsTrigger value="format">Format References</TabsTrigger>
-            <TabsTrigger value="topic">HP Topic Transcripts</TabsTrigger>
+            <TabsTrigger value="topic">Topic Transcripts</TabsTrigger>
             <TabsTrigger value="alternative">Alternative Sources</TabsTrigger>
           </TabsList>
           <TabsContent value="format" className="mt-6">

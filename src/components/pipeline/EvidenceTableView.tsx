@@ -19,6 +19,7 @@ import {
   type RiskLevel,
 } from "@/lib/parseEvidenceTable";
 import type { EvidencePoint } from "@/lib/api";
+import { useChannel } from "@/contexts/ChannelContext";
 
 type SourceFilter = "all" | "book" | "movie" | "both";
 type ConfidenceFilter = "all" | "high" | "medium" | "low";
@@ -34,26 +35,45 @@ interface Props {
   ) => void;
 }
 
-const FIELDS: { key: keyof EvidencePointDraft | "why_this_matters"; label: string }[] = [
-  { key: "claim", label: "Claim" },
-  { key: "source_file", label: "Source File" },
-  { key: "source_type", label: "Source Type" },
-  { key: "confidence", label: "Confidence" },
-  { key: "evidence_type", label: "Evidence Type" },
-  { key: "why_this_matters", label: "Why This Matters" },
-  { key: "book_evidence", label: "Book Evidence" },
-  { key: "movie_evidence", label: "Movie Evidence" },
-  { key: "difference_note", label: "Contrast" },
-  { key: "lexicon_support", label: "Lexicon Support" },
-  { key: "secondary_source_support", label: "Secondary Source Support" },
-  { key: "exact_quote", label: "Micro-Quote" },
-  { key: "paraphrase", label: "Paraphrase" },
-  { key: "commentary_angle", label: "Commentary Angle" },
-];
+type FieldDef = { key: keyof EvidencePointDraft | "why_this_matters"; label: string };
+
+// The axis columns keep their database keys; only the display labels come from
+// the channel's comparison_axis_labels.
+function buildFields(sideA: string | null, sideB: string | null): FieldDef[] {
+  const axisFields: FieldDef[] =
+    sideA && sideB
+      ? [
+          { key: "book_evidence", label: `${sideA} Evidence` },
+          { key: "movie_evidence", label: `${sideB} Evidence` },
+          { key: "difference_note", label: "Contrast" },
+        ]
+      : [];
+  return [
+    { key: "claim", label: "Claim" },
+    { key: "source_file", label: "Source File" },
+    { key: "source_type", label: "Source Type" },
+    { key: "confidence", label: "Confidence" },
+    { key: "evidence_type", label: "Evidence Type" },
+    { key: "why_this_matters", label: "Why This Matters" },
+    ...axisFields,
+    { key: "lexicon_support", label: "Lexicon Support" },
+    { key: "secondary_source_support", label: "Secondary Source Support" },
+    { key: "exact_quote", label: "Micro-Quote" },
+    { key: "paraphrase", label: "Paraphrase" },
+    { key: "commentary_angle", label: "Commentary Angle" },
+  ];
+}
 
 const COLLAPSED_KEYS = new Set(["claim", "source_file", "confidence", "why_this_matters"]);
 
 export function EvidenceTableView({ rows, libraryFileNames, onSetApproval }: Props) {
+  const { channel } = useChannel();
+  const axis = (channel?.comparison_axis_labels ?? {}) as { side_a?: string; side_b?: string };
+  const sideA = typeof axis.side_a === "string" && axis.side_a.trim() ? axis.side_a.trim() : null;
+  const sideB = typeof axis.side_b === "string" && axis.side_b.trim() ? axis.side_b.trim() : null;
+  const axisEnabled = !!(sideA && sideB);
+  const FIELDS = useMemo(() => buildFields(sideA, sideB), [sideA, sideB]);
+
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [confFilter, setConfFilter] = useState<ConfidenceFilter>("all");
@@ -145,9 +165,9 @@ export function EvidenceTableView({ rows, libraryFileNames, onSetApproval }: Pro
       claim: row.claim,
       source_type: row.source_type,
       source_file: row.source_file,
-      book_evidence: row.book_evidence,
-      movie_evidence: row.movie_evidence,
-      difference_note: row.difference_note,
+      book_evidence: axisEnabled ? row.book_evidence : null,
+      movie_evidence: axisEnabled ? row.movie_evidence : null,
+      difference_note: axisEnabled ? row.difference_note : null,
       lexicon_support: row.lexicon_support,
       exact_quote: row.exact_quote,
       paraphrase: row.paraphrase,

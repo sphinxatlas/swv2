@@ -47,24 +47,24 @@ export default function SourceLibrary() {
         <div className="space-y-6">
           <FileUploadCard
             fileType="book"
-            title="📚 Harry Potter Books"
-            description="Upload book text files (.txt, .md). Each book will be chunked and indexed for semantic search."
+            title="📚 Primary Texts"
+            description="Upload primary source text files (.txt, .md). Each file is chunked and indexed for semantic search, and is treated as primary evidence."
             files={books}
             onRefresh={refetch}
           />
 
           <FileUploadCard
             fileType="transcript"
-            title="🎬 Movie Transcripts"
-            description="Upload movie transcript files. These provide dialogue and scene descriptions for reference."
+            title="🎬 Transcripts"
+            description="Upload transcript files (.txt, .md) of primary material. These provide spoken content and scene or segment detail for reference."
             files={transcripts}
             onRefresh={refetch}
           />
 
           <FileUploadCard
             fileType="lexicon"
-            title="📖 Lexicon"
-            description="Upload Lexicon reference files (.txt). These serve as secondary reference only — used for context, chronology, and discovery, never as primary canon."
+            title="📖 Reference Library"
+            description="Upload supporting reference files (.txt) such as encyclopaedias, glossaries, timelines, or compiled summaries. Used for context, chronology, and discovery only — never as a primary source."
             accept=".txt"
             files={lexicon}
             onRefresh={refetch}
@@ -74,7 +74,7 @@ export default function SourceLibrary() {
           <FileUploadCard
             fileType="instructions"
             title="📝 Script Instructions & Strategy"
-            description="Upload your master script writing document — covers tone, style, hooks, pacing, rehooks, argument structure, and retention. Used to shape writing quality, never as canon evidence."
+            description="Upload your master script writing document — covers tone, style, hooks, pacing, rehooks, argument structure, and retention. Used to shape writing quality, never as evidence."
             accept=".txt,.md"
             files={instructions}
             onRefresh={refetch}
@@ -95,38 +95,38 @@ export default function SourceLibrary() {
 
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground leading-relaxed px-1">
-              <strong>Quality tagging is set by you, not by the AI.</strong> Strong = trusted research the writer can absorb and use freely as informed background. Useful = good for framing and audience awareness; specific claims need STRONG or canon backup. Limited = inspiration only; specific claims need STRONG or canon backup. Sources are never named in the script regardless of tier — the writer absorbs and rephrases.
+              <strong>Quality tagging is set by you, not by the AI.</strong> Strong = trusted research the writer can absorb and use freely as informed background. Useful = good for framing and audience awareness; specific claims need STRONG or primary source backup. Limited = inspiration only; specific claims need STRONG or primary source backup. Sources are never named in the script regardless of tier — the writer absorbs and rephrases.
             </p>
             <FileUploadCard
               fileType="competitor_analysis"
               title="🎙️ Commentary Transcripts (Secondary)"
-              description="Upload raw YouTube commentary transcripts for additional angles and context. Used for interpretation, framing, and idea discovery only. Never used as primary canon evidence or as a source for exact quotes from the books or films."
+              description="Upload raw YouTube commentary transcripts (.txt, .md) for additional angles and context. Used for interpretation, framing, and idea discovery only. Never used as primary evidence or as a source for exact quotes from the primary material."
               accept=".txt,.md"
               files={competitorAnalysis}
               onRefresh={refetch}
-              badge="Secondary Commentary — Not Canon"
+              badge="Secondary Commentary — Not a Primary Source"
             />
           </div>
 
           <FileUploadCard
             fileType="host_persona"
             title="🧑‍🎤 Host Persona"
-            description="Store your host profile — name, style, catchphrases, channel identity. This is for reference only and is NOT used in any generation step."
+            description="Upload your host profile (.txt, .md) — name, style, delivery habits, recurring phrases, channel identity. This document is loaded into generation and is the only voice authority in the system. It shapes how the script sounds, never what it claims as fact."
             accept=".txt,.md"
             files={hostPersona}
             onRefresh={refetch}
-            badge="Reference Only — Not Used in Generation"
+            badge="Voice Authority — Injected into Script Generation"
           />
 
           <div className="ml-4 border-l-2 border-border pl-4">
             <FileUploadCard
               fileType={"melty_voice_pass" as any}
-              title="🎤 Melty Voice Pass Instructions"
-              description="Upload the MELTY_VOICE_PASS_V1.txt document. Used together with the Host Persona during the Melty Voice Pass on the Full Script."
+              title="🎤 Voice Pass Instructions"
+              description="Upload the voice pass instruction document (.txt, .md). Used together with the Host Persona during the voice pass on the Full Script. Guidance for delivery only — never a source of evidence."
               accept=".txt,.md"
               files={meltyVoicePass}
               onRefresh={refetch}
-              badge="Used by Melty Voice Pass"
+              badge="Used by Voice Pass"
             />
           </div>
         </div>

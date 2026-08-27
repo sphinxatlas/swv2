@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -44,26 +44,15 @@ const blankForm = (): CreateBriefInput => ({
   priority_sources: [],
 });
 
-const BOOK_OPTIONS = [
-  "Book 1: Philosopher's Stone",
-  "Book 2: Chamber of Secrets",
-  "Book 3: Prisoner of Azkaban",
-  "Book 4: Goblet of Fire",
-  "Book 5: Order of the Phoenix",
-  "Book 6: Half-Blood Prince",
-  "Book 7: Deathly Hallows",
-];
+const UNGROUPED_LABEL = "Priority Sources";
 
-const MOVIE_OPTIONS = [
-  "Movie 1: Philosopher's Stone",
-  "Movie 2: Chamber of Secrets",
-  "Movie 3: Prisoner of Azkaban",
-  "Movie 4: Goblet of Fire",
-  "Movie 5: Order of the Phoenix",
-  "Movie 6: Half-Blood Prince",
-  "Movie 7.1: Deathly Hallows Part 1",
-  "Movie 7.2: Deathly Hallows Part 2",
-];
+interface SourceCatalogEntry {
+  label: string;
+  token?: string;
+  group?: string | null;
+}
+
+
 
 interface InlineTranscriptFormProps {
   label: string;
@@ -126,7 +115,42 @@ function InlineTranscriptForm({ label, onSave, onCancel }: InlineTranscriptFormP
 
 export default function TopicBriefs() {
   const navigate = useNavigate();
-  const { channelId } = useChannel();
+  const { channelId, channel } = useChannel();
+  const comparisonAvailable = !!channel?.comparison_mode_available;
+  const axis = (channel?.comparison_axis_labels ?? {}) as { side_a?: string; side_b?: string };
+  const comparisonLabel =
+    axis.side_a && axis.side_b
+      ? `${axis.side_a} vs ${axis.side_b} Comparison Mode`
+      : "Comparison Mode";
+
+  // Priority source dropdowns are built from the channel's source_catalog,
+  // grouped by `group` in first-appearance order. Ungrouped entries fall into a
+  // single trailing group.
+  const sourceGroups = useMemo(() => {
+    const raw: SourceCatalogEntry[] = Array.isArray(channel?.source_catalog)
+      ? (channel!.source_catalog as SourceCatalogEntry[])
+      : [];
+    const order: string[] = [];
+    const map = new Map<string, string[]>();
+    const ungrouped: string[] = [];
+    for (const entry of raw) {
+      const label = typeof entry?.label === "string" ? entry.label.trim() : "";
+      if (!label) continue;
+      const group = typeof entry?.group === "string" ? entry.group.trim() : "";
+      if (!group) {
+        ungrouped.push(label);
+        continue;
+      }
+      if (!map.has(group)) {
+        map.set(group, []);
+        order.push(group);
+      }
+      map.get(group)!.push(label);
+    }
+    const groups = order.map((name) => ({ name, labels: map.get(name)! }));
+    if (ungrouped.length > 0) groups.push({ name: UNGROUPED_LABEL, labels: ungrouped });
+    return groups;
+  }, [channel]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<CreateBriefInput>(blankForm());
   const [creating, setCreating] = useState(false);
@@ -214,6 +238,7 @@ export default function TopicBriefs() {
         ...form,
         title: form.title.trim(),
         angle_note: form.angle_note.trim(),
+        comparison_mode: comparisonAvailable ? form.comparison_mode : false,
       };
       let briefId: string;
       if (editingBriefId) {
@@ -320,7 +345,7 @@ export default function TopicBriefs() {
               <div>
                 <Label className="text-xs text-muted-foreground">Video Title</Label>
                 <Input
-                  placeholder="e.g., Why Snape's Redemption Arc is Overrated"
+                  placeholder="Video title"
                   value={form.title}
                   onChange={(e) => updateForm("title", e.target.value)}
                   className="bg-secondary border-border mt-1"
@@ -334,7 +359,7 @@ export default function TopicBriefs() {
                   Your angle or direction for this video. A few sentences. The system will develop this into a full thesis.
                 </p>
                 <Textarea
-                  placeholder="e.g., Snape's redemption is built on a single act, but the books frame him as far more selfish than fans remember..."
+                  placeholder="Two paragraphs on the angle. State the tension, not the finished thesis."
                   value={form.angle_note}
                   onChange={(e) => updateForm("angle_note", e.target.value)}
                   rows={4}
@@ -342,14 +367,14 @@ export default function TopicBriefs() {
                 />
               </div>
 
-              {/* Main Characters */}
+              {/* Key People or Entities */}
               <div>
-                <Label className="text-xs text-muted-foreground">Main Characters</Label>
+                <Label className="text-xs text-muted-foreground">Key People or Entities</Label>
                 <p className="text-[11px] text-muted-foreground/70 mb-1">
-                  Characters central to this video. Used to build retrieval queries. e.g., Ginny Weasley, Harry Potter
+                  People or entities central to this video. Used to build retrieval queries.
                 </p>
                 <Input
-                  placeholder="Ginny Weasley, Harry Potter"
+                  placeholder=""
                   value={(form.characters || []).join(", ")}
                   onChange={(e) =>
                     updateForm(
@@ -365,10 +390,10 @@ export default function TopicBriefs() {
               <div>
                 <Label className="text-xs text-muted-foreground">Focus Areas</Label>
                 <p className="text-[11px] text-muted-foreground/70 mb-1">
-                  Key themes, scenes, or topics this video covers. e.g., Chamber of Secrets trauma, OotP confrontation, adaptation gaps
+                  Key themes, moments, or topics this video covers.
                 </p>
                 <Input
-                  placeholder="Chamber of Secrets trauma, OotP confrontation, adaptation gaps"
+                  placeholder=""
                   value={(form.focus_areas || []).join(", ")}
                   onChange={(e) =>
                     updateForm(
@@ -380,39 +405,44 @@ export default function TopicBriefs() {
                 />
               </div>
 
-              {/* Priority Books */}
-              <div>
-                <Label className="text-xs text-muted-foreground">Priority Books</Label>
-                <p className="text-[11px] text-muted-foreground/70 mb-1">
-                  Which books are most relevant. Retrieval will weight these.
-                </p>
-                <MultiSelectChips
-                  options={BOOK_OPTIONS.map((b) => ({ value: b, label: b }))}
-                  selected={(form.priority_sources || []).filter((s) => BOOK_OPTIONS.includes(s))}
-                  onChange={(vals) => {
-                    const movies = (form.priority_sources || []).filter((s) => MOVIE_OPTIONS.includes(s));
-                    updateForm("priority_sources", [...vals, ...movies]);
-                  }}
-                  placeholder="Select priority books…"
-                />
-              </div>
-
-              {/* Priority Movies */}
-              <div>
-                <Label className="text-xs text-muted-foreground">Priority Movies</Label>
-                <p className="text-[11px] text-muted-foreground/70 mb-1">
-                  Which films are most relevant. Retrieval will weight these.
-                </p>
-                <MultiSelectChips
-                  options={MOVIE_OPTIONS.map((m) => ({ value: m, label: m }))}
-                  selected={(form.priority_sources || []).filter((s) => MOVIE_OPTIONS.includes(s))}
-                  onChange={(vals) => {
-                    const books = (form.priority_sources || []).filter((s) => BOOK_OPTIONS.includes(s));
-                    updateForm("priority_sources", [...books, ...vals]);
-                  }}
-                  placeholder="Select priority movies…"
-                />
-              </div>
+              {/* Priority Sources (built from the channel's source catalog) */}
+              {sourceGroups.length === 0 ? (
+                <div>
+                  <Label className="text-xs text-muted-foreground">Priority Sources</Label>
+                  <p className="text-[11px] text-muted-foreground/70 mb-1">
+                    Which sources are most relevant. Retrieval will weight these.
+                  </p>
+                  <MultiSelectChips
+                    options={[]}
+                    selected={[]}
+                    onChange={() => {}}
+                    disabled
+                    placeholder="No priority sources configured for this channel"
+                    emptyText="No priority sources configured for this channel"
+                  />
+                </div>
+              ) : (
+                sourceGroups.map((group) => {
+                  const inGroup = (s: string) => group.labels.includes(s);
+                  return (
+                    <div key={group.name}>
+                      <Label className="text-xs text-muted-foreground">{group.name}</Label>
+                      <p className="text-[11px] text-muted-foreground/70 mb-1">
+                        Which sources are most relevant. Retrieval will weight these.
+                      </p>
+                      <MultiSelectChips
+                        options={group.labels.map((l) => ({ value: l, label: l }))}
+                        selected={(form.priority_sources || []).filter(inGroup)}
+                        onChange={(vals) => {
+                          const others = (form.priority_sources || []).filter((s) => !inGroup(s));
+                          updateForm("priority_sources", [...others, ...vals]);
+                        }}
+                        placeholder={`Select ${group.name.toLowerCase()}…`}
+                      />
+                    </div>
+                  );
+                })
+              )}
 
               {/* Target Length */}
               <div>
@@ -444,20 +474,22 @@ export default function TopicBriefs() {
                 </Select>
               </div>
 
-              {/* Comparison Mode */}
-              <div className="flex items-center gap-3 pt-2 border-t border-border">
-                <Switch
-                  checked={form.comparison_mode}
-                  onCheckedChange={(v) => updateForm("comparison_mode", v)}
-                />
-                <div>
-                  <Label className="text-xs font-medium flex items-center gap-1.5">
-                    <GitCompare className="w-3.5 h-3.5 text-primary" />
-                    Book vs Movie Comparison Mode
-                  </Label>
-                  <p className="text-xs text-muted-foreground">Forces paired retrieval and contrast-based analysis</p>
+              {/* Comparison Mode — only when the channel supports it */}
+              {comparisonAvailable && (
+                <div className="flex items-center gap-3 pt-2 border-t border-border">
+                  <Switch
+                    checked={form.comparison_mode}
+                    onCheckedChange={(v) => updateForm("comparison_mode", v)}
+                  />
+                  <div>
+                    <Label className="text-xs font-medium flex items-center gap-1.5">
+                      <GitCompare className="w-3.5 h-3.5 text-primary" />
+                      {comparisonLabel}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">Forces paired retrieval and contrast-based analysis</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Format Reference Videos */}
               <div className="pt-2 border-t border-border">
@@ -465,7 +497,7 @@ export default function TopicBriefs() {
                   Format Reference Videos <span className="text-destructive">*</span>
                 </Label>
                 <p className="text-[11px] text-muted-foreground/70 mb-2">
-                  Non-HP format reference videos. Used for argument structure and positioning only — never for Harry Potter content. Min 1, max 2.
+                  Format reference videos from a different subject. Used for argument structure and positioning only — never as a source of content for this video. Min 1, max 2.
                 </p>
                 <div className="flex items-start gap-2">
                   <div className="flex-1 min-w-0">
@@ -513,11 +545,11 @@ export default function TopicBriefs() {
                 )}
               </div>
 
-              {/* HP Topic Transcripts */}
+              {/* Topic Transcripts */}
               <div className="pt-2 border-t border-border">
-                <Label className="text-xs text-muted-foreground">HP Topic Transcripts (optional)</Label>
+                <Label className="text-xs text-muted-foreground">Topic Transcripts (optional)</Label>
                 <p className="text-[11px] text-muted-foreground/70 mb-2">
-                  HP videos covering a similar topic to this video. Used as research leads. Optional, no maximum.
+                  Videos covering a similar topic to this video. Used as research leads. Optional, no maximum.
                 </p>
                 <div className="flex items-start gap-2">
                   <div className="flex-1 min-w-0">
@@ -525,10 +557,10 @@ export default function TopicBriefs() {
                       options={topicOptions}
                       selected={selectedTopicIds}
                       onChange={setSelectedTopicIds}
-                      placeholder={topicOptions.length === 0 ? "No HP topic transcripts available" : "Select HP topic transcripts…"}
-                      emptyText="No HP topic transcripts available."
+                      placeholder={topicOptions.length === 0 ? "No topic transcripts available" : "Select topic transcripts…"}
+                      emptyText="No topic transcripts available."
                       searchable
-                      searchPlaceholder="Search HP topic transcripts..."
+                      searchPlaceholder="Search topic transcripts..."
                       emptySearchMessage="No matching sources found."
                     />
                   </div>
@@ -543,14 +575,14 @@ export default function TopicBriefs() {
                 </div>
                 {showTopicAdd && (
                   <InlineTranscriptForm
-                    label="New HP Topic Transcript"
+                    label="New Topic Transcript"
                     onCancel={() => setShowTopicAdd(false)}
                     onSave={async (input) => {
                       const created = await saveBriefTopicTranscript(input, channelId!);
                       await refetchTopicTranscripts();
                       setSelectedTopicIds((prev) => [...prev, created.id]);
                       setShowTopicAdd(false);
-                      toast.success("HP topic transcript added");
+                      toast.success("Topic transcript added");
                     }}
                   />
                 )}
@@ -560,7 +592,7 @@ export default function TopicBriefs() {
               <div className="pt-2 border-t border-border">
                 <Label className="text-xs text-muted-foreground">Alternative Sources (optional)</Label>
                 <p className="text-[11px] text-muted-foreground/70 mb-2">
-                  Optional pasted sources such as Reddit threads, fan comments, wiki extracts, blog posts, websites, or research notes. Used as secondary context and angle support. Not canon unless explicitly primary source material.
+                  Optional pasted sources such as Reddit threads, fan comments, wiki extracts, blog posts, websites, or research notes. Used as secondary context and angle support. Not primary sources unless the material is explicitly primary source text.
                 </p>
                 <MultiSelectChips
                   options={altOptions}

@@ -23,6 +23,7 @@ interface MultiSelectChipsProps {
   searchable?: boolean;
   searchPlaceholder?: string;
   emptySearchMessage?: string;
+  disabled?: boolean;
 }
 
 export function MultiSelectChips({
@@ -35,6 +36,7 @@ export function MultiSelectChips({
   searchable = false,
   searchPlaceholder = "Search…",
   emptySearchMessage = "No matching sources found.",
+  disabled = false,
 }: MultiSelectChipsProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -69,6 +71,7 @@ export function MultiSelectChips({
             variant="outline"
             role="combobox"
             aria-expanded={open}
+            disabled={disabled}
             className={cn(
               "w-full justify-between bg-secondary border-border font-normal",
               triggerClassName,
