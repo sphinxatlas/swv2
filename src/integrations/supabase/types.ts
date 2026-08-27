@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       alternative_sources: {
         Row: {
+          channel_id: string
           char_count: number | null
           content: string
           created_at: string
@@ -30,6 +31,7 @@ export type Database = {
           url: string | null
         }
         Insert: {
+          channel_id?: string
           char_count?: number | null
           content: string
           created_at?: string
@@ -44,6 +46,7 @@ export type Database = {
           url?: string | null
         }
         Update: {
+          channel_id?: string
           char_count?: number | null
           content?: string
           created_at?: string
@@ -57,40 +60,15 @@ export type Database = {
           updated_at?: string
           url?: string | null
         }
-        Relationships: []
-      }
-      angle_lab_runs: {
-        Row: {
-          created_at: string
-          id: string
-          parsed_directions: Json | null
-          possible_topics: string | null
-          raw_output: string
-          updated_at: string
-          user_notes: string | null
-          working_idea: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          parsed_directions?: Json | null
-          possible_topics?: string | null
-          raw_output?: string
-          updated_at?: string
-          user_notes?: string | null
-          working_idea: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          parsed_directions?: Json | null
-          possible_topics?: string | null
-          raw_output?: string
-          updated_at?: string
-          user_notes?: string | null
-          working_idea?: string
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "alternative_sources_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       brief_alternative_source_links: {
         Row: {
@@ -169,6 +147,7 @@ export type Database = {
       }
       brief_topic_transcripts: {
         Row: {
+          channel_id: string
           channel_name: string
           char_count: number | null
           created_at: string
@@ -179,6 +158,7 @@ export type Database = {
           video_title: string
         }
         Insert: {
+          channel_id?: string
           channel_name: string
           char_count?: number | null
           created_at?: string
@@ -189,6 +169,7 @@ export type Database = {
           video_title: string
         }
         Update: {
+          channel_id?: string
           channel_name?: string
           char_count?: number | null
           created_at?: string
@@ -198,43 +179,66 @@ export type Database = {
           transcript?: string
           video_title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "brief_topic_transcripts_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      clip_quote_finder_runs: {
+      channels: {
         Row: {
-          brief_id: string
+          abbreviation_map: Json
+          comparison_axis_labels: Json
+          comparison_mode_available: boolean
           created_at: string
-          editor_notes: string | null
+          description: string | null
+          entity_roster: Json
           id: string
-          include_book_quote_inserts: boolean
-          include_contextual_broll_ideas: boolean
-          output_markdown: string
-          pasted_script: string
-          prioritize_exact_film_timestamps: boolean
+          is_active: boolean
+          name: string
+          query_expansion_map: Json
+          slug: string
+          sort_order: number
+          source_catalog: Json
+          source_hierarchy: Json
           updated_at: string
         }
         Insert: {
-          brief_id: string
+          abbreviation_map?: Json
+          comparison_axis_labels?: Json
+          comparison_mode_available?: boolean
           created_at?: string
-          editor_notes?: string | null
+          description?: string | null
+          entity_roster?: Json
           id?: string
-          include_book_quote_inserts?: boolean
-          include_contextual_broll_ideas?: boolean
-          output_markdown?: string
-          pasted_script: string
-          prioritize_exact_film_timestamps?: boolean
+          is_active?: boolean
+          name: string
+          query_expansion_map?: Json
+          slug: string
+          sort_order?: number
+          source_catalog?: Json
+          source_hierarchy?: Json
           updated_at?: string
         }
         Update: {
-          brief_id?: string
+          abbreviation_map?: Json
+          comparison_axis_labels?: Json
+          comparison_mode_available?: boolean
           created_at?: string
-          editor_notes?: string | null
+          description?: string | null
+          entity_roster?: Json
           id?: string
-          include_book_quote_inserts?: boolean
-          include_contextual_broll_ideas?: boolean
-          output_markdown?: string
-          pasted_script?: string
-          prioritize_exact_film_timestamps?: boolean
+          is_active?: boolean
+          name?: string
+          query_expansion_map?: Json
+          slug?: string
+          sort_order?: number
+          source_catalog?: Json
+          source_hierarchy?: Json
           updated_at?: string
         }
         Relationships: []
@@ -356,6 +360,7 @@ export type Database = {
       }
       format_reference_transcripts: {
         Row: {
+          channel_id: string
           channel_name: string
           created_at: string
           id: string
@@ -363,6 +368,7 @@ export type Database = {
           video_title: string
         }
         Insert: {
+          channel_id?: string
           channel_name: string
           created_at?: string
           id?: string
@@ -370,52 +376,22 @@ export type Database = {
           video_title: string
         }
         Update: {
+          channel_id?: string
           channel_name?: string
           created_at?: string
           id?: string
           transcript?: string
           video_title?: string
         }
-        Relationships: []
-      }
-      improved_scripts: {
-        Row: {
-          created_at: string
-          draft_script: string
-          id: string
-          improved_output: string
-          revision_count: number
-          target_max_words: number | null
-          target_min_words: number | null
-          title: string
-          tone_note: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          draft_script: string
-          id?: string
-          improved_output?: string
-          revision_count?: number
-          target_max_words?: number | null
-          target_min_words?: number | null
-          title?: string
-          tone_note?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          draft_script?: string
-          id?: string
-          improved_output?: string
-          revision_count?: number
-          target_max_words?: number | null
-          target_min_words?: number | null
-          title?: string
-          tone_note?: string | null
-          updated_at?: string
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "format_reference_transcripts_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pipeline_outputs: {
         Row: {
@@ -449,106 +425,9 @@ export type Database = {
           },
         ]
       }
-      question_bank_entries: {
-        Row: {
-          answer: string
-          canon_status: string
-          caveats: Json | null
-          confidence: string
-          created_at: string
-          explanation: string | null
-          id: string
-          question: string
-          script_safe_takeaway: string | null
-          tags: string[] | null
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          answer?: string
-          canon_status?: string
-          caveats?: Json | null
-          confidence?: string
-          created_at?: string
-          explanation?: string | null
-          id?: string
-          question: string
-          script_safe_takeaway?: string | null
-          tags?: string[] | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          answer?: string
-          canon_status?: string
-          caveats?: Json | null
-          confidence?: string
-          created_at?: string
-          explanation?: string | null
-          id?: string
-          question?: string
-          script_safe_takeaway?: string | null
-          tags?: string[] | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      question_bank_evidence: {
-        Row: {
-          canon_weight: string | null
-          created_at: string
-          entry_id: string
-          evidence_strength: string | null
-          exact_finding: string
-          id: string
-          location: string | null
-          notes: string | null
-          position: number
-          source_name: string
-          source_type: string
-          what_it_proves: string | null
-        }
-        Insert: {
-          canon_weight?: string | null
-          created_at?: string
-          entry_id: string
-          evidence_strength?: string | null
-          exact_finding: string
-          id?: string
-          location?: string | null
-          notes?: string | null
-          position?: number
-          source_name: string
-          source_type: string
-          what_it_proves?: string | null
-        }
-        Update: {
-          canon_weight?: string | null
-          created_at?: string
-          entry_id?: string
-          evidence_strength?: string | null
-          exact_finding?: string
-          id?: string
-          location?: string | null
-          notes?: string | null
-          position?: number
-          source_name?: string
-          source_type?: string
-          what_it_proves?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "question_bank_evidence_entry_id_fkey"
-            columns: ["entry_id"]
-            isOneToOne: false
-            referencedRelation: "question_bank_entries"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       source_files: {
         Row: {
+          channel_id: string
           char_count: number | null
           created_at: string
           estimated_tokens: number | null
@@ -561,6 +440,7 @@ export type Database = {
           storage_path: string
         }
         Insert: {
+          channel_id?: string
           char_count?: number | null
           created_at?: string
           estimated_tokens?: number | null
@@ -573,6 +453,7 @@ export type Database = {
           storage_path: string
         }
         Update: {
+          channel_id?: string
           char_count?: number | null
           created_at?: string
           estimated_tokens?: number | null
@@ -584,11 +465,20 @@ export type Database = {
           status?: string
           storage_path?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "source_files_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       topic_briefs: {
         Row: {
           angle_note: string | null
+          channel_id: string
           characters: string[] | null
           comparison_mode: boolean
           competitor_script_1: string | null
@@ -615,6 +505,7 @@ export type Database = {
         }
         Insert: {
           angle_note?: string | null
+          channel_id?: string
           characters?: string[] | null
           comparison_mode?: boolean
           competitor_script_1?: string | null
@@ -641,6 +532,7 @@ export type Database = {
         }
         Update: {
           angle_note?: string | null
+          channel_id?: string
           characters?: string[] | null
           comparison_mode?: boolean
           competitor_script_1?: string | null
@@ -665,7 +557,15 @@ export type Database = {
           tone?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "topic_briefs_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
