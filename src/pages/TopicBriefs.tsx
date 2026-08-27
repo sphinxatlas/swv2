@@ -233,6 +233,7 @@ export default function TopicBriefs() {
         ...form,
         title: form.title.trim(),
         angle_note: form.angle_note.trim(),
+        comparison_mode: comparisonAvailable ? form.comparison_mode : false,
       };
       let briefId: string;
       if (editingBriefId) {
@@ -339,7 +340,7 @@ export default function TopicBriefs() {
               <div>
                 <Label className="text-xs text-muted-foreground">Video Title</Label>
                 <Input
-                  placeholder="e.g., Why Snape's Redemption Arc is Overrated"
+                  placeholder="Video title"
                   value={form.title}
                   onChange={(e) => updateForm("title", e.target.value)}
                   className="bg-secondary border-border mt-1"
@@ -353,7 +354,7 @@ export default function TopicBriefs() {
                   Your angle or direction for this video. A few sentences. The system will develop this into a full thesis.
                 </p>
                 <Textarea
-                  placeholder="e.g., Snape's redemption is built on a single act, but the books frame him as far more selfish than fans remember..."
+                  placeholder="Two paragraphs on the angle. State the tension, not the finished thesis."
                   value={form.angle_note}
                   onChange={(e) => updateForm("angle_note", e.target.value)}
                   rows={4}
@@ -361,14 +362,14 @@ export default function TopicBriefs() {
                 />
               </div>
 
-              {/* Main Characters */}
+              {/* Key People or Entities */}
               <div>
-                <Label className="text-xs text-muted-foreground">Main Characters</Label>
+                <Label className="text-xs text-muted-foreground">Key People or Entities</Label>
                 <p className="text-[11px] text-muted-foreground/70 mb-1">
-                  Characters central to this video. Used to build retrieval queries. e.g., Ginny Weasley, Harry Potter
+                  People or entities central to this video. Used to build retrieval queries.
                 </p>
                 <Input
-                  placeholder="Ginny Weasley, Harry Potter"
+                  placeholder=""
                   value={(form.characters || []).join(", ")}
                   onChange={(e) =>
                     updateForm(
@@ -384,10 +385,10 @@ export default function TopicBriefs() {
               <div>
                 <Label className="text-xs text-muted-foreground">Focus Areas</Label>
                 <p className="text-[11px] text-muted-foreground/70 mb-1">
-                  Key themes, scenes, or topics this video covers. e.g., Chamber of Secrets trauma, OotP confrontation, adaptation gaps
+                  Key themes, moments, or topics this video covers.
                 </p>
                 <Input
-                  placeholder="Chamber of Secrets trauma, OotP confrontation, adaptation gaps"
+                  placeholder=""
                   value={(form.focus_areas || []).join(", ")}
                   onChange={(e) =>
                     updateForm(
@@ -399,39 +400,44 @@ export default function TopicBriefs() {
                 />
               </div>
 
-              {/* Priority Books */}
-              <div>
-                <Label className="text-xs text-muted-foreground">Priority Books</Label>
-                <p className="text-[11px] text-muted-foreground/70 mb-1">
-                  Which books are most relevant. Retrieval will weight these.
-                </p>
-                <MultiSelectChips
-                  options={BOOK_OPTIONS.map((b) => ({ value: b, label: b }))}
-                  selected={(form.priority_sources || []).filter((s) => BOOK_OPTIONS.includes(s))}
-                  onChange={(vals) => {
-                    const movies = (form.priority_sources || []).filter((s) => MOVIE_OPTIONS.includes(s));
-                    updateForm("priority_sources", [...vals, ...movies]);
-                  }}
-                  placeholder="Select priority books…"
-                />
-              </div>
-
-              {/* Priority Movies */}
-              <div>
-                <Label className="text-xs text-muted-foreground">Priority Movies</Label>
-                <p className="text-[11px] text-muted-foreground/70 mb-1">
-                  Which films are most relevant. Retrieval will weight these.
-                </p>
-                <MultiSelectChips
-                  options={MOVIE_OPTIONS.map((m) => ({ value: m, label: m }))}
-                  selected={(form.priority_sources || []).filter((s) => MOVIE_OPTIONS.includes(s))}
-                  onChange={(vals) => {
-                    const books = (form.priority_sources || []).filter((s) => BOOK_OPTIONS.includes(s));
-                    updateForm("priority_sources", [...books, ...vals]);
-                  }}
-                  placeholder="Select priority movies…"
-                />
-              </div>
+              {/* Priority Sources (built from the channel's source catalog) */}
+              {sourceGroups.length === 0 ? (
+                <div>
+                  <Label className="text-xs text-muted-foreground">Priority Sources</Label>
+                  <p className="text-[11px] text-muted-foreground/70 mb-1">
+                    Which sources are most relevant. Retrieval will weight these.
+                  </p>
+                  <MultiSelectChips
+                    options={[]}
+                    selected={[]}
+                    onChange={() => {}}
+                    disabled
+                    placeholder="No priority sources configured for this channel"
+                    emptyText="No priority sources configured for this channel"
+                  />
+                </div>
+              ) : (
+                sourceGroups.map((group) => {
+                  const inGroup = (s: string) => group.labels.includes(s);
+                  return (
+                    <div key={group.name}>
+                      <Label className="text-xs text-muted-foreground">{group.name}</Label>
+                      <p className="text-[11px] text-muted-foreground/70 mb-1">
+                        Which sources are most relevant. Retrieval will weight these.
+                      </p>
+                      <MultiSelectChips
+                        options={group.labels.map((l) => ({ value: l, label: l }))}
+                        selected={(form.priority_sources || []).filter(inGroup)}
+                        onChange={(vals) => {
+                          const others = (form.priority_sources || []).filter((s) => !inGroup(s));
+                          updateForm("priority_sources", [...others, ...vals]);
+                        }}
+                        placeholder={`Select ${group.name.toLowerCase()}…`}
+                      />
+                    </div>
+                  );
+                })
+              )}
 
               {/* Target Length */}
               <div>
@@ -463,20 +469,22 @@ export default function TopicBriefs() {
                 </Select>
               </div>
 
-              {/* Comparison Mode */}
-              <div className="flex items-center gap-3 pt-2 border-t border-border">
-                <Switch
-                  checked={form.comparison_mode}
-                  onCheckedChange={(v) => updateForm("comparison_mode", v)}
-                />
-                <div>
-                  <Label className="text-xs font-medium flex items-center gap-1.5">
-                    <GitCompare className="w-3.5 h-3.5 text-primary" />
-                    Book vs Movie Comparison Mode
-                  </Label>
-                  <p className="text-xs text-muted-foreground">Forces paired retrieval and contrast-based analysis</p>
+              {/* Comparison Mode — only when the channel supports it */}
+              {comparisonAvailable && (
+                <div className="flex items-center gap-3 pt-2 border-t border-border">
+                  <Switch
+                    checked={form.comparison_mode}
+                    onCheckedChange={(v) => updateForm("comparison_mode", v)}
+                  />
+                  <div>
+                    <Label className="text-xs font-medium flex items-center gap-1.5">
+                      <GitCompare className="w-3.5 h-3.5 text-primary" />
+                      {comparisonLabel}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">Forces paired retrieval and contrast-based analysis</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Format Reference Videos */}
               <div className="pt-2 border-t border-border">
@@ -484,7 +492,7 @@ export default function TopicBriefs() {
                   Format Reference Videos <span className="text-destructive">*</span>
                 </Label>
                 <p className="text-[11px] text-muted-foreground/70 mb-2">
-                  Non-HP format reference videos. Used for argument structure and positioning only — never for Harry Potter content. Min 1, max 2.
+                  Format reference videos from a different subject. Used for argument structure and positioning only — never as a source of content for this video. Min 1, max 2.
                 </p>
                 <div className="flex items-start gap-2">
                   <div className="flex-1 min-w-0">
