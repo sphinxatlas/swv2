@@ -1686,32 +1686,35 @@ const expandAbbreviationsInQueries = (queries: string[], patterns: Array<{ patte
   return out;
 };
 
-const deriveRetrievalQueryPack = (brief: any): QueryPack => {
+const deriveRetrievalQueryPack = (
+  brief: any,
+  channel: any,
+  abbrPatterns: Array<{ pattern: RegExp; expansions: string[] }>,
+): QueryPack => {
   const title = normalizeWhitespace(brief.title || "");
   const thesis = normalizeWhitespace(brief.thesis || "");
   const proofGoal = normalizeWhitespace(brief.proof_goal || "");
   const focusAreas = (brief.focus_areas || []).map((v: string) => normalizeWhitespace(v)).filter(Boolean);
   const characters = (brief.characters || []).map((v: string) => normalizeWhitespace(v)).filter(Boolean);
 
-  const targetCharacter = inferTargetCharacter(brief);
+  const targetCharacter = resolveFocusEntity(brief, channel);
 
   // Primary query from title + optional thesis/proofGoal
   const coreFields = [title, thesis, proofGoal].filter(Boolean);
   const primaryQuery =
     compressPhrase(coreFields.join(" "), 10) ||
     compressPhrase(title, 8) ||
-    "harry potter characterization";
+    (channel.subject_label || "").toLowerCase();
 
   // Theme queries from focus areas (only if present)
   const themeQueries = focusAreas.length > 0
     ? dedupeStrings(focusAreas.map((area: string) => compressPhrase(area, 6)).filter(Boolean), 8)
     : [];
 
-  // Canon-language expansion of focus areas. Editorial focus-area phrases
-  // ("graveyard rebirth scene") rarely appear verbatim in canon; this map
-  // translates them into token strings that DO appear in book/film chunks
-  // ("Wormtail knees", "Voldemort lazily"). See FOCUS_AREA_CANON_EXPANSIONS.
-  const focusAreaCanonQueries = expandFocusAreasToCanonQueries(focusAreas);
+  // Channel-configured expansion of focus areas. Editorial focus-area phrases
+  // rarely appear verbatim in source text; channel.query_expansion_map
+  // translates them into token strings that DO appear in indexed chunks.
+  const focusAreaCanonQueries = expandFocusAreas(focusAreas, channel);
 
   // Character queries (only if characters provided)
   const characterQueries = characters.length > 0
@@ -1720,7 +1723,7 @@ const deriveRetrievalQueryPack = (brief: any): QueryPack => {
 
   // Build seeded subqueries from available optional fields
   const seededParts: string[] = [];
-  if (themeQueries.length > 0) {
+  if (targetCharacter && themeQueries.length > 0) {
     seededParts.push(...themeQueries.map((theme) => `${targetCharacter} ${theme}`));
   }
   if (focusAreaCanonQueries.length > 0) {
@@ -1740,35 +1743,39 @@ const deriveRetrievalQueryPack = (brief: any): QueryPack => {
   // Transcript-specific queries — use SCREENPLAY LANGUAGE that actually appears in transcripts
   // Don't use meta-terms like "dialogue" or "confrontation scene" — use action words from scripts
   const transcriptQueries = dedupeStrings([
-    // Character name alone — matches any chunk mentioning them
-    targetCharacter,
-    // Action/speech verbs that appear in screenplays
-    `${targetCharacter} said`,
-    `${targetCharacter} shouted`,
-    `${targetCharacter} yelled`,
-    `${targetCharacter} snapped`,
-    `${targetCharacter} whispered`,
-    `${targetCharacter} angry`,
-    `${targetCharacter} furious`,
-    `${targetCharacter} frustrated`,
-    `${targetCharacter} screamed`,
-    `${targetCharacter} replied`,
-    `${targetCharacter} stared`,
-    `${targetCharacter} laughed`,
-    `${targetCharacter} sarcastically`,
+    ...(targetCharacter ? [
+      // Focus entity name alone — matches any chunk mentioning them
+      targetCharacter,
+      // Action/speech verbs that appear in screenplays
+      `${targetCharacter} said`,
+      `${targetCharacter} shouted`,
+      `${targetCharacter} yelled`,
+      `${targetCharacter} snapped`,
+      `${targetCharacter} whispered`,
+      `${targetCharacter} angry`,
+      `${targetCharacter} furious`,
+      `${targetCharacter} frustrated`,
+      `${targetCharacter} screamed`,
+      `${targetCharacter} replied`,
+      `${targetCharacter} stared`,
+      `${targetCharacter} laughed`,
+      `${targetCharacter} sarcastically`,
+    ] : []),
     // Strip honorifics from secondary characters so AND-token FTS does not
     // require the title to co-occur with the name in chunk text.
     ...characters.slice(0, 3).map((c: string) => compressPhrase(stripCharacterTitle(c), 3)),
   ].filter(Boolean), 15);
 
   // Fallbacks
-  const fallbackSubqueries = dedupeStrings([
-    `${targetCharacter} characterization`,
-    `${targetCharacter} sarcasm`,
-    `${targetCharacter} anger`,
-    `${targetCharacter} humor`,
-    `${targetCharacter} agency`,
-  ]);
+  const fallbackSubqueries = targetCharacter
+    ? dedupeStrings([
+        `${targetCharacter} characterization`,
+        `${targetCharacter} sarcasm`,
+        `${targetCharacter} anger`,
+        `${targetCharacter} humor`,
+        `${targetCharacter} agency`,
+      ])
+    : [];
 
   const subqueries = [...seededSubqueries];
   for (const fallback of fallbackSubqueries) {
@@ -1785,22 +1792,23 @@ const deriveRetrievalQueryPack = (brief: any): QueryPack => {
     comparisonQueries = dedupeStrings([
       ...themeQueries.slice(0, 6).map((theme) => `${theme} book vs movie`),
       ...characters.slice(0, 4).map((character: string) => `${compressPhrase(stripCharacterTitle(character), 3)} book vs movie characterization`),
-      `${targetCharacter} personality adaptation changes`,
-      `${targetCharacter} emotional intensity books and films`,
-      `${targetCharacter} agency books and films`,
-      `${targetCharacter} lines given to other characters`,
-      `${targetCharacter} internal monologue lost in film`,
+      ...(targetCharacter ? [
+        `${targetCharacter} personality adaptation changes`,
+        `${targetCharacter} emotional intensity books and films`,
+        `${targetCharacter} agency books and films`,
+        `${targetCharacter} lines given to other characters`,
+        `${targetCharacter} internal monologue lost in film`,
+      ] : []),
     ].filter(Boolean), 12);
   }
 
   const allQueries = dedupeStrings([primaryQuery, ...trimmedSubqueries, ...transcriptQueries, ...comparisonQueries], 30);
 
-  // Additive HP abbreviation expansion. If a query string contains an HP
-  // installment abbreviation (PS, CoS, HBP, OotP, DH2, ...), append a
-  // companion query with the abbreviation expanded to its full title so
-  // FTS can match canon filenames and chunk text. Originals are kept so
-  // we never lose existing matches.
-  const expandedAll = expandHpAbbreviationsInQueries(allQueries);
+  // Additive abbreviation expansion. If a query string contains a
+  // channel-configured abbreviation, append a companion query with the
+  // abbreviation expanded to its full form so FTS can match filenames and
+  // chunk text. Originals are kept so we never lose existing matches.
+  const expandedAll = expandAbbreviationsInQueries(allQueries, abbrPatterns);
   const finalAll = dedupeStrings([...allQueries, ...expandedAll], 60);
 
   return {
@@ -1833,34 +1841,14 @@ const getChunkCountByType = async (supabase: any, sourceType: SearchSourceType, 
   return count ?? 0;
 };
 
-// Maps UI option labels (from BOOK_OPTIONS / MOVIE_OPTIONS in the brief forms)
-// to filename tokens used in source_files.file_name. Filenames look like
-// HPM6_HalfbloodPrince_Movie_TranscriptVS.txt or HPB6_HalfBloodPrince.txt,
-// so we match on the leading HPM<n>/HPB<n> token (case-insensitive).
-const PRIORITY_LABEL_TO_TOKEN: Record<string, string> = {
-  "Movie 1: Philosopher's Stone": "HPM1",
-  "Movie 2: Chamber of Secrets": "HPM2",
-  "Movie 3: Prisoner of Azkaban": "HPM3",
-  "Movie 4: Goblet of Fire": "HPM4",
-  "Movie 5: Order of the Phoenix": "HPM5",
-  "Movie 6: Half-Blood Prince": "HPM6",
-  "Movie 7.1: Deathly Hallows Part 1": "HPM7_1",
-  "Movie 7.2: Deathly Hallows Part 2": "HPM7_2",
-  "Book 1: Philosopher's Stone": "HPB1",
-  "Book 2: Chamber of Secrets": "HPB2",
-  "Book 3: Prisoner of Azkaban": "HPB3",
-  "Book 4: Goblet of Fire": "HPB4",
-  "Book 5: Order of the Phoenix": "HPB5",
-  "Book 6: Half-Blood Prince": "HPB6",
-  "Book 7: Deathly Hallows": "HPB7",
-};
-
-const getPriorityBoost = (fileName: string, prioritySources: string[]) => {
-  // Hardcoded mapping defined just above
+// Maps UI option labels (from the brief forms) to filename tokens used in
+// source_files.file_name. The mapping comes from channel.source_catalog and is
+// built per request as `priorityLabelToToken`.
+const getPriorityBoost = (fileName: string, prioritySources: string[], priorityLabelToToken: Record<string, string>) => {
   if (!prioritySources.length) return 0;
   const lower = fileName.toLowerCase();
   const matched = prioritySources.some((source) => {
-    const token = PRIORITY_LABEL_TO_TOKEN[source];
+    const token = priorityLabelToToken[source];
     if (!token) return false;
     return lower.includes(token.toLowerCase());
   });
@@ -1886,6 +1874,7 @@ const applyFloorAndCeilingQuota = (
   prioritySources: string[],
   totalLimit: number,
   sourceType: "book" | "transcript",
+  priorityLabelToToken: Record<string, string>,
 ): any[] => {
   if (!sortedChunks.length || totalLimit <= 0) {
     return sortedChunks.slice(0, totalLimit);
@@ -1905,7 +1894,7 @@ const applyFloorAndCeilingQuota = (
 
   // ── Step 2: identify priority tokens (capped at 8 entries) ──
   const priorityTokens = prioritySources
-    .map((s) => PRIORITY_LABEL_TO_TOKEN[s])
+    .map((s) => priorityLabelToToken[s])
     .filter(Boolean)
     .slice(0, 8)
     .map((t) => t.toLowerCase());
@@ -2193,6 +2182,25 @@ serve(async (req) => {
       if (!brief.channel_id) throw new Error("Brief has no channel_id");
     }
 
+    // Load the channel config row for this brief.
+    let channel: any;
+    {
+      const { data: c, error: channelError } = await supabase
+        .from("channels")
+        .select("*")
+        .eq("id", brief.channel_id)
+        .single();
+      if (channelError || !c) throw new Error("Channel not found for brief");
+      channel = c;
+    }
+
+    // Per-request channel-derived config.
+    const abbrPatterns = buildAbbreviationPatterns(channel);
+    const priorityLabelToToken: Record<string, string> = {};
+    for (const e of (Array.isArray(channel.source_catalog) ? channel.source_catalog : [])) {
+      if (e && typeof e.label === "string" && typeof e.token === "string") priorityLabelToToken[e.label] = e.token;
+    }
+
     // Load shared guidance layers (Script Instructions, Anti-AI, Host Persona)
     // once per request. These are appended additively to every step's system
     // prompt in addition to any legacy inline injection, with intensity per
@@ -2334,7 +2342,7 @@ serve(async (req) => {
         // Expand HP installment abbreviations (PS/CoS/HBP/OotP/DH/...) in
         // the source body before the per-item cap. The original text is
         // preserved verbatim; expansions are appended in a trailing note.
-        const raw = expandHpAbbreviations((s.content || "").toString());
+        const raw = expandAbbreviations((s.content || "").toString(), abbrPatterns);
         let capped = raw;
         if (raw.length > perItem) {
           capped = raw.slice(0, perItem) +
@@ -2448,8 +2456,8 @@ Generate the Creative Brief now.`;
         body: JSON.stringify({
           model: getModelForStep(stepType),
           messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userMessage },
+            { role: "system", content: applyChannelPlaceholders(systemPrompt, channel) },
+            { role: "user", content: applyChannelPlaceholders(userMessage, channel) },
           ],
           stream: true,
         }),
@@ -2469,7 +2477,7 @@ Generate the Creative Brief now.`;
 
     // Build compact retrieval query pack from brief fields (brief stays rich for generation)
     // TODO: Add hybrid semantic/vector retrieval later using embeddings and pgvector. Current retrieval is keyword/full text search only.
-    const queryPack = deriveRetrievalQueryPack(brief);
+    const queryPack = deriveRetrievalQueryPack(brief, channel, abbrPatterns);
     const prioritySources = (brief.priority_sources || [])
       .map((s: string) => normalizeWhitespace(s))
       .filter(Boolean);
@@ -2509,6 +2517,7 @@ Generate the Creative Brief now.`;
     };
 
     const targetCharacter = queryPack.targetCharacter;
+    const targetCharacterLabel = targetCharacter ?? "none";
 
     if (stepType === "full_script" || stepType === "angle_check") {
       // Retrieval skipped: the Full Script user message omits Source Material
@@ -2537,11 +2546,13 @@ Generate the Creative Brief now.`;
         perQueryCounts[plan.query][plan.sourceType] = rows.length;
 
         rows.forEach((row: any) => {
-          const priorityBoost = getPriorityBoost(row.file_name || "", prioritySources);
+          const priorityBoost = getPriorityBoost(row.file_name || "", prioritySources, priorityLabelToToken);
           const primaryQueryBoost = plan.query === queryPack.primaryQuery ? 0.05 : 0;
 
           // Character relevance boost — especially important for transcripts
-          const charRelevance = getCharacterRelevanceScore(row.content || "", targetCharacter);
+          const charRelevance = targetCharacter
+            ? getCharacterRelevanceScore(row.content || "", targetCharacter)
+            : { score: 0, mentions: 0, likelySpeaker: false };
           const charBoost = plan.sourceType === "transcript" ? charRelevance.score * 1.5 : charRelevance.score * 0.5;
 
           const score = (row.rank ?? 0) + priorityBoost + primaryQueryBoost + charBoost;
@@ -2636,9 +2647,11 @@ Generate the Creative Brief now.`;
         perQueryCounts[plan.query][plan.sourceType] = fused.size;
 
         fused.forEach(({ row, rrf, ftsRank, vecRank }) => {
-          const priorityBoost = getPriorityBoost(row.file_name || "", prioritySources);
+          const priorityBoost = getPriorityBoost(row.file_name || "", prioritySources, priorityLabelToToken);
           const primaryQueryBoost = plan.query === queryPack.primaryQuery ? 0.05 : 0;
-          const charRelevance = getCharacterRelevanceScore(row.content || "", targetCharacter);
+          const charRelevance = targetCharacter
+            ? getCharacterRelevanceScore(row.content || "", targetCharacter)
+            : { score: 0, mentions: 0, likelySpeaker: false };
           const charBoost = plan.sourceType === "transcript" ? charRelevance.score * 1.5 : charRelevance.score * 0.5;
 
           // Scale RRF by 10 so its magnitude (~0.0–0.33) sits in the same range
@@ -2690,7 +2703,7 @@ Generate the Creative Brief now.`;
 
     const bookChunksSorted = Array.from(mergedByType.book.values())
       .sort((a, b) => b._score - a._score);
-    const bookChunks = applyFloorAndCeilingQuota(bookChunksSorted, prioritySources, bookLimit, "book");
+    const bookChunks = applyFloorAndCeilingQuota(bookChunksSorted, prioritySources, bookLimit, "book", priorityLabelToToken);
 
     // For transcripts: filter out chunks where target character has zero mentions (unless very few results)
     const allTranscriptChunks = Array.from(mergedByType.transcript.values())
@@ -2699,7 +2712,7 @@ Generate the Creative Brief now.`;
     const droppedTranscripts = allTranscriptChunks.length - relevantTranscripts.length;
     // Use relevant ones if we have enough, otherwise fall back to all
     const transcriptPool = relevantTranscripts.length >= 3 ? relevantTranscripts : allTranscriptChunks;
-    const transcriptChunks = applyFloorAndCeilingQuota(transcriptPool, prioritySources, transcriptLimit, "transcript");
+    const transcriptChunks = applyFloorAndCeilingQuota(transcriptPool, prioritySources, transcriptLimit, "transcript", priorityLabelToToken);
 
     const lexiconChunks = Array.from(mergedByType.lexicon.values())
       .sort((a, b) => b._score - a._score)
@@ -2732,7 +2745,7 @@ Generate the Creative Brief now.`;
     const transcriptLikelySpeaker = transcriptChunks.filter((c) => c._char_likely_speaker).length;
 
     const debugInfo = {
-      target_character: targetCharacter,
+      target_character: targetCharacterLabel,
       derived_query_pack: {
         primary_query: queryPack.primaryQuery,
         subqueries: queryPack.subqueries,
@@ -2766,7 +2779,7 @@ Generate the Creative Brief now.`;
         transcript_matches_per_query: transcriptMatchesPerQuery,
         transcript_overwhelmed_by_books: transcriptChunks.length === 0 && bookChunks.length > 5,
         transcript_character_relevance: {
-          target_character: targetCharacter,
+          target_character: targetCharacterLabel,
           chunks_mentioning_character: transcriptCharMentions,
           chunks_character_likely_speaker: transcriptLikelySpeaker,
           chunks_dropped_for_low_relevance: droppedTranscripts,
@@ -2829,23 +2842,23 @@ DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placehold
 
       // Transcript-specific debug
       sections.push(`### Transcript Retrieval Debug
-- Target character: ${targetCharacter}
+- Target character: ${targetCharacterLabel}
 - Transcript-specific queries used: ${queryPack.transcriptQueries.length}
 - Transcript chunks in index: ${transcriptChunkCount}
 - Transcript matches returned: ${transcriptChunks.length}
-- Transcript chunks mentioning ${targetCharacter}: ${transcriptCharMentions}
-- Transcript chunks where ${targetCharacter} is likely speaker: ${transcriptLikelySpeaker}
+- Transcript chunks mentioning ${targetCharacterLabel}: ${transcriptCharMentions}
+- Transcript chunks where ${targetCharacterLabel} is likely speaker: ${transcriptLikelySpeaker}
 - Transcript chunks dropped for low relevance: ${droppedTranscripts}
 - Total raw transcript matches before filtering: ${allTranscriptChunks.length}
 - Transcript query hit rate: ${queryPack.transcriptQueries.filter((q) => (perQueryCounts[q]?.transcript ?? 0) > 0).length}/${queryPack.transcriptQueries.length}`);
 
       if (bookChunks.length > 0) {
         sections.push("### PRIMARY SOURCES — Books (Book Evidence)\n" +
-          bookChunks.map((c: any) => `[${c.file_name} — BOOK — PRIMARY | matched: "${c._matched_query}" | ${targetCharacter} mentions: ${c._char_mentions}]\n${c.content}`).join("\n\n---\n\n"));
+          bookChunks.map((c: any) => `[${c.file_name} — BOOK — PRIMARY | matched: "${c._matched_query}" | ${targetCharacterLabel} mentions: ${c._char_mentions ?? 0}]\n${c.content}`).join("\n\n---\n\n"));
       }
       if (transcriptChunks.length > 0) {
         sections.push("### PRIMARY SOURCES — Movie Transcripts (Movie Evidence)\n" +
-          transcriptChunks.map((c: any) => `[${c.file_name} — TRANSCRIPT — PRIMARY | matched: "${c._matched_query}" | ${targetCharacter} mentions: ${c._char_mentions} | likely speaker: ${c._char_likely_speaker ? "YES" : "no"}]\n${c.content}`).join("\n\n---\n\n"));
+          transcriptChunks.map((c: any) => `[${c.file_name} — TRANSCRIPT — PRIMARY | matched: "${c._matched_query}" | ${targetCharacterLabel} mentions: ${c._char_mentions ?? 0} | likely speaker: ${c._char_likely_speaker ? "YES" : "no"}]\n${c.content}`).join("\n\n---\n\n"));
       }
 
       // Possible Contrast Pairs (comparison mode or when both families have results)
@@ -3344,8 +3357,8 @@ Please generate the ${stepType.replace(/_/g, " ")} based on the above informatio
       body: JSON.stringify({
         model: getModelForStep(stepType),
         messages: [
-          { role: "system", content: systemPromptFinal },
-          { role: "user", content: userMessage },
+          { role: "system", content: applyChannelPlaceholders(systemPromptFinal, channel) },
+          { role: "user", content: applyChannelPlaceholders(userMessage, channel) },
         ],
         stream: true,
       }),
