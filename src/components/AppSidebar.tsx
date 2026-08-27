@@ -1,6 +1,8 @@
 import { Library, ScrollText, Sparkles, Feather, BookOpen } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useChannel } from "@/contexts/ChannelContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const navItems = [
   { to: "/", label: "Source Library", icon: Library },
@@ -10,6 +12,7 @@ const navItems = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const { channels, channelId, setChannelId, loading } = useChannel();
 
   return (
     <aside className="w-64 border-r border-border bg-sidebar flex flex-col h-screen sticky top-0">
