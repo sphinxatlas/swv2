@@ -545,11 +545,11 @@ export default function TopicBriefs() {
                 )}
               </div>
 
-              {/* HP Topic Transcripts */}
+              {/* Topic Transcripts */}
               <div className="pt-2 border-t border-border">
-                <Label className="text-xs text-muted-foreground">HP Topic Transcripts (optional)</Label>
+                <Label className="text-xs text-muted-foreground">Topic Transcripts (optional)</Label>
                 <p className="text-[11px] text-muted-foreground/70 mb-2">
-                  HP videos covering a similar topic to this video. Used as research leads. Optional, no maximum.
+                  Videos covering a similar topic to this video. Used as research leads. Optional, no maximum.
                 </p>
                 <div className="flex items-start gap-2">
                   <div className="flex-1 min-w-0">
@@ -557,10 +557,10 @@ export default function TopicBriefs() {
                       options={topicOptions}
                       selected={selectedTopicIds}
                       onChange={setSelectedTopicIds}
-                      placeholder={topicOptions.length === 0 ? "No HP topic transcripts available" : "Select HP topic transcripts…"}
-                      emptyText="No HP topic transcripts available."
+                      placeholder={topicOptions.length === 0 ? "No topic transcripts available" : "Select topic transcripts…"}
+                      emptyText="No topic transcripts available."
                       searchable
-                      searchPlaceholder="Search HP topic transcripts..."
+                      searchPlaceholder="Search topic transcripts..."
                       emptySearchMessage="No matching sources found."
                     />
                   </div>
@@ -575,14 +575,14 @@ export default function TopicBriefs() {
                 </div>
                 {showTopicAdd && (
                   <InlineTranscriptForm
-                    label="New HP Topic Transcript"
+                    label="New Topic Transcript"
                     onCancel={() => setShowTopicAdd(false)}
                     onSave={async (input) => {
                       const created = await saveBriefTopicTranscript(input, channelId!);
                       await refetchTopicTranscripts();
                       setSelectedTopicIds((prev) => [...prev, created.id]);
                       setShowTopicAdd(false);
-                      toast.success("HP topic transcript added");
+                      toast.success("Topic transcript added");
                     }}
                   />
                 )}
@@ -592,7 +592,7 @@ export default function TopicBriefs() {
               <div className="pt-2 border-t border-border">
                 <Label className="text-xs text-muted-foreground">Alternative Sources (optional)</Label>
                 <p className="text-[11px] text-muted-foreground/70 mb-2">
-                  Optional pasted sources such as Reddit threads, fan comments, wiki extracts, blog posts, websites, or research notes. Used as secondary context and angle support. Not canon unless explicitly primary source material.
+                  Optional pasted sources such as Reddit threads, fan comments, wiki extracts, blog posts, websites, or research notes. Used as secondary context and angle support. Not primary sources unless the material is explicitly primary source text.
                 </p>
                 <MultiSelectChips
                   options={altOptions}
