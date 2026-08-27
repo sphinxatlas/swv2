@@ -35,6 +35,18 @@ async function embedQueriesBatch(texts: string[]): Promise<(number[] | null)[]> 
 
 const RRF_K = 60;
 
+const applyChannelPlaceholders = (text: string, channel: any): string => {
+  const workedExamples = (channel.worked_examples && typeof channel.worked_examples === "object") ? channel.worked_examples : {};
+  const hierarchyProse = (channel.source_hierarchy && typeof channel.source_hierarchy.prose === "string") ? channel.source_hierarchy.prose : "";
+  let out = text.split("{{SUBJECT_LABEL}}").join(channel.subject_label || "the channel subject");
+  out = out.split("{{SOURCE_HIERARCHY_PROSE}}").join(hierarchyProse);
+  out = out.replace(/\{\{WORKED_EXAMPLE:([a-z_]+)\}\}/g, (_m, key) => {
+    const entry = workedExamples[key];
+    return entry && typeof entry.body === "string" ? entry.body : "";
+  });
+  return out.replace(/\n{3,}/g, "\n\n");
+};
+
 function getModelForStep(stepType: string) {
   if (
     [
@@ -139,12 +151,12 @@ TIER 4 — WRITING GUIDANCE ONLY (never evidence, never canon):
 - Never used as canon evidence
 
 CRITICAL RULES:
-- Commentary Transcripts must NEVER be cited as canon evidence or used to prove Harry Potter facts
+- Commentary Transcripts must NEVER be cited as canon evidence or used to prove {{SUBJECT_LABEL}} facts
 - No competitor wording reuse — do NOT copy commentary transcript wording, structure, or phrasing
 - Script Instructions must NEVER be cited as canon evidence
 - They are layers that improve HOW the script is written, not WHAT it claims
 
-The Lexicon is a secondary reference source only. Use it to support context, chronology, orientation, and discovery. Do not treat it as equal to the Harry Potter books or movie transcripts. Prioritize books and movie transcripts for canon claims, exact quotes, and core comparisons. Never present Lexicon wording as if it were direct text from the novels or films.
+{{SOURCE_HIERARCHY_PROSE}}
 
 QUOTE DISCIPLINE (CRITICAL):
 - "exact quote" = verbatim text from the source, in quotation marks, with source cited
@@ -172,8 +184,8 @@ This script compares book and film versions. Do not force a paired book/movie st
 // and re-frame commentary + topic transcripts as theory/angle inputs rather than canon.
 
 const TOPIC_TRANSCRIPTS_FRAMING_INSTRUCTION = `
-BRIEF SPECIFIC HP TOPIC TRANSCRIPTS — THEORY, ANGLE, AND RESEARCH LEADS:
-These are topic relevant Harry Potter commentary, theory, or transcript materials selected for this brief.
+BRIEF SPECIFIC TOPIC TRANSCRIPTS — THEORY, ANGLE, AND RESEARCH LEADS:
+These are topic relevant commentary, theory, or transcript materials about {{SUBJECT_LABEL}} selected for this brief.
 Use them to identify possible theories, conspiracy style arguments, interpretive angles, fandom questions, contradictions worth exploring, unusual readings of characters/scenes/adaptation choices, and argument structures that could make the video more compelling.
 They are NOT Tier 1 canon and must NOT be treated as direct proof of canon events.
 However, they do not need to be strictly confirmed by primary canon in every case, because some are theories, speculative arguments, or interpretive claims.
@@ -257,7 +269,7 @@ I. SOURCE INTEGRATION RULE
 `;
 
 const STEP_PROMPTS: Record<string, string> = {
-  evidence_table: `You are a research assistant curating the strongest evidence for a YouTube script about Harry Potter.
+  evidence_table: `You are a research assistant curating the strongest evidence for a YouTube script about {{SUBJECT_LABEL}}.
 Given the topic brief, retrieval results, and source material excerpts, create a CURATED EVIDENCE TABLE.
 
 ${SOURCE_HIERARCHY_INSTRUCTION}
@@ -276,7 +288,7 @@ The Evidence Table must clearly separate four kinds of points. Group them under 
 
 Do not remove interesting theory based material just because it cannot be fully proven.
 Do not present theories as facts.
-The goal is compelling, defensible Harry Potter video argumentation, not only academic confirmation.
+The goal is compelling, defensible {{SUBJECT_LABEL}} video argumentation, not only academic confirmation.
 
 EVIDENCE QUALITY RULES (CRITICAL):
 1. QUALITY OVER QUANTITY: Select the 10-15 STRONGEST evidence points. Do NOT pad with weak or tangential evidence.
@@ -411,16 +423,7 @@ Each beat paragraph must cover, in natural prose order:
 3. What the viewer understands or feels at the end of the beat
 4. How this beat sets up the next beat
 
-EXAMPLE FORMAT (copy this shape, not this content):
-
-Contention: The Malfoy family built Draco for a world that no longer exists by the time Voldemort returns.
-Surface expectation: Draco is a spoiled bully who panics when things get real.
-
-1. Open on Madam Malkin's in Half-Blood Prince. Draco drops a slur without pausing, Narcissa threatens Harry and Ron with lethal consequences in a clothing shop, and the whole family dynamic is visible in one tiny scene. Canon anchor: HBP Chapter 6, the robe fitting. The viewer sees the family machine operating normally before anything goes wrong. Sets up the question of where Draco learned to do this.
-
-2. Chamber of Secrets gives the cleanest receipt for Draco's training. Lucius cuts Draco off mid-complaint and turns Hermione beating him in exams into a family humiliation. Canon anchor: CoS Borgin and Burkes eavesdropping scene, Lucius quote. The viewer understands that school performance is a brand management exercise for Lucius, not an education. Sets up the pattern of shame as Draco's primary motivator.
-
-[continues for all beats]
+{{WORKED_EXAMPLE:outline}}
 
 ABSOLUTELY FORBIDDEN in the beat plan output
 - Markdown headings of any level (#, ##, ###)
@@ -603,16 +606,16 @@ Good: 'The book is doing something else entirely here.'
 Pattern 3: Filler frames
 Banned: 'It is important to understand that', 'It is worth noting that', 'One thing to keep in mind', 'This raises an interesting question', 'When you really think about it', 'At the end of the day', 'The reality is', 'What this means is', 'The key takeaway is'.
 Rewrite by: deleting the frame and starting with the point.
-Bad: 'It is worth noting that Dumbledore knew the whole time.'
-Good: 'Dumbledore knew the whole time.'
+Bad: 'It is worth noting that the decision was made months earlier.'
+Good: 'The decision was made months earlier.'
 
 Pattern 4: Empty superlatives
 Banned: 'powerful', 'iconic', 'legendary', 'unforgettable', 'remarkable', 'fascinating', 'compelling', 'impactful', 'groundbreaking', 'revolutionary', 'game changing', 'transformative', 'a testament to', 'serves as a reminder'.
 These words are only allowed when the sentence makes them specific by showing what changes. Default rewrite: show what the thing changes, do not assert it matters.
 Bad: 'This is a powerful moment.'
-Good: 'This is the moment Harry stops trusting Dumbledore.'
-Bad: 'A testament to Rowling's writing.'
-Good: 'Rowling builds the trap across three chapters and never names it.'
+Good: 'This is the moment the audience stops trusting the narrator.'
+Bad: 'A testament to the writer's craft.'
+Good: 'The writer builds the trap across three chapters and never names it.'
 
 Pattern 5: Generic openings and curiosity bait
 Banned: 'Have you ever wondered', 'If you have ever wondered', 'What if I told you', 'Most people do not realize', 'The truth is more complex than you think', 'Today we are going to', 'In this video', 'In this episode', 'Let us dive into', 'Let me explain'.
@@ -762,13 +765,7 @@ ENFORCEMENT (structural, runs before the Full Script step):
 - If a beat does not help sustain, complicate, or pay off the opening hook tension established in the Creative Brief, cut it from the SEP. Do not mark it "weak" or "optional" — there is no downstream editor.
 - The purpose of these rules is to stop repeated evidence functions before Full Script generation and to preserve the hook-to-payoff route end to end.
 
-EXAMPLE FORMAT (copy this shape, not this content):
-
-Beat 1. The opening establishes that Harry has been steered to the Department of Mysteries. In Order of the Phoenix chapters 32 to 35, Rowling makes the manipulation explicit across multiple scenes: every false vision plants urgency, every push from Kreacher nudges Harry toward the Ministry, and the locked door at the Prophecy Hall is designed to confirm the bait. The film compresses this into a rescue mission, removing the engineering almost entirely. No quote needed here. Book and film disagree on what kind of scene this is: the book is about manufactured certainty, the film is about speed.
-
-Beat 2. Dumbledore's knowledge becomes the real accusation. In Deathly Hallows chapter 35, Kings Cross, Dumbledore admits to Harry directly that he knew enough to intervene and chose silence. He names it as his mistake without being asked. Quote worth considering: "I cared more for your happiness than your knowing the truth." This quote appears only in the book; the film never delivers this admission with the same weight.
-
-[continues for all beats]
+{{WORKED_EXAMPLE:script_evidence_pack}}
 
 ABSOLUTELY FORBIDDEN in the Script Evidence Pack output
 - Markdown headings or tables
@@ -783,7 +780,7 @@ EVIDENCE DISCIPLINE
 - Paraphrase by default. Quotes only when exact wording matters.
 - If a beat needs more than one piece of evidence, include the strongest one and note the second briefly in prose.
 - Do not include evidence that does not advance the beat's argument move. If it does not serve the beat, cut it.
-- Secondary sources (commentary, fan wikis, other YouTubers, Reddit, Quora, blog posts) cannot supply Harry Potter facts, canon proof, quotes, or evidence. Never cite them as proof and never paste their content.
+- Secondary sources (commentary, fan wikis, other YouTubers, Reddit, Quora, blog posts) cannot supply {{SUBJECT_LABEL}} facts, canon proof, quotes, or evidence. Never cite them as proof and never paste their content.
 - Audience-side signals synthesized through the Selected Source Analysis (objections, recurring fan signals, expected surface answers, emotional language, underdeveloped opportunities) are allowed and required where relevant. Use them only as framing, objection handling, or angle context in plain prose — never as factual proof for a canon claim.
 
 // BANNED CONSTRUCTIONS — keep in sync with full_script and beat_plan (outline)
@@ -833,7 +830,7 @@ If a banned construction appears in the draft, the output is invalid. Rewrite us
 
   // BANNED CONSTRUCTIONS — keep in sync with the Beat Plan (outline) prompt
   // BANNED CONSTRUCTIONS block. If one is updated, update both.
-  full_script: `You are a professional YouTube scriptwriter specializing in Harry Potter analysis content.
+  full_script: `You are a professional YouTube scriptwriter specializing in {{SUBJECT_LABEL}} analysis content.
 EVIDENCE PACK GROUNDING (HIGHEST-PRIORITY BINDING — READ FIRST):
 You must use only the evidence points provided in the approved evidence pack below. Do not introduce examples, references, named works, spin-offs, films, or claims from outside this set regardless of your training knowledge. If the argument requires a point that has no supporting evidence in the pack, insert [NEEDS EVIDENCE: one-line description of what is missing] as a placeholder and continue. Do not invent support. Do not silently include unsourced material.
 
@@ -925,16 +922,16 @@ Good: 'The book is doing something else entirely here.'
 Pattern 3: Filler frames
 Banned: 'It is important to understand that', 'It is worth noting that', 'One thing to keep in mind', 'This raises an interesting question', 'When you really think about it', 'At the end of the day', 'The reality is', 'What this means is', 'The key takeaway is'.
 Rewrite by: deleting the frame and starting with the point.
-Bad: 'It is worth noting that Dumbledore knew the whole time.'
-Good: 'Dumbledore knew the whole time.'
+Bad: 'It is worth noting that the decision was made months earlier.'
+Good: 'The decision was made months earlier.'
 
 Pattern 4: Empty superlatives
 Banned: 'powerful', 'iconic', 'legendary', 'unforgettable', 'remarkable', 'fascinating', 'compelling', 'impactful', 'groundbreaking', 'revolutionary', 'game changing', 'transformative', 'a testament to', 'serves as a reminder'.
 These words are only allowed when the sentence makes them specific by showing what changes. Default rewrite: show what the thing changes, do not assert it matters.
 Bad: 'This is a powerful moment.'
-Good: 'This is the moment Harry stops trusting Dumbledore.'
-Bad: 'A testament to Rowling's writing.'
-Good: 'Rowling builds the trap across three chapters and never names it.'
+Good: 'This is the moment the audience stops trusting the narrator.'
+Bad: 'A testament to the writer's craft.'
+Good: 'The writer builds the trap across three chapters and never names it.'
 
 Pattern 5: Generic openings and curiosity bait
 Banned: 'Have you ever wondered', 'If you have ever wondered', 'What if I told you', 'Most people do not realize', 'The truth is more complex than you think', 'Today we are going to', 'In this video', 'In this episode', 'Let us dive into', 'Let me explain'.
@@ -1077,18 +1074,6 @@ The meaning can stay; the construction must change completely. Do NOT replace on
 - A sharper action verb
 - A more conversational explanation
 
-MELTY VOICE EXECUTION (MANDATORY — do NOT suppress the persona):
-- The script should sound like a smart, canon-aware fan talking through a strong argument, not a neutral explainer.
-- Use occasional fan-coded reactions, blunt observations, dry humor, and emotionally invested phrasing.
-- Melty voice should appear through sentence rhythm, judgment, specificity, and reaction lines.
-- Do not literally say "Melty" unless it lands naturally. Do not overdo catchphrases. Do not turn the narrator into a cartoon.
-- Every major section should contain at least one line that feels like a real fan with a point of view.
-- Examples of acceptable voice direction (do not copy verbatim — use as tonal guideposts):
-  - "Bro, be serious, the story is basically handing us the answer here."
-  - "This is where the adaptation starts fighting for its life."
-  - "Fans argue about this for a reason."
-  - "The math is not mathing, and the book knows it."
-  - "To be fair, the movie nails the vibe here. It just pays for it somewhere else."
 - The persona document is appended below as a binding voice layer. Apply it through voice and reactions — not through narrator self-introductions.
 
 BEAT PLAN FIDELITY
@@ -1151,7 +1136,7 @@ STRUCTURAL ENFORCEMENT (binding — applies in addition to BEAT PLAN FIDELITY)
 - The final payoff must reinterpret the opening tension, not just restate the thesis. The viewer should leave seeing the opening moment differently than they did at the start.
 - The script must sound like performable voiceover, not an expanded outline. No section labels, no narrated structure, no meta-commentary about the script itself.
 
-The Full Script does not copy the Beat Plan's wording. The Beat Plan is neutral planning prose. The Full Script rewrites each beat as Melty's spoken voice.
+The Full Script does not copy the Beat Plan's wording. The Beat Plan is neutral planning prose. The Full Script rewrites each beat as the host persona's spoken voice.
 
 If the Beat Plan has 10 beats, the Full Script has 10 corresponding movements. Beat order is fixed unless the user requests a structural revision.
 
@@ -1168,7 +1153,7 @@ Requirements:
 - Do not include Lexicon-derived wording as if it were canon dialogue or narration
 
 LEXICON MENTION BAN (CRITICAL):
-- The spoken narration must NEVER mention "the Lexicon", "the Harry Potter Lexicon", or use phrasing like "The Lexicon notes…", "According to the Lexicon…", etc.
+- The spoken narration must NEVER mention "the Lexicon", or use phrasing like "The Lexicon notes…", "According to the Lexicon…", etc.
 - Lexicon is background context only — it informs your understanding but is INVISIBLE in the voiceover text
 - If Lexicon supports a point, the ONLY allowed reference is as an editor metadata tag on its own line: [LEXICON: filename | context]
 - No other Lexicon callouts, citations, or attribution language may appear in the script body
@@ -1191,12 +1176,7 @@ SOURCE SPECIFICITY IN NARRATION (CRITICAL):
 - Every evidence-based paragraph MUST naturally mention WHERE the moment happens within the spoken narration itself.
 - Always specify the installment: which book (by title or number) or which film (by title or number).
 - NEVER use vague phrasing like "during a key moment", "in the story", "at one point" without specifying the installment.
-- Vary phrasing naturally so it does not sound repetitive. Examples of varied phrasing:
-  - "In Order of the Phoenix, Harry's frustration boils over when..."
-  - "The fifth film captures this perfectly — Dumbledore barely looks at him..."
-  - "By the time we reach Goblet of Fire, the pattern is unmistakable..."
-  - "Rowling shows this most clearly in Half-Blood Prince, where..."
-  - "There's a moment in the third movie that changes everything..."
+{{WORKED_EXAMPLE:source_specificity_phrasings}}
 
 FORBIDDEN IN OUTPUT:
 - No [SOURCE: ...] lines anywhere
@@ -1220,13 +1200,7 @@ OUTPUT FORMAT
 
 The output is a voiceover script. It will be read aloud as-is. The output must be continuous spoken prose, broken only into paragraphs where the speaker would naturally pause or shift thought.
 
-Example of the correct shape (do not copy the content, copy the shape):
-
-Harry walks into the Department of Mysteries believing Sirius is alive. The book makes it obvious he has been steered there. Every clue, every push, every false memory, all engineered. The film softens this into a rescue mission, and that single softening changes who the trap is really about.
-
-Because in the book, the point is not that Harry walks into danger. The point is that he was made to. Dumbledore knew enough to prevent it. He stayed silent. By the time Harry figures this out, Sirius is gone and the person who could have stopped it is the one Harry is supposed to trust most.
-
-[continues in this register for the full script]
+{{WORKED_EXAMPLE:full_script}}
 
 Notice what is not there: no headings, no bracket tags, no labels, no timestamps, no word counts, no bullets. Just spoken prose.
 
@@ -1236,7 +1210,7 @@ IMPORTANT — WORD COUNT INSTRUCTIONS (injected dynamically per brief):
 {{FULL_SCRIPT_LENGTH_INSTRUCTION}}`,
 };
 
-STEP_PROMPTS["creative_brief"] = `You are a creative director for a Harry Potter YouTube channel.
+STEP_PROMPTS["creative_brief"] = `You are a creative director for a {{SUBJECT_LABEL}} YouTube channel.
 
 Your job: take the video title, angle note, format reference transcript(s), and any brief-specific HP topic transcripts provided, and generate a structured Creative Brief that will guide every subsequent step of the script pipeline.
 
@@ -1297,7 +1271,7 @@ ALTERNATIVE SOURCES (SECONDARY) RULES:
 - The block titled "## Alternative Sources (SECONDARY, NON-CANON)" contains pasted Reddit threads, forum comments, blog posts, fan articles, wiki extracts, and similar non-canon material the creator selected for this brief.
 - Mine this block for: fan debate signals, repeated viewer complaints, audience emotional language, common objections, the expected surface answer most viewers assume, the surprising deeper answer fans rarely reach, underdeveloped angles, and what fans already say too often (so the video can avoid repeating it).
 - Use those signals when filling: Viewer Click Question, Expected Answer, Surprising Actual Answer, Hook Shape, What To Avoid, Fairness Move, Emotional Arc, and Video Engine. The Creative Brief should feel sharpened by real audience tension, not floating in a vacuum.
-- Alternative sources cannot supply Harry Potter facts. Any factual claim about canon must come from books, film transcripts, or other approved primary/canon sources. Fan claims from alternative sources can inspire angles or objections, but must be verified against primary canon before being treated as evidence.
+- Alternative sources cannot supply {{SUBJECT_LABEL}} facts. Any factual claim about canon must come from books, film transcripts, or other approved primary/canon sources. Fan claims from alternative sources can inspire angles or objections, but must be verified against primary canon before being treated as evidence.
 
 Generate the Creative Brief in this EXACT format:
 
@@ -1350,7 +1324,7 @@ This section operationalizes the retention and escalation layer. Fill every fiel
 - **Hypothesized Final Payoff:** [Write this as a HYPOTHESIS, not a verdict. Begin with "If the hypothesis holds, the payoff could be…" One sentence. Do NOT write the script's closing argument. Do NOT cash out the thesis. If you find yourself writing the conclusion in committed language ("The book denies X" / "That single choice exposes Y"), stop and reframe as conditional.]
 `;
 
-STEP_PROMPTS["six_category_extraction"] = `You are a research analyst for a Harry Potter YouTube channel.
+STEP_PROMPTS["six_category_extraction"] = `You are a research analyst for a {{SUBJECT_LABEL}} YouTube channel.
 
 Given the Creative Brief and retrieved canon material, mine the evidence across six specific categories. This output feeds the evidence table and outline. Be sharp, specific, and argument-useful. Rank everything by: how surprising it is, how specific it is, how argument-useful it is. Generic observations rank last.
 
@@ -1417,7 +1391,7 @@ For each angle:
 - What should the creator know is unverified?
 `;
 
-STEP_PROMPTS["selected_source_analysis"] = `You are a senior research strategist for a Harry Potter YouTube channel.
+STEP_PROMPTS["selected_source_analysis"] = `You are a senior research strategist for a {{SUBJECT_LABEL}} YouTube channel.
 
 Your job is to analyze ONLY the secondary sources that the creator specifically selected for this Topic Brief — selected HP topic transcripts (other creators' videos on this topic) and selected Alternative Sources (Reddit threads, comments, forum posts, blog posts, wiki pages, articles, notes). You are the SECONDARY interpretive layer that runs AFTER the canon-first Insights & Research step.
 
@@ -1427,9 +1401,9 @@ ABSOLUTE RULES — READ CAREFULLY:
 
 2. SECONDARY SOURCES ARE NOT PROOF. Selected HP topic transcripts and Alternative Sources are AUDIENCE INTELLIGENCE and INTERPRETIVE INPUT only. They reveal what the fandom is debating, what's been overdone, what objections exist, and what framings are unexplored. They do NOT confirm canon facts. Any factual claim sourced from them must be flagged "needs canon validation".
 
-3. ORIGINALITY IS THE POINT. Do not summarize the selected transcripts. Do not paraphrase their arguments closely. Do not copy creator phrasings, jokes, transitions, examples, structures, or conclusions. Your job is to help Melty AVOID sounding like a remix of these creators.
+3. ORIGINALITY IS THE POINT. Do not summarize the selected transcripts. Do not paraphrase their arguments closely. Do not copy creator phrasings, jokes, transitions, examples, structures, or conclusions. Your job is to help the host AVOID sounding like a remix of these creators.
 
-4. FORMAT REFERENCE VIDEOS (if any appear in context) are STRUCTURE-ONLY references. Never treat their Harry Potter content as factual evidence and never extract HP claims from them.
+4. FORMAT REFERENCE VIDEOS (if any appear in context) are STRUCTURE-ONLY references. Never treat their {{SUBJECT_LABEL}} content as factual evidence and never extract {{SUBJECT_LABEL}} claims from them.
 
 5. If NO selected HP topic transcripts and NO selected Alternative Sources are attached, complete gracefully: state plainly that no selected secondary sources were provided, and produce a minimal analysis based on the Creative Brief and Insights & Research only. Do not block the pipeline. Do not invent fan signals.
 
@@ -1529,7 +1503,7 @@ type QueryPack = {
   comparisonQueries: string[];
   transcriptQueries: string[];
   allQueries: string[];
-  targetCharacter: string;
+  targetCharacter: string | null;
 };
 
 const STOP_WORDS = new Set([
@@ -1584,151 +1558,40 @@ const stripCharacterTitle = (name: string): string => {
   return normalizeWhitespace(out);
 };
 
-// Infer primary target character from brief fields
-const inferTargetCharacter = (brief: any): string => {
+const resolveFocusEntity = (brief: any, channel: any): string | null => {
   const characters = (brief.characters || []).map((v: string) => normalizeWhitespace(v)).filter(Boolean);
   if (characters.length > 0) {
-    const first = normalizeWhitespace(characters[0].split(",")[0]) || "Harry";
-    return stripCharacterTitle(first) || first;
+    const first = normalizeWhitespace(characters[0].split(",")[0]);
+    const stripped = stripCharacterTitle(first) || first;
+    if (stripped) return stripped;
   }
-
-  // Try to detect from title
+  const roster: string[] = Array.isArray(channel.entity_roster) ? channel.entity_roster : [];
   const title = (brief.title || "").toLowerCase();
-  const knownCharacters = ["harry", "hermione", "ron", "snape", "dumbledore", "voldemort", "draco", "neville", "luna", "sirius", "hagrid", "mcgonagall", "lupin", "ginny", "dobby", "fred", "george"];
-  for (const name of knownCharacters) {
-    if (title.includes(name)) return name.charAt(0).toUpperCase() + name.slice(1);
+  for (const name of roster) {
+    if (name && title.includes(name.toLowerCase())) return name;
   }
-
-  // Try thesis
   const thesis = (brief.thesis || "").toLowerCase();
-  for (const name of knownCharacters) {
-    if (thesis.includes(name)) return name.charAt(0).toUpperCase() + name.slice(1);
+  for (const name of roster) {
+    if (name && thesis.includes(name.toLowerCase())) return name;
   }
-
-  return "Harry";
+  return null;
 };
 
-// ── FOCUS-AREA CANON-LANGUAGE EXPANSION MAP ──────────────────────────────
-// User-entered focus areas are typically editorial labels ("graveyard rebirth
-// scene", "physical description", "loss of humanity") that do not appear
-// verbatim in canon and therefore return zero FTS hits via plainto_tsquery.
-// This static lookup translates common HP focus-area substrings into
-// canon-plausible token strings that DO appear in book/film chunks. Pure
-// synchronous string ops — no model call, no extra latency.
-//
-// Keys are lowercased substrings; if any key is contained in a focus area,
-// its mapped queries are added to the seeded subqueries pool. To extend:
-// just append more entries.
-const FOCUS_AREA_CANON_EXPANSIONS: Record<string, string[]> = {
-  // ── Voldemort / Tom Riddle ──
-  "malfoy manor meeting": [
-    "diseased pruning family trees",
-    "Bellatrix silenced hand raised",
-    "tiny flick captive table",
-    "Charity Burbage Nagini dinner"
-  ],
-  "neville recruitment": [
-    "Neville pure-blood spirit bravery valuable",
-    "we need your kind Voldemort",
-    "Voldemort recruiting battle Hogwarts"
-  ],
-  "seven potters chase": [
-    "Voldemort screams Mine NO wand fails",
-    "Harry escapes Voldemort battle seven potters",
-    "Voldemort loses control wand connection"
-  ],
-  "voldemort death scene": ["mundane finality", "feeble and shrunken", "Tom Riddle hit", "scarlet eyes", "arms splayed", "empty and vacant"],
-  "graveyard": ["Wormtail knees", "Voldemort lazily", "cauldron rebirth", "Death Eaters circle"],
-  "rebirth": ["Wormtail knees", "Voldemort lazily", "cauldron"],
-  "voldemort death": ["feeble shrunken", "rebounding curse", "Tom Riddle body", "Voldemort dead"],
-  "death scene": ["body floor", "rebounding curse", "shivering silence"],
-  "mundane finality": ["feeble shrunken", "Voldemort dead", "rebounding curse"],
-  "ash death": ["feeble shrunken", "Voldemort dead"],
-  "physical description": ["whiter than a skull", "wide livid scarlet eyes", "slits for nostrils", "long thin hands", "unnaturally long fingers", "lipless mouth", "snake-like face"],
-  "loss of humanity": ["snakelike", "no nose", "horcrux fragment", "soul split"],
-  "horcrux": ["soul fragment", "diary", "diadem", "locket", "Hufflepuff cup"],
-  "horcrux ideology": ["soul fragment", "Slughorn memory", "seven pieces"],
-  "death eater": ["Death Eaters circle", "Lucius Malfoy", "Bellatrix Lestrange"],
-  "tom riddle": ["Tom Marvolo Riddle", "I am Lord Voldemort", "past present and future", "very handsome", "charming boy", "quiet albeit brilliant", "monster buried deep"],
-  "ralph fiennes": ["serpentine face", "no nose", "red eyes"],
-  "theatricality": ["dramatic", "shouted", "cackled"],
-  "missing memories": ["Slughorn memory", "Pensieve", "Dumbledore showed"],
-  "hepzibah smith": ["Hepzibah Smith", "Hokey", "Hufflepuff's cup", "Slytherin's locket", "poor assistant", "brought flowers", "kissed her hand", "very handsome"],
-  "gaunt": ["Marvolo Gaunt", "Merope Gaunt", "Morfin Gaunt", "House of Gaunt", "Slytherin's locket", "Peverell ring", "filthy Muggle", "Tom Riddle senior"],
-  "hogwarts job interview": ["Defence Against the Dark Arts", "Lord Voldemort's request", "Dumbledore's office", "Tom Riddle", "features thick with rage", "curse on the job"],
-
-  // ── Voldemort book vs movie comparison expansions ──
-  "book voldemort vs movie voldemort": ["high cold voice", "red eyes", "slit pupils", "long white fingers", "look at me", "so weak so vulnerable"],
-  "voldemort face eyes": ["scarlet eyes", "red eyes", "slit pupils", "slits for nostrils", "white face", "skull-like face", "snake-like face"],
-  "voldemort hands body": ["long white fingers", "long thin hands", "skeletal hands", "unnaturally long fingers", "feeble and shrunken"],
-  "voldemort voice stillness": ["high cold voice", "said softly", "whispered Voldemort", "laughed softly", "stood quite still", "expression did not change"],
-  "voldemort duel physicality": ["wand raised", "jets of light", "flash of green light", "Avada Kedavra", "the Elder Wand", "kill the spare"],
-  "graveyard death eaters": ["circle of Death Eaters", "my faithful Death Eaters", "returned to me", "I smell guilt", "Avery", "Lucius", "kissed the hem"],
-  "voldemort punishes rewards": ["thirteen years", "I confess myself disappointed", "I smell guilt", "you returned to me", "silver hand", "Crucio"],
-  "diary tom riddle": ["Tom Marvolo Riddle", "I am Lord Voldemort", "past present and future", "mere memory", "memory in a diary", "Ginny Weasley"],
-  "young tom riddle": ["Tom Riddle", "Wool's Orphanage", "I can make things", "I can speak to snakes", "quiet albeit brilliant", "monster buried deep"],
-  "tom riddle charm": ["very handsome", "charming boy", "poor assistant", "kissed her hand", "brought flowers", "Hepzibah Smith"],
-  "half blood prince cut content": ["House of Gaunt", "Marvolo Gaunt", "Merope Gaunt", "Hepzibah Smith", "Hokey", "Defence Against the Dark Arts", "Lord Voldemort's request"],
-  "voldemort leadership ideology": ["my faithful Death Eaters", "returned to me", "I smell guilt", "Bellatrix", "Malfoy Manor", "Severus Snape"],
-  "voldemort blood purity": ["filthy Muggle father", "Mudbloods", "pure-blood", "Muggle-borns", "Slytherin's heir", "half-blood", "Muggle blood"],
-  "voldemort fear name": ["Lord Voldemort", "You-Know-Who", "He-Who-Must-Not-Be-Named", "the Dark Lord", "Taboo", "fear of a name"],
-  "voldemort and snape": ["Severus Snape", "the Elder Wand", "master of the wand", "Nagini", "the wand belongs", "I regret it"],
-  "bellatrix voldemort dynamic": ["Bellatrix", "my Lord", "Cissy", "Malfoy Manor", "faithful servant", "greatest pleasure"],
-  "voldemort final duel": ["the Elder Wand", "Avada Kedavra", "Expelliarmus", "the true master", "Tom Riddle", "red-gold glow"],
-  "voldemort possession": ["face on the back", "drinking unicorn blood", "Quirrell's turban", "come here Potter", "cursed life", "half life"],
-  "order phoenix duel": ["Ministry of Magic", "look at me", "so weak so vulnerable", "possession", "Atrium", "wand clatters"],
-  "chamber of secrets": ["basilisk", "diary", "Tom Riddle"],
-
-  // ── Snape ──
-  "snape loyalty": ["Lily", "always", "Dumbledore trust"],
-  "always": ["Lily", "doe Patronus"],
-  "snape death": ["Shrieking Shack", "Nagini", "memories vial"],
-
-  // ── Dumbledore ──
-  "dumbledore plan": ["Snape kill", "Harry Horcrux", "King's Cross"],
-  "dumbledore death": ["tower", "Avada Kedavra Snape", "falling"],
-  "grindelwald": ["Godric's Hollow", "Ariana", "Nurmengard"],
-
-  // ── Harry ──
-  "harry sacrifice": ["walk forest", "Resurrection Stone", "King's Cross"],
-  "harry anger": ["shouted Harry", "Harry yelled", "fury"],
-
-  // ── Draco ──
-  "draco redemption": ["lowering wand", "tower hesitation", "Vanishing Cabinet"],
-  "draco family": ["Lucius", "Narcissa", "Malfoy Manor"],
-  "vanishing cabinet": ["Room of Requirement", "Borgin Burkes", "broken cabinet"],
-
-  // ── Ginny ──
-  "ginny diary": ["Tom Riddle diary", "Chamber", "possessed"],
-  "ginny film": ["Ginny tied shoe", "Burrow fire"],
-
-  // ── Worldbuilding ──
-  "worldbuilding": ["Ministry of Magic", "Statute of Secrecy", "wizarding world"],
-  "ministry": ["Ministry of Magic", "Fudge", "Scrimgeour"],
-
-  // ── Adaptation framing (these never match canon directly, but expand
-  // into film-side anchors) ──
-  "adaptation gaps": ["scene cut", "memory removed", "subplot dropped"],
-  "film changes": ["scene cut", "Ginny shoe", "Burrow fire"],
-
-  // ── Worldbuilding / Lore ──
-  "diagon alley": ["middle o Diagon Alley", "Ollivanders wand shop", "counting bricks wall trash can", "cauldrons pewter standard size"],
-  "room of requirement": ["Come and Go Room", "Room of Requirement Dobby", "room that is always there when you need it"],
-  "pensieve": ["stone basin memories", "Pensieve Dumbledore office", "stored memories silver"],
-  "the trace": ["Decree Reasonable Restriction Underage Sorcery", "improper use of magic underage"],
-  "underage magic": ["Decree Reasonable Restriction Underage Sorcery", "improper use of magic underage", "Hover Charm performed"],
-  "deathly hallows myth": ["Elder Wand Resurrection Stone Cloak", "Death picked up stone riverbank", "Peverell family", "Cloak of Invisibility Death"],
-  "hallows": ["Elder Wand Resurrection Stone Cloak", "Death picked up stone riverbank", "Peverell family"],
-  "horcrux naming": ["I don't know anything about Horcruxes", "Slughorn Horcrux memory", "soul fragment Horcrux"],
-};
-
-const expandFocusAreasToCanonQueries = (focusAreas: string[]): string[] => {
+// ── FOCUS-AREA EXPANSION (channel-configured) ────────────────────────────
+// User-entered focus areas are typically editorial labels that do not appear
+// verbatim in source text. channel.query_expansion_map translates lowercased
+// focus-area substrings into token strings that DO appear in indexed chunks.
+const expandFocusAreas = (focusAreas: string[], channel: any): string[] => {
+  const map = (channel.query_expansion_map && typeof channel.query_expansion_map === "object" && !Array.isArray(channel.query_expansion_map))
+    ? channel.query_expansion_map as Record<string, string[]>
+    : {};
   const out: string[] = [];
   for (const raw of focusAreas) {
     const lower = raw.toLowerCase();
-    for (const key of Object.keys(FOCUS_AREA_CANON_EXPANSIONS)) {
+    for (const key of Object.keys(map)) {
       if (lower.includes(key)) {
-        out.push(...FOCUS_AREA_CANON_EXPANSIONS[key]);
+        const vals = map[key];
+        if (Array.isArray(vals)) out.push(...vals.filter((v) => typeof v === "string"));
       }
     }
   }
@@ -1747,9 +1610,9 @@ const getCharacterRelevanceScore = (content: string, targetCharacter: string): {
   
   // Check if character is likely the speaker (screenplay patterns)
   const speakerPatterns = [
-    new RegExp(`^${charLower}[:\\s]`, 'im'),           // "HARRY: ..."
-    new RegExp(`\\n${charLower}[:\\s]`, 'im'),          // newline "HARRY: ..."  
-    new RegExp(`^${charLower}$`, 'im'),                 // "HARRY" on its own line
+    new RegExp(`^${charLower}[:\\s]`, 'im'),           // "NAME: ..."
+    new RegExp(`\\n${charLower}[:\\s]`, 'im'),          // newline "NAME: ..."  
+    new RegExp(`^${charLower}$`, 'im'),                 // "NAME" on its own line
     new RegExp(`\\b${charLower}\\s+(says?|said|shouts?|shouted|whispers?|whispered|yells?|yelled|screams?|screamed|mutters?|muttered|snaps?|snapped|cries?|cried|asks?|asked|replies?|replied|growls?|growled)\\b`, 'i'),
   ];
   const likelySpeaker = speakerPatterns.some(p => p.test(content));
@@ -1767,37 +1630,34 @@ const getCharacterRelevanceScore = (content: string, targetCharacter: string): {
 };
 
 // ─────────────────────────────────────────────────────────────────────────
-// HP ABBREVIATION EXPANSION
+// ABBREVIATION EXPANSION (channel-configured)
 //
-// Fan-source text and user-authored queries often use HP installment
-// abbreviations (PS, SS, CoS, PoA, GoF, OotP, HBP, DH, DH1, DH2, DA,
-// Hinny). Our canon filenames and chunk text use the full titles
-// ("Half-Blood Prince", "Order of the Phoenix", etc.) so FTS misses
-// these references. We expand abbreviations ADDITIVELY — the original
-// text/query is preserved and the expansion is appended — so existing
-// matches are never lost. This is a pure text-augmentation; retrieval
-// filtering and priority boosting are untouched.
+// Source text and user-authored queries often use abbreviations that do not
+// match the full titles used in indexed chunk text. channel.abbreviation_map
+// supplies the pairs. We expand ADDITIVELY — the original text/query is
+// preserved and the expansion is appended — so existing matches are never
+// lost. Pure text-augmentation; retrieval filtering and priority boosting
+// are untouched.
 // ─────────────────────────────────────────────────────────────────────────
-const HP_ABBREVIATIONS: Array<{ pattern: RegExp; expansions: string[] }> = [
-  { pattern: /\bPS\b/g,   expansions: ["Philosopher's Stone"] },
-  { pattern: /\bSS\b/g,   expansions: ["Sorcerer's Stone"] },
-  { pattern: /\bCoS\b/g,  expansions: ["Chamber of Secrets"] },
-  { pattern: /\bPoA\b/g,  expansions: ["Prisoner of Azkaban"] },
-  { pattern: /\bGoF\b/g,  expansions: ["Goblet of Fire"] },
-  { pattern: /\bOotP\b/g, expansions: ["Order of the Phoenix"] },
-  { pattern: /\bOOTP\b/g, expansions: ["Order of the Phoenix"] },
-  { pattern: /\bHBP\b/g,  expansions: ["Half-Blood Prince"] },
-  { pattern: /\bDH1\b/g,  expansions: ["Deathly Hallows"] },
-  { pattern: /\bDH2\b/g,  expansions: ["Deathly Hallows"] },
-  { pattern: /\bDH\b/g,   expansions: ["Deathly Hallows"] },
-  { pattern: /\bDA\b/g,   expansions: ["Dumbledore's Army"] },
-  { pattern: /\bHinny\b/gi, expansions: ["Harry Ginny"] },
-];
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-const expandHpAbbreviations = (text: string): string => {
+const buildAbbreviationPatterns = (channel: any): Array<{ pattern: RegExp; expansions: string[] }> => {
+  const entries = Array.isArray(channel.abbreviation_map) ? channel.abbreviation_map : [];
+  const out: Array<{ pattern: RegExp; expansions: string[] }> = [];
+  for (const e of entries) {
+    if (!e || typeof e.abbr !== "string" || !Array.isArray(e.expansions)) continue;
+    out.push({
+      pattern: new RegExp(`\\b${escapeRegExp(e.abbr)}\\b`, e.case_sensitive === false ? "gi" : "g"),
+      expansions: e.expansions.filter((x: any) => typeof x === "string"),
+    });
+  }
+  return out;
+};
+
+const expandAbbreviations = (text: string, patterns: Array<{ pattern: RegExp; expansions: string[] }>): string => {
   if (!text) return text;
   const found = new Set<string>();
-  for (const { pattern, expansions } of HP_ABBREVIATIONS) {
+  for (const { pattern, expansions } of patterns) {
     if (pattern.test(text)) {
       for (const e of expansions) found.add(e);
     }
@@ -1808,13 +1668,13 @@ const expandHpAbbreviations = (text: string): string => {
   return `${text}\n\n[Abbreviation expansions: ${Array.from(found).join("; ")}]`;
 };
 
-const expandHpAbbreviationsInQueries = (queries: string[]): string[] => {
+const expandAbbreviationsInQueries = (queries: string[], patterns: Array<{ pattern: RegExp; expansions: string[] }>): string[] => {
   const out: string[] = [];
   for (const q of queries) {
     if (!q) continue;
     let expanded = q;
     let touched = false;
-    for (const { pattern, expansions } of HP_ABBREVIATIONS) {
+    for (const { pattern, expansions } of patterns) {
       if (pattern.test(expanded)) {
         touched = true;
         expanded = expanded.replace(pattern, (m) => `${m} ${expansions.join(" ")}`);
@@ -2158,7 +2018,7 @@ serve(async (req) => {
     //   1. Script Writing Instructions (file_type: 'instructions',
     //      legacy fallback 'script_strategy')
     //   2. Anti AI Writing Instructions  (file_type: 'anti_ai_guide')
-    //   3. Host Persona: Melty           (file_type: 'host_persona')
+    //   3. Host Persona                  (file_type: 'host_persona')
     //
     // None of these are evidence. They never override canon, source hierarchy,
     // or factual claims. Returns text + provenance metadata so we can log
@@ -2280,7 +2140,7 @@ serve(async (req) => {
         `1. Source hierarchy / canon evidence (highest)\n` +
         `2. Script Writing Instructions\n` +
         `3. Anti AI Writing Instructions\n` +
-        `4. Host Persona: Melty\n` +
+        `4. Host Persona\n` +
         `5. Step-specific prompt\n` +
         `6. User-pasted input / supporting context\n`;
       return block ? block + order : "";
@@ -2946,7 +2806,7 @@ Generate the Creative Brief now.`;
 ${queryPack.allQueries.map((q, i) => `  ${i + 1}. ${q}`).join("\n")}
 - **Likely reason**: ${debugInfo.indexed_chunks.book === 0 && debugInfo.indexed_chunks.transcript === 0 ? "No primary source files have been uploaded and processed yet." : "Derived queries did not match indexed chunk text. Try clearer trait/action keywords in title, thesis, focus areas, characters, or proof goal."}
 
-DO NOT use general Harry Potter knowledge. DO NOT generate placeholder evidence. Return a retrieval failure report ONLY.`;
+DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placeholder evidence. Return a retrieval failure report ONLY.`;
     } else {
       const sections: string[] = [];
       // Add debug summary at top
@@ -3227,14 +3087,14 @@ If a Selected Source Analysis output appears in the previous pipeline context, t
 Rules:
 - Do NOT copy or closely paraphrase claims, jokes, transitions, structures, or conclusions from the selected HP topic transcripts or Alternative Sources.
 - Do NOT promote any "candidate claim" or "needs validation" item from the Selected Source Analysis to a confirmed factual claim unless it is independently supported by Tier 1 canon (books / movie transcripts) in the retrieved Source Material Excerpts.
-- DO use the Selected Source Analysis to: avoid overdone angles, address likely audience objections, sharpen escalation, strengthen re-hooks, and produce a more original Melty-driven final argument.
+- DO use the Selected Source Analysis to: avoid overdone angles, address likely audience objections, sharpen escalation, strengthen re-hooks, and produce a more original final argument in the host persona's voice.
 - Honour the "Do-Not-Copy Notes" section of the Selected Source Analysis if present.
 
 Before finalizing your output, silently self-check:
 1. Am I repeating a secondary source's exact argument too closely?
 2. Am I reusing their joke, phrase, structure, or conclusion?
 3. Is my conclusion an original synthesis grounded in the canon extraction (Insights & Research / Evidence Table)?
-4. Does this feel like Melty's original take, not a remix of other creators?
+4. Does this feel like the host persona's original take, not a remix of other creators?
 5. Are selected sources being used as audience intelligence rather than as substituted substance?
 If any answer reveals overreliance, revise toward a more original, canon-grounded argument before producing the final output. Do not mention this self-check in the output.`;
     }
