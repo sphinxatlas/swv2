@@ -23,6 +23,7 @@ const FIELD_MAP: Record<string, keyof EvidencePointDraft | "why_this_matters"> =
   "source type": "source_type",
   "source file": "source_file",
   "book evidence": "book_evidence",
+  "evidence": "book_evidence",
   "movie evidence": "movie_evidence",
   "contrast": "difference_note",
   "difference": "difference_note",
@@ -85,7 +86,14 @@ export function parseEvidenceTable(markdown: string): EvidencePointDraft[] {
       const rawVal = blankIfPlaceholder(clean(m[2]));
       if (!rawKey || rawKey === "field" || rawKey.startsWith("---")) continue;
       const mapped = FIELD_MAP[rawKey];
-      if (mapped) fields[mapped] = rawVal;
+      if (mapped) {
+        fields[mapped] = rawVal;
+      } else if (/\sevidence$/.test(rawKey)) {
+        // Unknown axis label (e.g. "Episode Evidence") — route into the two
+        // generic evidence slots so a channel with a different axis parses.
+        if (!fields.book_evidence) fields.book_evidence = rawVal;
+        else fields.movie_evidence = rawVal;
+      }
     }
 
     if (!fields.claim) continue;

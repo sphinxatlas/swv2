@@ -35,10 +35,42 @@ async function embedQueriesBatch(texts: string[]): Promise<(number[] | null)[]> 
 
 const RRF_K = 60;
 
+const getAxisLabels = (channel: any) => {
+  const axis = (channel?.comparison_axis_labels && typeof channel.comparison_axis_labels === "object")
+    ? channel.comparison_axis_labels
+    : {};
+  const rawA = typeof axis.side_a === "string" ? axis.side_a.trim() : "";
+  const rawB = typeof axis.side_b === "string" ? axis.side_b.trim() : "";
+  const hasAxis = Boolean(rawA && rawB);
+  const sideA = hasAxis ? rawA : "Primary Document";
+  const sideB = hasAxis ? rawB : "Primary Transcript";
+  const plural = (s: string) => (/s$/i.test(s) ? s : `${s}s`);
+  return { hasAxis, sideA, sideB, sideAPlural: plural(sideA), sideBPlural: plural(sideB) };
+};
+
 const applyChannelPlaceholders = (text: string, channel: any): string => {
   const workedExamples = (channel.worked_examples && typeof channel.worked_examples === "object") ? channel.worked_examples : {};
   const hierarchyProse = (channel.source_hierarchy && typeof channel.source_hierarchy.prose === "string") ? channel.source_hierarchy.prose : "";
-  let out = text.split("{{SUBJECT_LABEL}}").join(channel.subject_label || "the channel subject");
+  const { hasAxis, sideA, sideB, sideAPlural, sideBPlural } = getAxisLabels(channel);
+  const hasChannelContext = typeof channel?.description === "string" && channel.description.trim().length > 0;
+
+  let out = text
+    .replace(/\{\{#IF_COMPARISON\}\}([\s\S]*?)\{\{\/IF_COMPARISON\}\}/g, (_m, body) => (hasAxis ? body : ""))
+    .replace(/\{\{#IF_NO_COMPARISON\}\}([\s\S]*?)\{\{\/IF_NO_COMPARISON\}\}/g, (_m, body) => (hasAxis ? "" : body))
+    .replace(/\{\{#IF_CHANNEL_CONTEXT\}\}([\s\S]*?)\{\{\/IF_CHANNEL_CONTEXT\}\}/g, (_m, body) => (hasChannelContext ? body : ""));
+
+  out = out.split("{{SIDE_A}}").join(sideA);
+  out = out.split("{{SIDE_B}}").join(sideB);
+  out = out.split("{{SIDE_A_PLURAL}}").join(sideAPlural);
+  out = out.split("{{SIDE_B_PLURAL}}").join(sideBPlural);
+  out = out.split("{{SIDE_A_LOWER}}").join(sideA.toLowerCase());
+  out = out.split("{{SIDE_B_LOWER}}").join(sideB.toLowerCase());
+  out = out.split("{{SIDE_A_PLURAL_LOWER}}").join(sideAPlural.toLowerCase());
+  out = out.split("{{SIDE_B_PLURAL_LOWER}}").join(sideBPlural.toLowerCase());
+  out = out.split("{{CHANNEL_NAME}}").join(channel?.name || "this channel");
+  out = out.split("{{CHANNEL_CONTEXT}}").join((channel?.description || "").trim());
+
+  out = out.split("{{SUBJECT_LABEL}}").join(channel.subject_label || "the channel subject");
   out = out.split("{{SOURCE_HIERARCHY_PROSE}}").join(hierarchyProse);
   out = out.replace(/\{\{WORKED_EXAMPLE:([a-z_]+)\}\}/g, (_m, key) => {
     const entry = workedExamples[key];
@@ -65,15 +97,22 @@ function getModelForStep(stepType: string) {
   return "google/gemini-2.5-flash";
 }
 
+const CHANNEL_CONTEXT_HEADER = `{{#IF_CHANNEL_CONTEXT}}CHANNEL CONTEXT (BINDING FRAME):
+You are writing for the channel "{{CHANNEL_NAME}}".
+{{CHANNEL_CONTEXT}}
+Everything below is written for this channel. Do not drift outside its subject matter or its register.
+
+{{/IF_CHANNEL_CONTEXT}}`;
+
 const SOURCE_HIERARCHY_INSTRUCTION = `
 IMPORTANT SOURCE HIERARCHY RULES:
 
 TIER 1 — PRIMARY SOURCE EVIDENCE:
-- Books = PRIMARY source (highest priority)
-- Movie Transcripts = PRIMARY source (highest priority)
+- {{SIDE_A_PLURAL}} = PRIMARY source (highest priority)
+- {{SIDE_B}} Transcripts = PRIMARY source (highest priority)
 - Used for factual claims about story events, characterization, and exact quotes
-- Used for book vs film comparisons
-- ONLY these can be treated as primary evidence
+{{#IF_COMPARISON}}- Used for {{SIDE_A_LOWER}} vs {{SIDE_B_LOWER}} comparisons
+{{/IF_COMPARISON}}- ONLY these can be treated as primary evidence
 
 
 TIER 2 — UNIVERSAL RULE FOR ALL SECONDARY SOURCES (applies to every tier below):
@@ -95,7 +134,7 @@ CAN do:
 
 CANNOT do:
 - Override Tier 1 primary sources when Tier 1 evidence exists
-- Supply Micro-Quotes attributed to primary Source Files (books or film transcripts) — that rule remains absolute
+- Supply Micro-Quotes attributed to primary Source Files — that rule remains absolute
 - Be named, quoted, or paraphrased closely in the script
 
 TIER 2.6 — USEFUL SECONDARY SOURCES (tagged [USEFUL] or [UNSET]):
@@ -135,7 +174,7 @@ TIER 3 — TIER ROUTING FOR ALL SECONDARY SOURCES:
 Every secondary source (Commentary Transcripts, Brief Topic Transcripts, Alternative Sources) appears in the prompt context with a quality tag in square brackets. The tag determines which subtier (2.5 / 2.6 / 2.7) applies.
 
 Reliability hierarchy for backing a claim:
-- Tier 1 primary sources (books + film transcripts) — strongest backing
+- Tier 1 primary sources — strongest backing
 - [STRONG] secondary — can supplement the primary sources, can stand in where the primary sources are missing
 - [USEFUL] / [UNSET] — can support framing; needs [STRONG] or primary sources to back specific claims
 - [LIMITED] — inspiration only; needs [STRONG] or primary sources to back any specific claim
@@ -164,12 +203,13 @@ QUOTE DISCIPLINE (CRITICAL):
 - ALWAYS label which type each piece of evidence is
 
 When citing evidence:
-- Clearly label whether evidence comes from a book or a movie transcript
+- Clearly label which primary source the evidence comes from{{#IF_COMPARISON}}: the {{SIDE_A_LOWER}} or the {{SIDE_B_LOWER}} transcript{{/IF_COMPARISON}}
 `;
 
 const COMPARISON_MODE_INSTRUCTION = `
-COMPARISON MODE ACTIVE:
-This script compares book and film versions. Do not force a paired book/movie structure sentence by sentence. Lead with the strongest argument. However: every major book claim must have a corresponding film observation somewhere in the same section — what the film does instead, what it omits, or what it changes. A section that builds a book case for 400+ words without any film contrast has failed. The contrast does not need to be immediate, but it must land before the section closes. Where film evidence is missing, narrow the claim or use available film evidence from other moments. Never tell the viewer that film evidence is missing.
+{{#IF_COMPARISON}}COMPARISON MODE ACTIVE:
+This script compares the {{SIDE_A_LOWER}} and {{SIDE_B_LOWER}} versions. Do not force a paired {{SIDE_A_LOWER}}/{{SIDE_B_LOWER}} structure sentence by sentence. Lead with the strongest argument. However: every major {{SIDE_A_LOWER}} claim must have a corresponding {{SIDE_B_LOWER}} observation somewhere in the same section — what the {{SIDE_B_LOWER}} does instead, what it omits, or what it changes. A section that builds a {{SIDE_A_LOWER}} case for 400+ words without any {{SIDE_B_LOWER}} contrast has failed. The contrast does not need to be immediate, but it must land before the section closes. Where {{SIDE_B_LOWER}} evidence is missing, narrow the claim or use available {{SIDE_B_LOWER}} evidence from other moments. Never tell the viewer that {{SIDE_B_LOWER}} evidence is missing.
+{{/IF_COMPARISON}}
 `;
 
 // ── BINDING WRITING / VOICE / THEORY INSTRUCTION BLOCKS ──
@@ -184,11 +224,11 @@ They are NOT Tier 1 primary sources and must NOT be treated as direct proof of e
 However, they do not need to be strictly confirmed by the primary sources in every case, because some are theories, speculative arguments, or interpretive claims.
 
 Rules:
-- If a point is presented as a primary source fact, it MUST be supported by Tier 1 book or movie transcript evidence.
+- If a point is presented as a primary source fact, it MUST be supported by Tier 1 primary source evidence.
 - If a point is a theory, interpretation, conspiracy, or speculative reading, it may be used if it makes logical sense and does not ignore obvious primary source details.
 - The script must clearly frame theories as theories, interpretations, possibilities, or readings.
 - Do not present topic transcript ideas as proven primary source claims unless Tier 1 evidence supports them.
-- Do not let topic transcripts override clear book or movie evidence.
+- Do not let topic transcripts override clear primary source evidence.
 - If a theory conflicts with the primary sources, acknowledge the tension instead of hiding it.
 - Use these transcripts to make the script sharper, more interesting, and more fan aware — not to replace original analysis.
 `;
@@ -198,7 +238,7 @@ COMMENTARY TRANSCRIPTS — INTERPRETIVE AND THEORY INPUT:
 These materials may contain analysis, theories, speculation, fandom interpretation, or competitor framing. They are NOT primary source evidence.
 Use them to discover interesting angles, framings, and argument patterns.
 
-- For factual primary source claims, verify with Tier 1 books or movie transcripts.
+- For factual primary source claims, verify against Tier 1 primary sources.
 - For theories and interpretive angles, do NOT require direct primary source confirmation. Instead, check that the idea is plausible, logically coherent, interesting, and not obviously contradicted by the primary sources.
 - Never present commentary material as proven primary source claims unless Tier 1 evidence supports it.
 - Never copy commentary wording, structure, or phrasing into the script.
@@ -272,12 +312,15 @@ ${TOPIC_TRANSCRIPTS_FRAMING_INSTRUCTION}
 ${COMMENTARY_TRANSCRIPTS_FRAMING_INSTRUCTION}
 
 EVIDENCE CATEGORIZATION (CRITICAL — DO NOT FLATTEN):
-The Evidence Table must clearly separate four kinds of points. Group them under labeled subsections in this order:
+The Evidence Table must clearly separate {{#IF_COMPARISON}}four{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}three{{/IF_NO_COMPARISON}} kinds of points. Group them under labeled subsections in this order:
 
-1. SOURCE-SUPPORTED CLAIMS — require Tier 1 book or movie transcript support. Confidence: High/Medium based on source clarity.
-2. ADAPTATION CONTRASTS — book vs movie differences. Use book and movie transcript evidence where possible.
+1. SOURCE-SUPPORTED CLAIMS — require Tier 1 primary source support. Confidence: High/Medium based on source clarity.
+{{#IF_COMPARISON}}2. ADAPTATION CONTRASTS — {{SIDE_A_LOWER}} vs {{SIDE_B_LOWER}} differences. Use {{SIDE_A_LOWER}} and {{SIDE_B_LOWER}} transcript evidence where possible.
 3. INTERPRETIVE / THEORY ANGLES — do NOT require direct primary source confirmation. Check that the theory is plausible, interesting, logically coherent, and not obviously contradicted by the primary sources. Clearly label as theory / interpretation / speculative angle. Note what primary source detail, scene, omission, contradiction, or pattern makes the theory worth considering.
 4. SPECULATION / CONSPIRACY STYLE IDEAS — fan-aware, speculative readings. Label clearly as speculation. Must still be grounded in some primary source detail or pattern, even if interpretive.
+{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}2. INTERPRETIVE / THEORY ANGLES — do NOT require direct primary source confirmation. Check that the theory is plausible, interesting, logically coherent, and not obviously contradicted by the primary sources. Clearly label as theory / interpretation / speculative angle. Note what primary source detail, scene, omission, contradiction, or pattern makes the theory worth considering.
+3. SPECULATION / CONSPIRACY STYLE IDEAS — fan-aware, speculative readings. Label clearly as speculation. Must still be grounded in some primary source detail or pattern, even if interpretive.
+{{/IF_NO_COMPARISON}}
 
 Do not remove interesting theory based material just because it cannot be fully proven.
 Do not present theories as facts.
@@ -285,8 +328,9 @@ The goal is compelling, defensible {{SUBJECT_LABEL}} video argumentation, not on
 
 EVIDENCE QUALITY RULES (CRITICAL):
 1. QUALITY OVER QUANTITY: Select the 10-15 STRONGEST evidence points. Do NOT pad with weak or tangential evidence.
-2. PREFER COMPARISON POINTS: Where possible, each evidence point should include BOTH book evidence AND movie evidence with a clear contrast. Do not make the table mostly book-only unless no movie counterpart exists.
-3. STRONGEST FIRST: Rank evidence points by: (a) relevance to the thesis, (b) clarity of the quote, (c) usefulness for a YouTube argument, (d) strength of contrast between book and movie.
+{{#IF_COMPARISON}}2. PREFER COMPARISON POINTS: Where possible, each evidence point should include BOTH {{SIDE_A_LOWER}} evidence AND {{SIDE_B_LOWER}} evidence with a clear contrast. Do not make the table mostly {{SIDE_A_LOWER}}-only unless no {{SIDE_B_LOWER}} counterpart exists.
+{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}2. PREFER RICHLY SOURCED POINTS: Where possible, each evidence point should rest on more than one primary source passage rather than a single line.
+{{/IF_NO_COMPARISON}}3. STRONGEST FIRST: Rank evidence points by: (a) relevance to the thesis, (b) clarity of the quote, (c) usefulness for a YouTube argument{{#IF_COMPARISON}}, (d) strength of contrast between the {{SIDE_A_LOWER}} and the {{SIDE_B_LOWER}}{{/IF_COMPARISON}}.
 4. DEPRIORITIZE WEAK EVIDENCE: Exclude points that are only loosely related to the target trait. If the brief is about anger, do not include mild discomfort or general stress unless it is highly revealing. Match the claim intensity to what the source actually says.
 5. CLAIM DISCIPLINE: The claim must precisely match the evidence. Do not overstate grief as anger, discomfort as volatility, or tension as defiance unless the source strongly supports that wording.
 6. The table should feel like a curated shortlist of the best arguments for the video, not a broad evidence dump.
@@ -301,14 +345,14 @@ PARAPHRASE-FIRST DISCIPLINE (CRITICAL):
 MICRO-QUOTE PROVENANCE RULE (CRITICAL):
 A Micro-Quote is a verbatim string. It must appear word-for-word in the retrieved chunks of the Source File listed for that evidence point. If the phrase appears only in upstream pipeline steps (Brief, SSA), in secondary sources, or in your own paraphrase, it is NOT a valid Micro-Quote — leave the field empty and set Evidence Type to "paraphrase" or "interpretation."
 
-A book Micro-Quote must come from a book chunk; a movie Micro-Quote must come from a movie transcript chunk.
+{{#IF_COMPARISON}}A {{SIDE_A_LOWER}} Micro-Quote must come from a {{SIDE_A_LOWER}} chunk; a {{SIDE_B_LOWER}} Micro-Quote must come from a {{SIDE_B_LOWER}} transcript chunk.{{/IF_COMPARISON}}
 
 FACT VALIDATION VS QUOTATION — these are different operations:
-- Secondary sources (commentary transcripts, fan wikis) CAN validate that a scene, event, or visual fact exists in the primary sources. Use them freely in Book Evidence, Movie Evidence, Contrast, and Paraphrase fields when they support the underlying claim.
+- Secondary sources (commentary transcripts, fan wikis) CAN validate that a scene, event, or visual fact exists in the primary sources. Use them freely in the evidence, contrast, and paraphrase fields when they support the underlying claim.
 - Secondary sources CANNOT supply a Micro-Quote attributed to a primary Source File. The Micro-Quote field is reserved for verbatim strings from the primary source's retrieved chunks only.
 
 Example — death scene:
-- VALID: "Voldemort's body dissolves into ash" as paraphrase in Movie Evidence, supported by a secondary source describing the final duel. Micro-Quote field empty. Evidence Type: paraphrase.
+- VALID: "Voldemort's body dissolves into ash" as paraphrase in an evidence field, supported by a secondary source describing the final duel. Micro-Quote field empty. Evidence Type: paraphrase.
 - INVALID: "slowly crumbles into ash" in the Micro-Quote field tagged to the DH2 transcript file, when that exact string is not in the retrieved DH2 chunks.
 
 SECONDARY SOURCE ESCALATION RULE (CRITICAL):
@@ -316,7 +360,7 @@ When an evidence point is assigned Confidence: Medium or Low because primary sou
 1. Check topic transcripts (commentary creators, fan analysis) for any reference to the same scene, moment, or claim.
 2. Check secondary source blocks in the retrieved material for corroborating references.
 
-If secondary sources contain supporting evidence, populate the **Secondary Source Support** field for that evidence point with the source name(s) + what they confirm, in plain prose. Example: "MediaRetrospective confirms Voldemort prowls and rips Death Eater masks in the GOF graveyard film scene. Bretts Thoughts corroborates. Neither provides transcript timecode."
+If secondary sources contain supporting evidence, populate the **Secondary Source Support** field for that evidence point with the source name(s) + what they confirm, in plain prose. Example: "MediaRetrospective confirms Voldemort prowls and rips Death Eater masks in the GOF graveyard scene. Bretts Thoughts corroborates. Neither provides transcript timecode."
 
 Then update the Commentary Angle field to state explicitly:
 - What the secondary sources confirm
@@ -347,11 +391,13 @@ Create the evidence table in this EXACT markdown format for each evidence point:
 | Field | Value |
 |-------|-------|
 | **Claim** | [The precise claim — must match what the evidence actually shows] |
-| **Source Type** | Book / Movie Transcript / Both |
+| **Source Type** | {{#IF_COMPARISON}}{{SIDE_A}} / {{SIDE_B}} / Both{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}Document / Transcript / Both{{/IF_NO_COMPARISON}} |
 | **Source File** | [Exact filename(s)] |
-| **Book Evidence** | [Paraphrased evidence from book, if any — leave blank if none] |
-| **Movie Evidence** | [Paraphrased evidence from movie transcript, if any — leave blank if none] |
-| **Contrast** | [What differs between book and movie, if both present] |
+{{#IF_COMPARISON}}| **{{SIDE_A}} Evidence** | [Paraphrased evidence from the {{SIDE_A_LOWER}}, if any — leave blank if none] |
+| **{{SIDE_B}} Evidence** | [Paraphrased evidence from the {{SIDE_B_LOWER}} transcript, if any — leave blank if none] |
+| **Contrast** | [What differs between the {{SIDE_A_LOWER}} and the {{SIDE_B_LOWER}}, if both present] |
+{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}| **Evidence** | [Paraphrased evidence from the primary source] |
+{{/IF_NO_COMPARISON}}
 | **Secondary Source Support** | [REQUIRED when Confidence is Medium or Low — name the secondary source(s) + what they confirm in plain prose. If none corroborates, write: "No secondary source corroboration found. Recommend dropping or heavily qualifying this claim in the Beat Plan." Leave blank only when Confidence is High.] |
 | **Micro-Quote** | [Optional: verbatim quote UNDER 12 words, in quotation marks — leave blank if not essential] |
 | **Paraphrase** | [Paraphrased version of the evidence — REQUIRED for every point] |
@@ -362,14 +408,14 @@ Create the evidence table in this EXACT markdown format for each evidence point:
 
 Rules:
 - Aim for 10-15 evidence points, curated for strength and relevance
-- Majority should include both book AND movie evidence where possible
+{{#IF_COMPARISON}}- Majority should include both {{SIDE_A_LOWER}} AND {{SIDE_B_LOWER}} evidence where possible{{/IF_COMPARISON}}
 - Every evidence point must have a source trace (which file it came from)
 - Never invent quotes
 - Never blur exact quote vs paraphrase
 - Paraphrase is the DEFAULT — exact quotes are the exception, not the rule
 - If a point is only weakly related to the thesis, exclude it entirely
 - Commentary Transcripts CANNOT be used as primary evidence — only as angle inspiration
-- If an angle was inspired by a commentary transcript, it must be confirmed against books or movie transcripts before inclusion`,
+- If an angle was inspired by a commentary transcript, it must be confirmed against the primary sources before inclusion`,
 
   // NOTE: The Beat Plan step uses the internal key 'outline' to avoid schema
   // changes. User-facing label is "Beat Plan" (see src/lib/api.ts).
@@ -408,7 +454,7 @@ Each beat is one paragraph of plain prose. No bullet points inside a beat. Each 
 
 Each beat paragraph must cover, in natural prose order:
 1. What argument move happens in this beat
-2. The primary source point or evidence that anchors it (book chapter, film scene, specific moment)
+2. The primary source point or evidence that anchors it (specific source passage, scene, or moment)
 3. What the viewer understands or feels at the end of the beat
 4. How this beat sets up the next beat
 
@@ -454,9 +500,9 @@ For each beat, write its function in this exact sentence form:
 
 Then for each consecutive pair (1→2, 2→3, 3→4, ... N-1→N), check if the two sentences could be swapped without changing the meaning of the script. If yes, the beats are functionally duplicate. Merge or cut. Two beats sharing a topic is allowed; two beats sharing a function is not.
 
-Example of failure: "Beat 2 reveals that book Voldemort uses stillness as power" and "Beat 4 reveals that book Voldemort treats power as effortless." These are paraphrases. Merge.
+Example of failure: "Beat 2 reveals that {{SIDE_A_LOWER}} Voldemort uses stillness as power" and "Beat 4 reveals that {{SIDE_A_LOWER}} Voldemort treats power as effortless." These are paraphrases. Merge.
 
-Example of pass: "Beat 5 reveals that book Voldemort dominates by controlling other people's bodies" and "Beat 6 reveals that book Voldemort runs entire rooms through ideology and micro-control." Different function (one-on-one vs. group), different mechanism.
+Example of pass: "Beat 5 reveals that {{SIDE_A_LOWER}} Voldemort dominates by controlling other people's bodies" and "Beat 6 reveals that {{SIDE_A_LOWER}} Voldemort runs entire rooms through ideology and micro-control." Different function (one-on-one vs. group), different mechanism.
 
 SECTION 2 — ESCALATION CHAIN
 
@@ -494,7 +540,7 @@ Hard rules:
 
 - No scene serves as primary anchor in more than one beat.
 
-- No book↔film contrast pair serves as primary contrast in more than one beat.
+{{#IF_COMPARISON}}- No {{SIDE_A_LOWER}}↔{{SIDE_B_LOWER}} contrast pair serves as primary contrast in more than one beat.{{/IF_COMPARISON}}
 
 - If a single source appears as contrast anchor in more than 3 beats: STOP. The plan is a contrast monoculture. Restructure or surface this as a retrieval gap in the audit.
 
@@ -504,9 +550,9 @@ For each beat, confirm its job is named using a Section Structure function (set 
 
 If a beat's job can only be described as "covers [topic]," it is topic-assigned. Rewrite as a function.
 
-SECTION 5 — CONTRAST CLOSURE
+{{#IF_COMPARISON}}SECTION 5 — CONTRAST CLOSURE
 
-For book vs. film comparison scripts: confirm each beat plans a contrast landing before it closes. Mark which acceptable contrast form each beat uses (what the other version does instead / omits / changes in emphasis / why the difference matters).
+For {{SIDE_A_LOWER}} vs. {{SIDE_B_LOWER}} comparison scripts: confirm each beat plans a contrast landing before it closes. Mark which acceptable contrast form each beat uses (what the other version does instead / omits / changes in emphasis / why the difference matters).{{/IF_COMPARISON}}
 
 SECTION 6 — REHOOK FORWARD-MOTION
 
@@ -547,9 +593,9 @@ FINAL CHECK BEFORE REMOVING THE AUDIT BLOCK:
 If any check fails, restructure the beat plan and rewrite the audit. Only after all checks pass, remove the \`<beat_plan_audit>\` block from your final output.
 
 EVIDENCE REQUIREMENTS
-- Each beat must name the specific source anchor (book chapter, film scene). No vague references.
+- Each beat must name the specific source anchor (specific source passage or scene). No vague references.
 - Evidence is paraphrased into the beat prose. No raw quotes in the beat plan. Quotes are reserved for the Full Script.
-- Secondary sources (other YouTube commentary, fan wikis, Reddit, Quora, blog posts) are not primary source evidence. Factual/source anchors must come from book and film primary sources only — never from secondary sources.
+- Secondary sources (other YouTube commentary, fan wikis, Reddit, Quora, blog posts) are not primary source evidence. Factual/source anchors must come from Tier 1 primary sources only — never from secondary sources.
 - SSA-derived audience signals (Audience Objections, Recurring Fan Signals, Expected Surface Answers, Underdeveloped Opportunities) are required inputs for shaping rehooks, escalation rungs, and at least one pre-emption beat where relevant. Use them to design the argument's audience-facing moves, not to supply primary source proof.
 
 // BANNED CONSTRUCTIONS — keep in sync with full_script BANNED
@@ -589,8 +635,8 @@ Better closing directions:
 Pattern 2: Essay transitions
 Banned: 'Furthermore', 'Moreover', 'Additionally', 'Therefore', 'Consequently', 'Nevertheless', 'This demonstrates that', 'This highlights', 'This suggests that', 'In conclusion', 'To sum up', 'Overall', 'Ultimately', 'All things considered'.
 Rewrite by: making the previous point feel incomplete, raising stakes, revealing a consequence, or shifting perspective. The transition should move through meaning, not announce the next topic.
-Bad: 'Furthermore, the book treats this differently.'
-Good: 'The book is doing something else entirely here.'
+Bad: 'Furthermore, the {{SIDE_A_LOWER}} treats this differently.'
+Good: 'The {{SIDE_A_LOWER}} is doing something else entirely here.'
 
 Pattern 3: Filler frames
 Banned: 'It is important to understand that', 'It is worth noting that', 'One thing to keep in mind', 'This raises an interesting question', 'When you really think about it', 'At the end of the day', 'The reality is', 'What this means is', 'The key takeaway is'.
@@ -667,9 +713,9 @@ FORMAT
 
 For each beat in the Beat Plan, write one paragraph in plain prose. Number each paragraph to match the beat number. The paragraph must cover:
 1. What the beat is doing (one sentence paraphrasing the Beat Plan)
-2. The primary source evidence woven into prose, not listed. Write it the way a writer would recall it: the book chapter, the film scene, the specific moment, paraphrased into natural language. The writer should be able to narrate from this without referring back to the original source.
+2. The primary source evidence woven into prose, not listed. Write it the way a writer would recall it: the specific passage, the specific scene, the specific moment, paraphrased into natural language. The writer should be able to narrate from this without referring back to the original source.
 3. Any single direct quote worth considering verbatim, in quotation marks. Maximum one quote per beat. Most beats should have zero.
-4. Any meaningful contradiction between book and film worth noting in narration, in one sentence.
+{{#IF_COMPARISON}}4. Any meaningful contradiction between the {{SIDE_A_LOWER}} and the {{SIDE_B_LOWER}} worth noting in narration, in one sentence.{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}4. Any meaningful tension or contradiction inside the primary source evidence worth noting in narration, in one sentence.{{/IF_NO_COMPARISON}}
 5. Function: state in one short sentence whether this beat proves, complicates, reveals, rehooks, or pays off. Name what specifically it proves / complicates / reveals / rehooks / pays off.
 6. Hook/payoff relation: state in one short sentence how this beat keeps the opening hook question alive, complicates it, or moves toward paying it off.
 Write items 5 and 6 as natural writer-facing sentences inside the same paragraph. Do not turn the beat into a table. Do not add markdown headings or labels like "Function:" inside the paragraph — embed the information in prose the writer can read in one pass.
@@ -713,13 +759,13 @@ Authority summary:
 
 EVIDENCE LEDGER (MANDATORY — complete before writing any beat paragraph)
 
-Before writing any beat, build an internal evidence ledger. List every primary anchor available in the Evidence Table and Beat Plan — each specific film scene, book moment, or direct quote. Assign each anchor to exactly one beat. No anchor may serve as the primary evidence for more than one beat.
+Before writing any beat, build an internal evidence ledger. List every primary anchor available in the Evidence Table and Beat Plan — each specific scene, moment, or direct quote. Assign each anchor to exactly one beat. No anchor may serve as the primary evidence for more than one beat.
 
 If two beats are currently mapped to the same primary anchor, resolve the conflict before writing:
 
 - Reassign one beat to a different anchor from the Evidence Table.
 
-- If no alternative anchor exists, restructure one beat to argue from book-only or film-only contrast without re-citing the shared moment.
+- If no alternative anchor exists, restructure one beat to argue from {{#IF_COMPARISON}}{{SIDE_A_LOWER}}-only or {{SIDE_B_LOWER}}-only contrast{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}a different angle on the remaining evidence{{/IF_NO_COMPARISON}} without re-citing the shared moment.
 
 - If neither is possible, apply the Merge-or-Cut Rule above: merge the two beats or cut the weaker one. Do not flag conditionally.
 
@@ -737,7 +783,7 @@ If a beat fails the question chain test, restructure it before writing. Acceptab
 
 - Isolated moment to systemic pattern  
 
-- What the films do to what that choice costs
+- What the source does to what that choice costs
 
 - Symptom to cause
 
@@ -821,11 +867,11 @@ If a banned construction appears in the draft, the output is invalid. Rewrite us
   // BANNED CONSTRUCTIONS block. If one is updated, update both.
   full_script: `You are a professional YouTube scriptwriter specializing in {{SUBJECT_LABEL}} analysis content.
 EVIDENCE PACK GROUNDING (HIGHEST-PRIORITY BINDING — READ FIRST):
-You must use only the evidence points provided in the approved evidence pack below. Do not introduce examples, references, named works, spin-offs, films, or claims from outside this set regardless of your training knowledge. If the argument requires a point that has no supporting evidence in the pack, insert [NEEDS EVIDENCE: one-line description of what is missing] as a placeholder and continue. Do not invent support. Do not silently include unsourced material.
+You must use only the evidence points provided in the approved evidence pack below. Do not introduce examples, references, named works, spin-offs, adaptations, or claims from outside this set regardless of your training knowledge. If the argument requires a point that has no supporting evidence in the pack, insert [NEEDS EVIDENCE: one-line description of what is missing] as a placeholder and continue. Do not invent support. Do not silently include unsourced material.
 
 EVIDENCE TRACKING DURING WRITING
 
-As you write each beat, internally track which primary evidence anchors you have already spent. An anchor is a specific scene, specific quote, or specific moment. Once spent, an anchor is closed for the rest of the script. If you find yourself reaching for a closed anchor in a later beat, the beat is structurally weak — restructure it to use a different anchor or to argue from contrast alone (book-only or film-only) without re-citing the spent moment.
+As you write each beat, internally track which primary evidence anchors you have already spent. An anchor is a specific scene, specific quote, or specific moment. Once spent, an anchor is closed for the rest of the script. If you find yourself reaching for a closed anchor in a later beat, the beat is structurally weak — restructure it to use a different anchor or to argue from contrast alone{{#IF_COMPARISON}} ({{SIDE_A_LOWER}}-only or {{SIDE_B_LOWER}}-only){{/IF_COMPARISON}} without re-citing the spent moment.
 
 Given the topic brief, evidence, analysis, and outline, write a FULL SCRIPT.
 
@@ -861,11 +907,11 @@ The following must NEVER appear in the spoken script body:
 - Bold or italic emphasis markers
 - Bulleted or numbered lists
 - The phrases 'in this video', 'today we are going to', 'let us dive into', 'in this episode', 'we will explore'
-- The word 'tagging' when used to describe how a source codes or labels a character (e.g. 'the film keeps tagging him with exertion')
+- The word 'tagging' when used to describe how a source codes or labels a character (e.g. 'the {{SIDE_B_LOWER}} keeps tagging him with exertion')
 - The word 'texture' when used to describe source material quality (e.g. 'physical, grindy texture')
-- The word 'coded' or 'coding' when describing how a film or book presents a character (e.g. 'the film keeps coding him as expressive')
-- The phrase 'the films keep coding'
-- The phrase 'the books code'
+- The word 'coded' or 'coding' when describing how a source presents a character (e.g. 'the {{SIDE_B_LOWER}} keeps coding him as expressive')
+- The phrase 'the {{SIDE_B_PLURAL_LOWER}} keep coding'
+- The phrase 'the {{SIDE_A_PLURAL_LOWER}} code'
 - Any word or phrase that describes source material as a document being analyzed rather than a story being narrated. These are writer-facing analytical terms that belong in the SEP, not in spoken voiceover.
 
 Any of the above appearing in the spoken body invalidates the output.
@@ -905,8 +951,8 @@ Better closing directions:
 Pattern 2: Essay transitions
 Banned: 'Furthermore', 'Moreover', 'Additionally', 'Therefore', 'Consequently', 'Nevertheless', 'This demonstrates that', 'This highlights', 'This suggests that', 'In conclusion', 'To sum up', 'Overall', 'Ultimately', 'All things considered'.
 Rewrite by: making the previous point feel incomplete, raising stakes, revealing a consequence, or shifting perspective. The transition should move through meaning, not announce the next topic.
-Bad: 'Furthermore, the book treats this differently.'
-Good: 'The book is doing something else entirely here.'
+Bad: 'Furthermore, the {{SIDE_A_LOWER}} treats this differently.'
+Good: 'The {{SIDE_A_LOWER}} is doing something else entirely here.'
 
 Pattern 3: Filler frames
 Banned: 'It is important to understand that', 'It is worth noting that', 'One thing to keep in mind', 'This raises an interesting question', 'When you really think about it', 'At the end of the day', 'The reality is', 'What this means is', 'The key takeaway is'.
@@ -1016,7 +1062,7 @@ Compare the opening 3 sentences against the final 3 paragraphs. If the opening c
 
 Search for these banned rehook patterns and rewrite any matches:
 
-- "And the books are ruthless about showing you"
+- "And the {{SIDE_A_PLURAL_LOWER}} are ruthless about showing you"
 
 - "And once you notice that"
 
@@ -1075,7 +1121,7 @@ Before writing any prose, complete this internal checklist silently. Do not outp
 
 1. EVIDENCE LEDGER
 
-List every primary evidence anchor in the SEP (specific film scene, specific book moment, specific direct quote). Assign each anchor to exactly one beat. No anchor may appear in more than one beat. If two beats currently share an anchor, reassign one beat to a different anchor or restructure that beat to use book-only or film-only evidence.
+List every primary evidence anchor in the SEP (specific scene, specific moment, specific direct quote). Assign each anchor to exactly one beat. No anchor may appear in more than one beat. If two beats currently share an anchor, reassign one beat to a different anchor or restructure that beat to use {{#IF_COMPARISON}}{{SIDE_A_LOWER}}-only or {{SIDE_B_LOWER}}-only evidence{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}a different slice of the available evidence{{/IF_NO_COMPARISON}}.
 
 2. ESCALATION CHAIN
 
@@ -1087,7 +1133,7 @@ Acceptable escalation moves:
 
 - Isolated choice to systemic pattern
 
-- What the films do to what the films cost
+- What the source does to what that choice costs
 
 - Symptom to cause
 
@@ -1137,7 +1183,7 @@ Additional fidelity rules:
 
 Requirements:
 - The body text must be PURELY NATURAL SPOKEN WORDS as if read aloud by a creator — conversational, authoritative, human
-- Build the script primarily from books and movie transcripts
+- Build the script primarily from the Tier 1 primary sources
 
 QUOTE DISCIPLINE (CRITICAL):
 - Do not overuse direct quotes. Most evidence must be paraphrased naturally.
@@ -1151,11 +1197,11 @@ SOURCE MATERIAL REFERENCE RULE (BINDING — CRITICAL):
 Never use the word 'transcript,' 'script,' 'text,' 'passage,' 'excerpt,' 'chapter,' 'narration,' or 'stage direction' as a noun referring to a source document in the voiceover. These words may only appear if they are part of a direct quote being attributed to a character. The test: if the sentence could be rewritten as 'describe what happens in the scene,' do that instead.
 
 EVIDENCE DIVERSITY AND REHOOK RULE (BINDING — CRITICAL):
-Each beat must anchor to different primary evidence. Do not use the same film scene, transcript moment, or direct quote in more than one beat. If a film moment has already been used, subsequent beats must draw from different film evidence. The same rule applies to book evidence. Every section must end with a rehook that makes the previous point feel incomplete — not a sentence that announces the next topic.
+Each beat must anchor to different primary evidence. Do not use the same scene, transcript moment, or direct quote in more than one beat. If a moment has already been used, subsequent beats must draw from different evidence. The same rule applies to every primary source family. Every section must end with a rehook that makes the previous point feel incomplete — not a sentence that announces the next topic.
 
 SOURCE SPECIFICITY IN NARRATION (CRITICAL):
 - Every evidence-based paragraph MUST naturally mention WHERE the moment happens within the spoken narration itself.
-- Always specify the installment: which book (by title or number) or which film (by title or number).
+- Always specify the installment: which {{SIDE_A_LOWER}} (by title or number) or which {{SIDE_B_LOWER}} (by title or number).
 - NEVER use vague phrasing like "during a key moment", "in the story", "at one point" without specifying the installment.
 {{WORKED_EXAMPLE:source_specificity_phrasings}}
 
@@ -1168,7 +1214,7 @@ FORBIDDEN IN OUTPUT:
 
 EDITOR REFERENCES
 
-Editor information does not appear inside the spoken script. After the script ends, add one section titled exactly EDITOR REFERENCES. Below that heading, list one bullet per beat with the source backing it (book chapter, film scene).
+Editor information does not appear inside the spoken script. After the script ends, add one section titled exactly EDITOR REFERENCES. Below that heading, list one bullet per beat with the source backing it (specific source passage or scene).
 
 The voiceover above must contain zero bracket tags, zero source labels, zero markdown. The EDITOR REFERENCES section is the only place editor information lives.
 
@@ -1245,7 +1291,7 @@ Angle has not asked for.
 TOPIC TRANSCRIPT RULES:
 - These are videos about {{SUBJECT_LABEL}} covering similar topics to this video
 - Use to understand: what angles exist, what claims have been made, what primary source moments are relevant
-- Identify specific scenes or moments to verify against primary sources (books and movie transcripts)
+- Identify specific scenes or moments to verify against the primary sources
 - Do NOT treat as proof of primary source facts
 
 ALTERNATIVE SOURCES (SECONDARY) RULES:
@@ -1265,7 +1311,7 @@ Generate the Creative Brief in this EXACT format:
 [What must be demonstrated by the end for the thesis to land. 1-2 sentences.]
 
 ### Video Type
-[One of: Comparison / Movie-Focus / Book-Focus / Character Study / Plot Hole Dive / Grievance Analysis]
+[One of: {{#IF_COMPARISON}}Comparison / {{SIDE_B}}-Focus / {{SIDE_A}}-Focus / {{/IF_COMPARISON}}Character Study / Plot Hole Dive / Grievance Analysis]
 
 ### Emotional Arc
 [The emotional journey the viewer goes on. Drawn from the topic angle, not the format reference.]
@@ -1302,7 +1348,7 @@ This section operationalizes the retention and escalation layer. Fill every fiel
 - **Hypothesized Surprising Answer:** [Write this as a HYPOTHESIS, not a thesis. Begin with "The angle suggests…" or "Working guess:" and frame the answer as something to be tested. Do NOT write a committed verdict. One sentence. If you find yourself writing the script's conclusion, stop — that's SEP's job. Example shape: "The angle suggests the real mismatch is X, but this needs SEP to confirm whether the primary source evidence supports X or points elsewhere."]
 - **Emotional Arc:** [Ordered progression of feeling, e.g. curiosity → suspicion → tension → realization → payoff. 4–6 stages.]
 - **Escalation Logic:** [ONE sentence describing the SINGLE mechanism by which tension deepens — e.g. "stakes raise from aesthetic to ideological," or "each point exposes a deeper structural choice." Do NOT chain stages with arrows, "then," "move from… into… then into…" — that is a ladder, which is forbidden. Do NOT name sections, beats, or moments. If your sentence contains more than one "then," delete and rewrite. Beat Plan owns sequence; this field owns only the principle.]
-- **Hypothesized Final Payoff:** [Write this as a HYPOTHESIS, not a verdict. Begin with "If the hypothesis holds, the payoff could be…" One sentence. Do NOT write the script's closing argument. Do NOT cash out the thesis. If you find yourself writing the conclusion in committed language ("The book denies X" / "That single choice exposes Y"), stop and reframe as conditional.]
+- **Hypothesized Final Payoff:** [Write this as a HYPOTHESIS, not a verdict. Begin with "If the hypothesis holds, the payoff could be…" One sentence. Do NOT write the script's closing argument. Do NOT cash out the thesis. If you find yourself writing the conclusion in committed language ("The {{SIDE_A}} denies X" / "That single choice exposes Y"), stop and reframe as conditional.]
 `;
 
 STEP_PROMPTS["six_category_extraction"] = `You are a research analyst for a {{SUBJECT_LABEL}} YouTube channel.
@@ -1310,7 +1356,7 @@ STEP_PROMPTS["six_category_extraction"] = `You are a research analyst for a {{SU
 Given the Creative Brief and retrieved primary source material, mine the evidence across six specific categories. This output feeds the evidence table and outline. Be sharp, specific, and argument-useful. Rank everything by: how surprising it is, how specific it is, how argument-useful it is. Generic observations rank last.
 
 IMPORTANT SOURCE RULES:
-- Only draw confirmed factual claims from primary sources: books and movie transcripts
+- Only draw confirmed factual claims from the Tier 1 primary sources
 - Topic transcripts and knowledge base sources can point you toward what to investigate but every claim must be confirmed in the primary sources
 - Do NOT invent or fabricate evidence
 - If primary source material does not support a claim, say so explicitly
@@ -1323,22 +1369,27 @@ Produce output in this EXACT format:
 The strongest direct evidence confirmed in the primary sources.
 For each point:
 - **Claim**: [Precise statement]
-- **Source**: [Book or film title + location]
+- **Source**: [Source title + location]
 - **Evidence Type**: exact quote / paraphrase / summary
 - **Content**: [The evidence — paraphrased unless quote is under 12 words and essential]
 - **Argument Value**: [Why this matters to the thesis]
 
-### 2. THE DELTA
-Where the book version and film version of the same moment diverge.
+{{#IF_COMPARISON}}### 2. THE DELTA
+Where the {{SIDE_A_LOWER}} version and {{SIDE_B_LOWER}} version of the same moment diverge.
 For each delta:
 - **Scene**: [What scene or moment]
-- **Book Version**: [What the book does — source cited]
-- **Film Version**: [What the film does — source cited]
+- **{{SIDE_A}} Version**: [What the {{SIDE_A_LOWER}} does — source cited]
+- **{{SIDE_B}} Version**: [What the {{SIDE_B_LOWER}} does — source cited]
 - **What Changed**: [Specifically what was altered, removed, or added]
-- **Effect on Argument**: [What this change does to characterization or the thesis]
+- **Effect on Argument**: [What this change does to characterization or the thesis]{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}### 2. THE SHIFT
+Where the primary sources revise, complicate, or contradict their own account of the same moment.
+For each shift:
+- **Moment**: [What moment]
+- **What Changed**: [Specifically what was altered, removed, or added]
+- **Effect on Argument**: [What this change does to the thesis]{{/IF_NO_COMPARISON}}
 
 ### 3. THE PATTERN
-Recurring behavior or adaptation choices across multiple books/films that prove the thesis is not a one-off.
+Recurring behavior or adaptation choices across multiple {{#IF_COMPARISON}}{{SIDE_A_PLURAL_LOWER}}/{{SIDE_B_PLURAL_LOWER}}{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}primary sources{{/IF_NO_COMPARISON}} that prove the thesis is not a one-off.
 For each pattern:
 - **Pattern**: [The recurring behavior]
 - **Instances**: [At least 3 specific examples with sources]
@@ -1378,7 +1429,7 @@ Your job is to analyze ONLY the secondary sources that the creator specifically 
 
 ABSOLUTE RULES — READ CAREFULLY:
 
-1. You are NOT the primary source evidence layer. The Insights & Research step already mined the books and movie transcripts. Do not re-do that work. Do not invent primary source claims. Do not promote a transcript's claim as confirmed fact.
+1. You are NOT the primary source evidence layer. The Insights & Research step already mined the primary sources. Do not re-do that work. Do not invent primary source claims. Do not promote a transcript's claim as confirmed fact.
 
 2. SECONDARY SOURCES ARE NOT PROOF. Selected topic transcripts and Alternative Sources are AUDIENCE INTELLIGENCE and INTERPRETIVE INPUT only. They reveal what the fandom is debating, what's been overdone, what objections exist, and what framings are unexplored. They do NOT confirm primary source facts. Any factual claim sourced from them must be flagged "needs primary source validation".
 
@@ -1405,7 +1456,7 @@ Ideas the selected sources touch on but never fully exploit, escalate, or land. 
 Objections, counterarguments, "well actually" pushback, or fan disagreements the final script should anticipate. Bullet list. Pull from comment-style alternative sources where available.
 
 ## 5. Primary Source Validation Needed
-Claims surfaced by selected sources that sound interesting but MUST be checked against books or movie transcripts before use. Bullet list. Tag each as: [book check] / [movie transcript check] / [either].
+Claims surfaced by selected sources that sound interesting but MUST be checked against the primary sources before use. Bullet list. Tag each as: {{#IF_COMPARISON}}[{{SIDE_A_LOWER}} check] / [{{SIDE_B_LOWER}} transcript check] / [either]{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}[primary source check] / [unverifiable]{{/IF_NO_COMPARISON}}.
 
 ## 6. Original Synthesis Opportunities
 New conclusions or angles that emerge ONLY when the selected source signals are pressure-tested against the Insights & Research output (primary source extraction). Bullet list. Each item must combine a fan/audience signal with a specific primary source detail from Insights & Research and produce a non-obvious reading.
@@ -1424,7 +1475,7 @@ Concrete guidance on how this should shape: structure, pacing, re-hooks, escalat
 Specific phrases, jokes, transitions, structures, conclusions, or examples from the selected sources that the script should NOT imitate. Bullet list. Quote the imitable element briefly so downstream steps can recognize and avoid it.
 
 SOURCE HIERARCHY REMINDER:
-Books and movie transcripts are Tier 1 primary sources. Permanent commentary transcripts and the selected secondary sources are interpretive only. Your output flows into the Evidence Table, Outline, and Full Script — those steps will treat your candidate claims as leads to validate, NOT as final proof.
+The primary sources are Tier 1. Permanent commentary transcripts and the selected secondary sources are interpretive only. Your output flows into the Evidence Table, Outline, and Full Script — those steps will treat your candidate claims as leads to validate, NOT as final proof.
 `;
 
 STEP_PROMPTS["angle_check"] = `You are a story editor stress-testing the argument for a YouTube video before any evidence is curated or structured.
@@ -1770,15 +1821,20 @@ const deriveRetrievalQueryPack = (
   // Comparison queries
   let comparisonQueries: string[] = [];
   if (brief.comparison_mode) {
+    const axis = getAxisLabels(channel);
+    const a = axis.sideA.toLowerCase();
+    const b = axis.sideB.toLowerCase();
+    const aPlural = axis.sideAPlural.toLowerCase();
+    const bPlural = axis.sideBPlural.toLowerCase();
     comparisonQueries = dedupeStrings([
-      ...themeQueries.slice(0, 6).map((theme) => `${theme} book vs movie`),
-      ...characters.slice(0, 4).map((character: string) => `${compressPhrase(stripCharacterTitle(character), 3)} book vs movie characterization`),
+      ...themeQueries.slice(0, 6).map((theme) => `${theme} ${a} vs ${b}`),
+      ...characters.slice(0, 4).map((character: string) => `${compressPhrase(stripCharacterTitle(character), 3)} ${a} vs ${b} characterization`),
       ...(targetCharacter ? [
         `${targetCharacter} personality adaptation changes`,
-        `${targetCharacter} emotional intensity books and films`,
-        `${targetCharacter} agency books and films`,
+        `${targetCharacter} emotional intensity ${aPlural} and ${bPlural}`,
+        `${targetCharacter} agency ${aPlural} and ${bPlural}`,
         `${targetCharacter} lines given to other characters`,
-        `${targetCharacter} internal monologue lost in film`,
+        `${targetCharacter} internal monologue lost in the ${b}`,
       ] : []),
     ].filter(Boolean), 12);
   }
@@ -2345,7 +2401,7 @@ serve(async (req) => {
         footer = `\n\n${msg}`;
         truncationWarnings.push(`alt_sources_dropped:${skipped}:profile=${profile}`);
       }
-      return `\n\n## ${label} (SECONDARY, NON-PRIMARY)\nThese are pasted secondary sources such as Reddit threads, fan comments, wiki extracts, blog posts, or research notes. Use ONLY for fan debate signals, audience language, jokes, cultural references, angle inspiration, and supporting interpretation. NEVER treat as Tier 1 primary sources. Do NOT cite as primary evidence. All factual primary source claims must still be supported by book/movie sources.\n\n${parts.join("\n\n---\n\n")}${footer}`;
+      return `\n\n## ${label} (SECONDARY, NON-PRIMARY)\nThese are pasted secondary sources such as Reddit threads, fan comments, wiki extracts, blog posts, or research notes. Use ONLY for fan debate signals, audience language, jokes, cultural references, angle inspiration, and supporting interpretation. NEVER treat as Tier 1 primary sources. Do NOT cite as primary evidence. All factual primary source claims must still be supported by the primary sources.\n\n${parts.join("\n\n---\n\n")}${footer}`;
     };
 
     const truncateTopicTranscripts = (items: any[], profile: BudgetProfile): any[] => {
@@ -2437,7 +2493,7 @@ Generate the Creative Brief now.`;
         body: JSON.stringify({
           model: getModelForStep(stepType),
           messages: [
-            { role: "system", content: applyChannelPlaceholders(systemPrompt, channel) },
+            { role: "system", content: applyChannelPlaceholders(CHANNEL_CONTEXT_HEADER + systemPrompt, channel) },
             { role: "user", content: applyChannelPlaceholders(userMessage, channel) },
           ],
           stream: true,
@@ -2791,6 +2847,7 @@ ${queryPack.allQueries.map((q, i) => `  ${i + 1}. ${q}`).join("\n")}
 DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placeholder evidence. Return a retrieval failure report ONLY.`;
     } else {
       const sections: string[] = [];
+      const axisLabels = getAxisLabels(channel);
       // Add debug summary at top
       sections.push(`## Retrieval Debug Summary
 - Primary query: ${queryPack.primaryQuery}
@@ -2821,11 +2878,11 @@ DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placehold
 - Transcript query hit rate: ${queryPack.transcriptQueries.filter((q) => (perQueryCounts[q]?.transcript ?? 0) > 0).length}/${queryPack.transcriptQueries.length}`);
 
       if (bookChunks.length > 0) {
-        sections.push("### PRIMARY SOURCES — Books (Book Evidence)\n" +
+        sections.push(`### PRIMARY SOURCES — ${axisLabels.sideAPlural} (${axisLabels.sideA} Evidence)\n` +
           bookChunks.map((c: any) => `[${c.file_name} — BOOK — PRIMARY | matched: "${c._matched_query}" | ${targetCharacterLabel} mentions: ${c._char_mentions ?? 0}]\n${c.content}`).join("\n\n---\n\n"));
       }
       if (transcriptChunks.length > 0) {
-        sections.push("### PRIMARY SOURCES — Movie Transcripts (Movie Evidence)\n" +
+        sections.push(`### PRIMARY SOURCES — ${axisLabels.sideB} Transcripts (${axisLabels.sideB} Evidence)\n` +
           transcriptChunks.map((c: any) => `[${c.file_name} — TRANSCRIPT — PRIMARY | matched: "${c._matched_query}" | ${targetCharacterLabel} mentions: ${c._char_mentions ?? 0} | likely speaker: ${c._char_likely_speaker ? "YES" : "no"}]\n${c.content}`).join("\n\n---\n\n"));
       }
 
@@ -2844,7 +2901,7 @@ DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placehold
           );
           if (candidate) {
             usedTranscripts.add(candidate.id);
-            contrastPairs.push(`**Book**: [${book.file_name}] ${book.content.slice(0, 200)}...\n**Movie**: [${candidate.file_name}] ${candidate.content.slice(0, 200)}...`);
+            contrastPairs.push(`**${axisLabels.sideA}**: [${book.file_name}] ${book.content.slice(0, 200)}...\n**${axisLabels.sideB}**: [${candidate.file_name}] ${candidate.content.slice(0, 200)}...`);
           }
         }
         if (contrastPairs.length > 0) {
@@ -2874,8 +2931,8 @@ DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placehold
 
       // Retrieval gaps
       const gaps: string[] = [];
-      if (bookChunks.length === 0) gaps.push("- No book evidence found");
-      if (transcriptChunks.length === 0) gaps.push("- No movie transcript evidence found");
+      if (bookChunks.length === 0) gaps.push(`- No ${axisLabels.sideA.toLowerCase()} evidence found`);
+      if (transcriptChunks.length === 0) gaps.push(`- No ${axisLabels.sideB.toLowerCase()} transcript evidence found`);
       if (isComparison && (bookChunks.length === 0 || transcriptChunks.length === 0)) {
         gaps.push("- Comparison mode is ON but one source family returned zero results");
       }
@@ -2936,8 +2993,8 @@ DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placehold
             if (r.source_file) block.push(`Source File: ${r.source_file}`);
             block.push(`Source Type: ${r.source_type}`);
             block.push(`Confidence: ${r.confidence} | Evidence Type: ${r.evidence_type}`);
-            if (r.book_evidence) block.push(`Book Evidence: ${r.book_evidence}`);
-            if (r.movie_evidence) block.push(`Movie Evidence: ${r.movie_evidence}`);
+            if (r.book_evidence) block.push(`${getAxisLabels(channel).sideA} Evidence: ${r.book_evidence}`);
+            if (r.movie_evidence) block.push(`${getAxisLabels(channel).sideB} Evidence: ${r.movie_evidence}`);
             if (r.difference_note) block.push(`Contrast: ${r.difference_note}`);
             if (r.exact_quote) block.push(`Micro-Quote: ${r.exact_quote}`);
             if (r.paraphrase) block.push(`Paraphrase: ${r.paraphrase}`);
@@ -3002,8 +3059,8 @@ DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placehold
             if (r.source_file) block.push(`Source File: ${r.source_file}`);
             block.push(`Source Type: ${r.source_type}`);
             block.push(`Confidence: ${r.confidence} | Evidence Type: ${r.evidence_type}`);
-            if (r.book_evidence) block.push(`Book Evidence: ${r.book_evidence}`);
-            if (r.movie_evidence) block.push(`Movie Evidence: ${r.movie_evidence}`);
+            if (r.book_evidence) block.push(`${getAxisLabels(channel).sideA} Evidence: ${r.book_evidence}`);
+            if (r.movie_evidence) block.push(`${getAxisLabels(channel).sideB} Evidence: ${r.movie_evidence}`);
             if (r.difference_note) block.push(`Contrast: ${r.difference_note}`);
             if (r.exact_quote) block.push(`Micro-Quote: ${r.exact_quote}`);
             if (r.paraphrase) block.push(`Paraphrase: ${r.paraphrase}`);
@@ -3060,7 +3117,7 @@ If a Selected Source Analysis output appears in the previous pipeline context, t
 
 Rules:
 - Do NOT copy or closely paraphrase claims, jokes, transitions, structures, or conclusions from the selected topic transcripts or Alternative Sources.
-- Do NOT promote any "candidate claim" or "needs validation" item from the Selected Source Analysis to a confirmed factual claim unless it is independently supported by Tier 1 primary sources (books / movie transcripts) in the retrieved Source Material Excerpts.
+- Do NOT promote any "candidate claim" or "needs validation" item from the Selected Source Analysis to a confirmed factual claim unless it is independently supported by Tier 1 primary sources in the retrieved Source Material Excerpts.
 - DO use the Selected Source Analysis to: avoid overdone angles, address likely audience objections, sharpen escalation, strengthen re-hooks, and produce a more original final argument in the host persona's voice.
 - Honour the "Do-Not-Copy Notes" section of the Selected Source Analysis if present.
 
@@ -3076,8 +3133,8 @@ If any answer reveals overreliance, revise toward a more original, primary-sourc
     // Full Script source precedence: SEP controls; Creative Brief is directional only.
     if (stepType === "full_script") {
       systemPrompt += `\n\nSOURCE PRECEDENCE (BINDING): The Script Evidence Pack is the CONTROLLING source for argument route, beat sequence, evidence, source-grounded claims, fan objections, repetition control, and hook/payoff execution. The Creative Brief is DIRECTIONAL ONLY: title promise, thesis direction, tone, emotional arc, intended payoff. If they conflict, follow the Script Evidence Pack. Do not import Creative Brief sentences verbatim. Do not restate the thesis using Creative Brief phrasing more than once. Treat the Creative Brief as a compass, not as script copy. If an Angle Check appears in context via the Script Evidence Pack's framing, the SEP already encodes its contention — do not revert to Creative Brief thesis phrasing.`;
-      systemPrompt += `\n\nANTI-INVENTION RULE (BINDING):\nThe Script Evidence Pack contains every primary source claim, scene, quote, and evidence point that the Full Script is permitted to use. You may not introduce any of the following if they are not present in the Script Evidence Pack:\n- Specific scenes from books or films\n- Direct or paraphrased quotes\n- Primary source facts about characters, events, or settings\n- Specific moments framed as evidence\n- References to deleted scenes, behind-the-scenes material, or interviews\n\nIf a beat in the Script Evidence Pack is thin or has weak evidence, write the beat with the evidence available. Do not fill the gap by adding scenes, quotes, or details that are not in the Pack. If a beat genuinely cannot be written from the Pack alone, generate the beat as written and add a single bracketed flag at that point in the script: [FLAG: insufficient evidence in Pack].\n\nThe Source Material Excerpts section provided in the user message exists only as context. You may not introduce any claim from those excerpts that is not also present in the Script Evidence Pack. The Script Evidence Pack is the only source of permitted content.\n\nThis rule applies regardless of how natural, plausible, or argumentatively useful an additional claim might seem.`;
-      systemPrompt += `\n\nNO META-COMMENTARY RULE (BINDING — HARD):\nThe script is viewer-facing copy. The viewer must NEVER see any reference to the script's own research process, evidence pipeline, or source availability. Specifically, you must NOT:\n- Mention the evidence pack, Script Evidence Pack, source library, retrieval, transcripts, books-vs-films coverage gaps, or what sources were or were not available.\n- Say anything like "I can't prove this part", "the transcript doesn't show", "evidence is limited here", "the books don't confirm", "we don't have a scene for this", or any equivalent acknowledgement of a gap in the source material.\n- Reference the pipeline, the model, the system, instructions, or limitations of any kind.\n\nIf a beat lacks the evidence to make the comparison or claim it was meant to make, you have exactly three permitted moves: (1) work around the gap silently using whatever evidence IS available, (2) narrow the claim to what can actually be supported, or (3) omit the beat entirely and continue.\n\n[FLAG: ...] markers and any other bracketed flags are INTERNAL ONLY and must NEVER appear in the script output. This OVERRIDES the earlier instruction to insert [FLAG: insufficient evidence in Pack] — do not insert that marker or any equivalent. Handle gaps silently using the three moves above.`;
+      systemPrompt += `\n\nANTI-INVENTION RULE (BINDING):\nThe Script Evidence Pack contains every primary source claim, scene, quote, and evidence point that the Full Script is permitted to use. You may not introduce any of the following if they are not present in the Script Evidence Pack:\n- Specific scenes from the primary sources\n- Direct or paraphrased quotes\n- Primary source facts about characters, events, or settings\n- Specific moments framed as evidence\n- References to deleted scenes, behind-the-scenes material, or interviews\n\nIf a beat in the Script Evidence Pack is thin or has weak evidence, write the beat with the evidence available. Do not fill the gap by adding scenes, quotes, or details that are not in the Pack. If a beat genuinely cannot be written from the Pack alone, generate the beat as written and add a single bracketed flag at that point in the script: [FLAG: insufficient evidence in Pack].\n\nThe Source Material Excerpts section provided in the user message exists only as context. You may not introduce any claim from those excerpts that is not also present in the Script Evidence Pack. The Script Evidence Pack is the only source of permitted content.\n\nThis rule applies regardless of how natural, plausible, or argumentatively useful an additional claim might seem.`;
+      systemPrompt += `\n\nNO META-COMMENTARY RULE (BINDING — HARD):\nThe script is viewer-facing copy. The viewer must NEVER see any reference to the script's own research process, evidence pipeline, or source availability. Specifically, you must NOT:\n- Mention the evidence pack, Script Evidence Pack, source library, retrieval, transcripts, source coverage gaps, or what sources were or were not available.\n- Say anything like "I can't prove this part", "the transcript doesn't show", "evidence is limited here", "the sources don't confirm", "we don't have a scene for this", or any equivalent acknowledgement of a gap in the source material.\n- Reference the pipeline, the model, the system, instructions, or limitations of any kind.\n\nIf a beat lacks the evidence to make the comparison or claim it was meant to make, you have exactly three permitted moves: (1) work around the gap silently using whatever evidence IS available, (2) narrow the claim to what can actually be supported, or (3) omit the beat entirely and continue.\n\n[FLAG: ...] markers and any other bracketed flags are INTERNAL ONLY and must NEVER appear in the script output. This OVERRIDES the earlier instruction to insert [FLAG: insufficient evidence in Pack] — do not insert that marker or any equivalent. Handle gaps silently using the three moves above.`;
     }
 
     // Selected Hook binding — only when a hook direction is present for full_script.
@@ -3101,7 +3158,10 @@ If any answer reveals overreliance, revise toward a more original, primary-sourc
     if (brief.priority_sources?.length) briefContext += `\n**Priority Sources (soft boost only, not a filter):** ${brief.priority_sources.join(", ")}`;
     if (brief.emotional_angle) briefContext += `\n**Emotional Angle:** ${brief.emotional_angle}`;
     if (brief.tone) briefContext += `\n**Tone:** ${brief.tone}`;
-    if (brief.comparison_mode) briefContext += `\n**Mode:** Book vs Movie Comparison`;
+    if (brief.comparison_mode) {
+      const axis = getAxisLabels(channel);
+      briefContext += `\n**Mode:** ${axis.sideA} vs ${axis.sideB} Comparison`;
+    }
     if (brief.creative_brief_feedback) briefContext += `\n**Creator Feedback:** ${brief.creative_brief_feedback}`;
 
     const queryPackContext = `**Primary Query:** ${queryPack.primaryQuery}
@@ -3160,7 +3220,7 @@ If any answer reveals overreliance, revise toward a more original, primary-sourc
     // ─────────────────────────────────────────────────────────────────────
     const topicTranscriptUserBlock =
       stepType === "selected_source_analysis" && topicTranscripts.length > 0
-        ? `\n\n## Brief-Specific Topic Transcripts (THEORY, ANGLE, AND RESEARCH LEADS — not Tier 1 primary sources)\nTreat these as theory/angle/interpretation input. Factual primary source claims still require Tier 1 book or movie transcript support. Theories may be used if plausible, coherent, and not obviously contradicted by the primary sources. Frame theories honestly as theories.\n\n` +
+        ? `\n\n## Brief-Specific Topic Transcripts (THEORY, ANGLE, AND RESEARCH LEADS — not Tier 1 primary sources)\nTreat these as theory/angle/interpretation input. Factual primary source claims still require Tier 1 primary source support. Theories may be used if plausible, coherent, and not obviously contradicted by the primary sources. Frame theories honestly as theories.\n\n` +
           truncateTopicTranscripts(topicTranscripts, "ssa")
             .map((r: any) => `### "${r.video_title}" by ${r.channel_name} ${qualityTag(r.script_strength)}\n${r.transcript}`)
             .join("\n\n---\n\n")
@@ -3243,7 +3303,7 @@ ${creativeBriefContent || `Title: ${brief.title}\nAngle: ${brief.angle_note || b
 ## Creator Feedback on Brief
 ${brief.creative_brief_feedback || "None provided."}
 
-## Retrieved Primary Source Material (books and movie transcripts — primary evidence only)
+## Retrieved Primary Source Material (primary evidence only)
 ${sourceContext}
 
 Mine all six categories now. Rank everything by surprise value, specificity, and argument usefulness. Be precise about sources.`;
@@ -3318,7 +3378,7 @@ Please generate the ${stepType.replace(/_/g, " ")} based on the above informatio
       body: JSON.stringify({
         model: getModelForStep(stepType),
         messages: [
-          { role: "system", content: applyChannelPlaceholders(systemPromptFinal, channel) },
+          { role: "system", content: applyChannelPlaceholders(CHANNEL_CONTEXT_HEADER + systemPromptFinal, channel) },
           { role: "user", content: applyChannelPlaceholders(userMessage, channel) },
         ],
         stream: true,
