@@ -575,6 +575,7 @@ export type Database = {
       match_chunks: {
         Args: {
           k?: number
+          p_channel_id: string
           query_embedding: string
           source_type: Database["public"]["Enums"]["source_file_type"]
         }
@@ -589,7 +590,11 @@ export type Database = {
         }[]
       }
       search_chunks: {
-        Args: { max_results?: number; search_query: string }
+        Args: {
+          max_results?: number
+          p_channel_id: string
+          search_query: string
+        }
         Returns: {
           chunk_index: number
           content: string
@@ -603,6 +608,7 @@ export type Database = {
       search_chunks_by_type: {
         Args: {
           max_results?: number
+          p_channel_id: string
           search_query: string
           source_type: Database["public"]["Enums"]["source_file_type"]
         }
