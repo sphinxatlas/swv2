@@ -30,6 +30,7 @@ import {
 import { Plus, Trash2, ArrowRight, FileText, GitCompare, Clock, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useChannel } from "@/contexts/ChannelContext";
 
 const blankForm = (): CreateBriefInput => ({
   title: "",
@@ -125,6 +126,7 @@ function InlineTranscriptForm({ label, onSave, onCancel }: InlineTranscriptFormP
 
 export default function TopicBriefs() {
   const navigate = useNavigate();
+  const { channelId } = useChannel();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<CreateBriefInput>(blankForm());
   const [creating, setCreating] = useState(false);

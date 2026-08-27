@@ -50,6 +50,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useChannel } from "@/contexts/ChannelContext";
 
 type ActiveStep = PipelineStepType;
 
@@ -124,6 +125,7 @@ function splitMeltyVoicePassOutput(text: string): { scriptBody: string; changeLo
 
 export default function PipelineView() {
   const { briefId } = useParams<{ briefId: string }>();
+  const { channelId, setChannelId } = useChannel();
   const [activeStep, setActiveStep] = useState<ActiveStep>("creative_brief");
   const [generating, setGenerating] = useState(false);
   const [streamContent, setStreamContent] = useState("");
@@ -173,6 +175,13 @@ export default function PipelineView() {
     },
     enabled: !!briefId,
   });
+
+  // Opening a brief by URL moves the app to that brief's channel.
+  useEffect(() => {
+    if (brief?.channel_id && channelId && brief.channel_id !== channelId) {
+      setChannelId(brief.channel_id);
+    }
+  }, [brief?.channel_id, channelId, setChannelId]);
 
   const { data: outputs = [], refetch: refetchOutputs } = useQuery({
     queryKey: ["pipeline-outputs", briefId],

@@ -25,6 +25,7 @@ import { Plus, Trash2, Eye, Download } from "lucide-react";
 import { toast } from "sonner";
 import { SourceDetailModal } from "@/components/SourceDetailModal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useChannel } from "@/contexts/ChannelContext";
 
 const QUALITY_HELPER_TEXT =
   "Quality tagging is set by you, not by the AI. Strong = trusted research, absorbed and used freely. Useful = framing only; specific claims need STRONG or canon backup. Limited = inspiration only; specific claims need STRONG or canon backup. Sources are never named in the script.";
@@ -132,6 +133,7 @@ function InlineAddForm({ onSave, onCancel, busy }: InlineFormProps) {
 }
 
 function TranscriptSection({ section }: { section: Section }) {
+  const { channelId } = useChannel();
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [viewing, setViewing] = useState<any | null>(null);
@@ -142,8 +144,9 @@ function TranscriptSection({ section }: { section: Section }) {
   const deleteFn = section === "format" ? deleteFormatReferenceTranscript : deleteBriefTopicTranscript;
 
   const { data: items = [], refetch } = useQuery({
-    queryKey: [queryKey],
-    queryFn: fetchFn,
+    queryKey: [queryKey, channelId],
+    queryFn: () => fetchFn(channelId!),
+    enabled: !!channelId,
   });
 
   const label =
@@ -156,7 +159,7 @@ function TranscriptSection({ section }: { section: Section }) {
   const handleSave = async (input: { channel_name: string; video_title: string; transcript: string }) => {
     setBusy(true);
     try {
-      await saveFn(input);
+      await saveFn(input, channelId!);
       toast.success("Transcript saved");
       setShowForm(false);
       refetch();
@@ -169,7 +172,7 @@ function TranscriptSection({ section }: { section: Section }) {
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteFn(id);
+      await deleteFn(id, channelId!);
       toast.success("Deleted");
       refetch();
     } catch (err: any) {
@@ -239,7 +242,7 @@ function TranscriptSection({ section }: { section: Section }) {
                       <QualitySelect
                         value={item.script_strength}
                         onChange={async (next) => {
-                          await updateBriefTopicTranscriptStrength(item.id, next);
+                          await updateBriefTopicTranscriptStrength(item.id, next, channelId!);
                           refetch();
                         }}
                       />
@@ -315,8 +318,9 @@ function AlternativeSourcesSection() {
   const [notes, setNotes] = useState("");
 
   const { data: items = [], refetch } = useQuery({
-    queryKey: ["alternative-sources"],
-    queryFn: getAlternativeSources,
+    queryKey: ["alternative-sources", channelId],
+    queryFn: () => getAlternativeSources(channelId!),
+    enabled: !!channelId,
   });
 
   const reset = () => {
@@ -342,7 +346,7 @@ function AlternativeSourcesSection() {
         source_author: sourceAuthor.trim() || null,
         url: url.trim() || null,
         notes: notes.trim() || null,
-      });
+      }, channelId!);
       toast.success("Alternative source saved");
       reset();
       setShowForm(false);
@@ -356,7 +360,7 @@ function AlternativeSourcesSection() {
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteAlternativeSource(id);
+      await deleteAlternativeSource(id, channelId!);
       toast.success("Deleted");
       refetch();
     } catch (err: any) {
@@ -523,7 +527,7 @@ function AlternativeSourcesSection() {
                     <QualitySelect
                       value={item.script_strength as ScriptStrength | undefined}
                       onChange={async (next) => {
-                        await updateAlternativeSourceStrength(item.id, next);
+                        await updateAlternativeSourceStrength(item.id, next, channelId!);
                         refetch();
                       }}
                     />
