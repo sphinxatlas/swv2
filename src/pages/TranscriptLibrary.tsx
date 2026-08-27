@@ -307,6 +307,7 @@ function TranscriptSection({ section }: { section: Section }) {
 }
 
 function AlternativeSourcesSection() {
+  const { channelId } = useChannel();
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [viewing, setViewing] = useState<any | null>(null);
