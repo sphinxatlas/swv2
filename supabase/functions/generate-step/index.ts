@@ -1955,11 +1955,12 @@ const deriveRetrievalQueryPack = (brief: any): QueryPack => {
   };
 };
 
-const getChunkCountByType = async (supabase: any, sourceType: SearchSourceType) => {
+const getChunkCountByType = async (supabase: any, sourceType: SearchSourceType, channelId: string) => {
   const { data: files } = await supabase
     .from("source_files")
     .select("id")
-    .eq("file_type", sourceType);
+    .eq("file_type", sourceType)
+    .eq("channel_id", channelId);
 
   const fileIds = files?.map((f: any) => f.id) || [];
   if (fileIds.length === 0) return 0;
@@ -2185,7 +2186,8 @@ serve(async (req) => {
       const { data: files } = await supabase
         .from("source_files")
         .select("id, file_type")
-        .in("file_type", fileTypes);
+        .in("file_type", fileTypes)
+        .eq("channel_id", brief.channel_id);
       const empty: LayerMeta = { text: "", sourceUsed: "none", chunksRead: 0, totalChunks: 0, truncated: false };
       if (!files || files.length === 0) return empty;
       const ids = files.map((f: any) => f.id);
@@ -2328,6 +2330,7 @@ serve(async (req) => {
         .single();
       if (briefError || !b) throw new Error("Brief not found");
       brief = b;
+      if (!brief.channel_id) throw new Error("Brief has no channel_id");
     }
 
     // Load shared guidance layers (Script Instructions, Anti-AI, Host Persona)
@@ -2389,7 +2392,8 @@ serve(async (req) => {
     const { data: personaFiles } = await supabase
       .from("source_files")
       .select("id")
-      .eq("file_type", "host_persona");
+      .eq("file_type", "host_persona")
+      .eq("channel_id", brief.channel_id);
     let hostPersonaContext = "";
     if (personaFiles && personaFiles.length > 0) {
       const { data: personaChunks } = await supabase
@@ -2658,6 +2662,7 @@ Generate the Creative Brief now.`;
           supabase.rpc("search_chunks_by_type", {
             search_query: plan.query,
             source_type: plan.sourceType,
+            p_channel_id: brief.channel_id,
             max_results: plan.maxResults,
           }),
         ),
@@ -2715,12 +2720,14 @@ Generate the Creative Brief now.`;
             supabase.rpc("search_chunks_by_type", {
               search_query: plan.query,
               source_type: plan.sourceType,
+              p_channel_id: brief.channel_id,
               max_results: plan.maxResults,
             }),
             emb
               ? supabase.rpc("match_chunks", {
                   query_embedding: `[${emb.join(",")}]`,
                   source_type: plan.sourceType,
+                  p_channel_id: brief.channel_id,
                   k: plan.maxResults,
                 })
               : Promise.resolve({ data: [] as any[], error: null }),
@@ -2845,9 +2852,9 @@ Generate the Creative Brief now.`;
 
     // Get total indexed chunk counts for debug
     const [bookChunkCount, transcriptChunkCount, lexiconChunkCount] = await Promise.all([
-      getChunkCountByType(supabase, "book"),
-      getChunkCountByType(supabase, "transcript"),
-      getChunkCountByType(supabase, "lexicon"),
+      getChunkCountByType(supabase, "book", brief.channel_id),
+      getChunkCountByType(supabase, "transcript", brief.channel_id),
+      getChunkCountByType(supabase, "lexicon", brief.channel_id),
     ]);
 
     const matchesPerQuery = queryPack.allQueries.map((query) => ({
