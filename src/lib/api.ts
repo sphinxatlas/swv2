@@ -806,10 +806,10 @@ export async function getBriefTopicTranscriptLinks(briefId: string) {
   return (data || []).map((r: any) => r.brief_topic_transcripts).filter(Boolean);
 }
 
-export async function updateBriefCreativeBriefFields(briefId: string, updates: {
+export async function updateBriefCreativeBriefFields(briefId: string, channelId: string, updates: {
   creative_brief_feedback?: string;
   creative_brief_approved?: boolean;
-}, channelId: string) {
+}) {
   const { error } = await supabase
     .from('topic_briefs')
     .update(updates)
