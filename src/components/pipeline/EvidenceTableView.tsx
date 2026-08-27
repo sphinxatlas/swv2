@@ -19,6 +19,7 @@ import {
   type RiskLevel,
 } from "@/lib/parseEvidenceTable";
 import type { EvidencePoint } from "@/lib/api";
+import { useChannel } from "@/contexts/ChannelContext";
 
 type SourceFilter = "all" | "book" | "movie" | "both";
 type ConfidenceFilter = "all" | "high" | "medium" | "low";
@@ -66,6 +67,13 @@ function buildFields(sideA: string | null, sideB: string | null): FieldDef[] {
 const COLLAPSED_KEYS = new Set(["claim", "source_file", "confidence", "why_this_matters"]);
 
 export function EvidenceTableView({ rows, libraryFileNames, onSetApproval }: Props) {
+  const { channel } = useChannel();
+  const axis = (channel?.comparison_axis_labels ?? {}) as { side_a?: string; side_b?: string };
+  const sideA = typeof axis.side_a === "string" && axis.side_a.trim() ? axis.side_a.trim() : null;
+  const sideB = typeof axis.side_b === "string" && axis.side_b.trim() ? axis.side_b.trim() : null;
+  const axisEnabled = !!(sideA && sideB);
+  const FIELDS = useMemo(() => buildFields(sideA, sideB), [sideA, sideB]);
+
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [confFilter, setConfFilter] = useState<ConfidenceFilter>("all");
@@ -157,9 +165,9 @@ export function EvidenceTableView({ rows, libraryFileNames, onSetApproval }: Pro
       claim: row.claim,
       source_type: row.source_type,
       source_file: row.source_file,
-      book_evidence: row.book_evidence,
-      movie_evidence: row.movie_evidence,
-      difference_note: row.difference_note,
+      book_evidence: axisEnabled ? row.book_evidence : null,
+      movie_evidence: axisEnabled ? row.movie_evidence : null,
+      difference_note: axisEnabled ? row.difference_note : null,
       lexicon_support: row.lexicon_support,
       exact_quote: row.exact_quote,
       paraphrase: row.paraphrase,
