@@ -595,22 +595,6 @@ export type Database = {
           similarity: number
         }[]
       }
-      search_chunks: {
-        Args: {
-          max_results?: number
-          p_channel_id: string
-          search_query: string
-        }
-        Returns: {
-          chunk_index: number
-          content: string
-          file_id: string
-          file_name: string
-          file_type: Database["public"]["Enums"]["source_file_type"]
-          id: string
-          rank: number
-        }[]
-      }
       search_chunks_by_type: {
         Args: {
           max_results?: number
