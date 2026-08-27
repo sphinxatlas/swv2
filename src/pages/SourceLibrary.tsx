@@ -61,15 +61,6 @@ export default function SourceLibrary() {
             onRefresh={refetch}
           />
 
-          <FileUploadCard
-            fileType="lexicon"
-            title="📖 Reference Library"
-            description="Upload supporting reference files (.txt) such as encyclopaedias, glossaries, timelines, or compiled summaries. Used for context, chronology, and discovery only — never as a primary source."
-            accept=".txt"
-            files={lexicon}
-            onRefresh={refetch}
-            badge="Secondary Reference"
-          />
 
           <FileUploadCard
             fileType="instructions"
