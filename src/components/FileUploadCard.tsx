@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { SourceDetailModal } from "@/components/SourceDetailModal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useChannel } from "@/contexts/ChannelContext";
 
 interface FileUploadCardProps {
   fileType: "book" | "transcript" | "instructions" | "lexicon" | "competitor_analysis" | "host_persona" | "anti_ai_guide" | "melty_voice_pass";
@@ -29,6 +30,7 @@ interface FileUploadCardProps {
 }
 
 export function FileUploadCard({ fileType, title, description, accept = ".txt,.md,.pdf", files, onRefresh, badge }: FileUploadCardProps) {
+  const { channelId } = useChannel();
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState<string | null>(null);
   const [viewing, setViewing] = useState<SourceFile | null>(null);
@@ -44,7 +46,7 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
     setUploading(true);
     try {
       for (const file of Array.from(fileList)) {
-        const uploaded = await uploadSourceFile(file, fileType);
+        const uploaded = await uploadSourceFile(file, fileType, channelId!);
         toast.success(`Uploaded ${file.name}`);
         
         // Auto-process
@@ -59,11 +61,11 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
       setUploading(false);
       setProcessing(null);
     }
-  }, [fileType, onRefresh]);
+  }, [fileType, onRefresh, channelId]);
 
   const handleDelete = async (file: SourceFile) => {
     try {
-      await deleteSourceFile(file.id, file.storage_path);
+      await deleteSourceFile(file.id, file.storage_path, channelId!);
       toast.success(`Deleted ${file.name}`);
       onRefresh();
     } catch (err: any) {
@@ -127,7 +129,7 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
   const confirmRename = async (file: SourceFile) => {
     setRenameSaving(true);
     try {
-      await renameSourceFile(file.id, file.storage_path, file.name, renameValue);
+      await renameSourceFile(file.id, file.storage_path, file.name, renameValue, channelId!);
       toast.success(`Renamed to ${renameValue.trim()}`);
       setRenamingId(null);
       setRenameValue("");
@@ -273,7 +275,7 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
                   onValueChange={async (v) => {
                     const next = v === "unset" ? null : (v as ScriptStrength);
                     try {
-                      await updateSourceFileStrength(file.id, next);
+                      await updateSourceFileStrength(file.id, next, channelId!);
                       onRefresh();
                     } catch (err: any) {
                       toast.error(err.message || "Failed to update quality");

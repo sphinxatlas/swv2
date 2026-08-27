@@ -3,11 +3,14 @@ import { Layout } from "@/components/Layout";
 import { FileUploadCard } from "@/components/FileUploadCard";
 import { getSourceFiles } from "@/lib/api";
 import { Database } from "lucide-react";
+import { useChannel } from "@/contexts/ChannelContext";
 
 export default function SourceLibrary() {
+  const { channelId, loading: channelLoading } = useChannel();
   const { data: files = [], refetch } = useQuery({
-    queryKey: ["source-files"],
-    queryFn: getSourceFiles,
+    queryKey: ["source-files", channelId],
+    queryFn: () => getSourceFiles(channelId!),
+    enabled: !!channelId,
   });
 
   const books = files.filter((f) => f.file_type === "book");
@@ -20,6 +23,10 @@ export default function SourceLibrary() {
   const meltyVoicePass = files.filter((f) => f.file_type === "melty_voice_pass");
 
   const indexedCount = files.filter((f) => f.status === "indexed").length;
+
+  if (channelLoading || !channelId) {
+    return <Layout><div className="p-8" /></Layout>;
+  }
 
   return (
     <Layout>

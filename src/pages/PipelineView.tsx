@@ -187,8 +187,9 @@ export default function PipelineView() {
   });
 
   const { data: sourceFiles = [] } = useQuery({
-    queryKey: ["source-files-all"],
-    queryFn: getSourceFiles,
+    queryKey: ["source-files-all", channelId],
+    queryFn: () => getSourceFiles(channelId!),
+    enabled: !!channelId,
   });
   const libraryFileNames = sourceFiles.map((f: any) => f.name);
 
@@ -294,7 +295,7 @@ export default function PipelineView() {
     if (!briefId) return;
     setApproving(true);
     try {
-      await updateBriefCreativeBriefFields(briefId, {
+      await updateBriefCreativeBriefFields(briefId, channelId!, {
         creative_brief_feedback: feedbackText,
         creative_brief_approved: true,
       });
@@ -318,7 +319,7 @@ export default function PipelineView() {
     // edge function picks it up on read, then clear the field locally.
     if (activeStep === "creative_brief" && feedbackText.trim()) {
       try {
-        await updateBriefCreativeBriefFields(briefId, {
+        await updateBriefCreativeBriefFields(briefId, channelId!, {
           creative_brief_feedback: feedbackText.trim(),
         });
         await refetchBrief();
