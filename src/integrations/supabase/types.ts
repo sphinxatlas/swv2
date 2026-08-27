@@ -205,7 +205,9 @@ export type Database = {
           sort_order: number
           source_catalog: Json
           source_hierarchy: Json
+          subject_label: string
           updated_at: string
+          worked_examples: Json
         }
         Insert: {
           abbreviation_map?: Json
@@ -222,7 +224,9 @@ export type Database = {
           sort_order?: number
           source_catalog?: Json
           source_hierarchy?: Json
+          subject_label: string
           updated_at?: string
+          worked_examples?: Json
         }
         Update: {
           abbreviation_map?: Json
@@ -239,7 +243,9 @@ export type Database = {
           sort_order?: number
           source_catalog?: Json
           source_hierarchy?: Json
+          subject_label?: string
           updated_at?: string
+          worked_examples?: Json
         }
         Relationships: []
       }
