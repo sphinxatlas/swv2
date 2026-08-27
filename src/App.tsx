@@ -8,6 +8,7 @@ import TopicBriefs from "./pages/TopicBriefs";
 import PipelineView from "./pages/PipelineView";
 import TranscriptLibrary from "./pages/TranscriptLibrary";
 import NotFound from "./pages/NotFound";
+import { ChannelProvider } from "@/contexts/ChannelContext";
 
 const queryClient = new QueryClient();
 
@@ -16,15 +17,17 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<SourceLibrary />} />
-          <Route path="/briefs" element={<TopicBriefs />} />
-          <Route path="/briefs/:briefId" element={<PipelineView />} />
-          <Route path="/transcripts" element={<TranscriptLibrary />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <ChannelProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<SourceLibrary />} />
+            <Route path="/briefs" element={<TopicBriefs />} />
+            <Route path="/briefs/:briefId" element={<PipelineView />} />
+            <Route path="/transcripts" element={<TranscriptLibrary />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </ChannelProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

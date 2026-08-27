@@ -49,8 +49,19 @@ export function AppSidebar() {
 
       <div className="p-4 border-t border-border">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <BookOpen className="w-3.5 h-3.5 text-gold/70" />
-          <span>Harry Potter Universe</span>
+          <BookOpen className="w-3.5 h-3.5 text-gold/70 shrink-0" />
+          <Select value={channelId ?? undefined} onValueChange={setChannelId} disabled={loading || channels.length === 0}>
+            <SelectTrigger className="h-7 flex-1 text-xs border-0 bg-transparent px-1 focus:ring-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {channels.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </aside>
