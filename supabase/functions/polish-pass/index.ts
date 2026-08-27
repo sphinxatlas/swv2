@@ -46,7 +46,7 @@ HARD RULES:
 - Do NOT add unsupported claims. Do NOT invent evidence. Do NOT change canon meaning.
 - Do NOT restart the script from scratch unless the current version is structurally broken.
 - Do NOT primarily focus on anti-AI wording, sentence-level AI residue, host persona jokes, or generic style polish — that is a different pass.
-- Preserve all editor tags (e.g. [BOOK: ...], [FILM: ...], [LEXICON: ...]) wherever the underlying content remains.
+- Preserve all editor tags (e.g. [BOOK: ...], [FILM: ...]) wherever the underlying content remains.
 - Output the COMPLETE revised script only. No critique. No preamble. No change log.`;
 
 const ANTI_AI_SYSTEM = `You are running a STRICT FINAL ANTI AI CLEANUP PASS on an existing finished YouTube script.
@@ -126,7 +126,7 @@ HARD PRESERVATION RULES
 ================================================================
 - Preserve facts, thesis, evidence, source meaning, claim strength (only weaken unsupported claims), section order, argument structure, canon interpretation, and intended payoff.
 - Do NOT add new evidence, invent quotes/details, add new canon claims, or add unsupported jokes.
-- Preserve EDITOR REFERENCES / editor tags exactly (e.g. [BOOK: ...], [FILM: ...], [LEXICON: ...]).
+- Preserve EDITOR REFERENCES / editor tags exactly (e.g. [BOOK: ...], [FILM: ...]).
 - PRESERVE STRONG HUMAN LINES. If a line is vivid, funny, specific, or personally voiced in the host persona's register, leave it alone. Do NOT corporate-flatten it. Example of what NOT to do:
     Original: "And I'm not mad at the player for missing the shot. I'm mad at the coach for drawing up a play that needed him to miss it."
     Bad revision: "My frustration here is with the coaching decision..."
@@ -216,7 +216,7 @@ const HOST_VOICE_PASS_PROCEDURE = `You are running a HOST VOICE PASS on a finish
 HARD PRESERVATION RULES (BINDING)
 ================================================================
 - Do not change the script's arguments, evidence, claim strength, structure, factual claims, section order, or canon meaning.
-- Preserve all editor tags (e.g. [BOOK: ...], [FILM: ...], [LEXICON: ...]) exactly.
+- Preserve all editor tags (e.g. [BOOK: ...], [FILM: ...]) exactly.
 - Do not invent new evidence.
 
 ================================================================

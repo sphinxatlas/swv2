@@ -74,7 +74,7 @@ export const PIPELINE_STEPS: {
   },
 ];
 
-export async function uploadSourceFile(file: File, fileType: "book" | "transcript" | "instructions" | "lexicon" | "competitor_analysis" | "host_persona" | "anti_ai_guide" | "melty_voice_pass", channelId: string) {
+export async function uploadSourceFile(file: File, fileType: "book" | "transcript" | "instructions" | "competitor_analysis" | "host_persona" | "anti_ai_guide" | "melty_voice_pass", channelId: string) {
   const storagePath = `${fileType}/${Date.now()}-${file.name}`;
 
   const { error: uploadError } = await supabase.storage
@@ -852,7 +852,6 @@ export async function replaceEvidencePoints(
     book_evidence: d.book_evidence,
     movie_evidence: d.movie_evidence,
     difference_note: d.difference_note,
-    lexicon_support: d.lexicon_support,
     exact_quote: d.exact_quote,
     paraphrase: d.paraphrase,
     confidence: d.confidence,
