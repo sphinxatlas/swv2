@@ -2993,8 +2993,8 @@ DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placehold
             if (r.source_file) block.push(`Source File: ${r.source_file}`);
             block.push(`Source Type: ${r.source_type}`);
             block.push(`Confidence: ${r.confidence} | Evidence Type: ${r.evidence_type}`);
-            if (r.book_evidence) block.push(`Book Evidence: ${r.book_evidence}`);
-            if (r.movie_evidence) block.push(`Movie Evidence: ${r.movie_evidence}`);
+            if (r.book_evidence) block.push(`${getAxisLabels(channel).sideA} Evidence: ${r.book_evidence}`);
+            if (r.movie_evidence) block.push(`${getAxisLabels(channel).sideB} Evidence: ${r.movie_evidence}`);
             if (r.difference_note) block.push(`Contrast: ${r.difference_note}`);
             if (r.exact_quote) block.push(`Micro-Quote: ${r.exact_quote}`);
             if (r.paraphrase) block.push(`Paraphrase: ${r.paraphrase}`);
@@ -3059,8 +3059,8 @@ DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placehold
             if (r.source_file) block.push(`Source File: ${r.source_file}`);
             block.push(`Source Type: ${r.source_type}`);
             block.push(`Confidence: ${r.confidence} | Evidence Type: ${r.evidence_type}`);
-            if (r.book_evidence) block.push(`Book Evidence: ${r.book_evidence}`);
-            if (r.movie_evidence) block.push(`Movie Evidence: ${r.movie_evidence}`);
+            if (r.book_evidence) block.push(`${getAxisLabels(channel).sideA} Evidence: ${r.book_evidence}`);
+            if (r.movie_evidence) block.push(`${getAxisLabels(channel).sideB} Evidence: ${r.movie_evidence}`);
             if (r.difference_note) block.push(`Contrast: ${r.difference_note}`);
             if (r.exact_quote) block.push(`Micro-Quote: ${r.exact_quote}`);
             if (r.paraphrase) block.push(`Paraphrase: ${r.paraphrase}`);
