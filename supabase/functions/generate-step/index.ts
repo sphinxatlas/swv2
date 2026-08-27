@@ -75,9 +75,6 @@ TIER 1 — PRIMARY SOURCE EVIDENCE:
 - Used for book vs film comparisons
 - ONLY these can be treated as primary evidence
 
-TIER 2 — SECONDARY SOURCE SUPPORT:
-- Lexicon = SECONDARY reference only (lower priority)
-- Never overrides books or movie transcripts
 
 TIER 2 — UNIVERSAL RULE FOR ALL SECONDARY SOURCES (applies to every tier below):
 No secondary source — at any tier — is ever named, quoted verbatim, or paraphrased closely in the final script output. The writer absorbs the information and writes in their own voice. Source names like "MediaRetrospective", "Bretts Thoughts", a specific blogger, or a Reddit thread MUST NEVER appear in the script body. The tier governs RELIABILITY of claims (how confidently the writer can make a claim), not VISIBILITY of sources (which is always zero).
@@ -167,11 +164,7 @@ QUOTE DISCIPLINE (CRITICAL):
 - ALWAYS label which type each piece of evidence is
 
 When citing evidence:
-- Clearly label whether evidence comes from a book, movie transcript, or Lexicon
-- If Lexicon is used, label it as "secondary support"
-- Never present Lexicon text as primary sources
-- Never use Lexicon as a substitute for direct quotes from books or films
-- If a major claim relies mainly on Lexicon, flag it as needing primary confirmation
+- Clearly label whether evidence comes from a book or a movie transcript
 `;
 
 const COMPARISON_MODE_INSTRUCTION = `
@@ -296,8 +289,7 @@ EVIDENCE QUALITY RULES (CRITICAL):
 3. STRONGEST FIRST: Rank evidence points by: (a) relevance to the thesis, (b) clarity of the quote, (c) usefulness for a YouTube argument, (d) strength of contrast between book and movie.
 4. DEPRIORITIZE WEAK EVIDENCE: Exclude points that are only loosely related to the target trait. If the brief is about anger, do not include mild discomfort or general stress unless it is highly revealing. Match the claim intensity to what the source actually says.
 5. CLAIM DISCIPLINE: The claim must precisely match the evidence. Do not overstate grief as anger, discomfort as volatility, or tension as defiance unless the source strongly supports that wording.
-6. LEXICON STRICTNESS: Only include Lexicon support if it adds genuinely useful context. Do not include weak Lexicon entries just to fill a field.
-7. The table should feel like a curated shortlist of the best arguments for the video, not a broad evidence dump.
+6. The table should feel like a curated shortlist of the best arguments for the video, not a broad evidence dump.
 
 PARAPHRASE-FIRST DISCIPLINE (CRITICAL):
 - Default to PARAPHRASED evidence in every row. Paraphrase is the standard output.
@@ -312,25 +304,24 @@ A Micro-Quote is a verbatim string. It must appear word-for-word in the retrieve
 A book Micro-Quote must come from a book chunk; a movie Micro-Quote must come from a movie transcript chunk.
 
 FACT VALIDATION VS QUOTATION — these are different operations:
-- Secondary sources (Lexicon, commentary transcripts, fan wikis) CAN validate that a scene, event, or visual fact exists in the primary sources. Use them freely in Book Evidence, Movie Evidence, Contrast, and Paraphrase fields when they support the underlying claim.
+- Secondary sources (commentary transcripts, fan wikis) CAN validate that a scene, event, or visual fact exists in the primary sources. Use them freely in Book Evidence, Movie Evidence, Contrast, and Paraphrase fields when they support the underlying claim.
 - Secondary sources CANNOT supply a Micro-Quote attributed to a primary Source File. The Micro-Quote field is reserved for verbatim strings from the primary source's retrieved chunks only.
 
 Example — death scene:
-- VALID: "Voldemort's body dissolves into ash" as paraphrase in Movie Evidence, supported by Lexicon entry on the final duel. Micro-Quote field empty. Evidence Type: paraphrase.
+- VALID: "Voldemort's body dissolves into ash" as paraphrase in Movie Evidence, supported by a secondary source describing the final duel. Micro-Quote field empty. Evidence Type: paraphrase.
 - INVALID: "slowly crumbles into ash" in the Micro-Quote field tagged to the DH2 transcript file, when that exact string is not in the retrieved DH2 chunks.
 
 SECONDARY SOURCE ESCALATION RULE (CRITICAL):
 When an evidence point is assigned Confidence: Medium or Low because primary source retrieval does not fully support the claim, do NOT leave the secondary fields empty. Run the following escalation before finalising the evidence point:
 1. Check topic transcripts (commentary creators, fan analysis) for any reference to the same scene, moment, or claim.
-2. Check the Lexicon for a matching entry covering the same claim.
-3. Check secondary source blocks in the retrieved material for corroborating references.
+2. Check secondary source blocks in the retrieved material for corroborating references.
 
 If secondary sources contain supporting evidence, populate the **Secondary Source Support** field for that evidence point with the source name(s) + what they confirm, in plain prose. Example: "MediaRetrospective confirms Voldemort prowls and rips Death Eater masks in the GOF graveyard film scene. Bretts Thoughts corroborates. Neither provides transcript timecode."
 
 Then update the Commentary Angle field to state explicitly:
 - What the secondary sources confirm
 - What still requires primary primary source verification before the claim can be scripted as fact
-- Whether the secondary evidence is strong enough to use the claim as a qualified assertion ("according to commentary" / "widely noted by fans" / "per the Lexicon") rather than dropping it
+- Whether the secondary evidence is strong enough to use the claim as a qualified assertion ("according to commentary" / "widely noted by fans") rather than dropping it
 
 If no secondary source supports the claim either, write in Secondary Source Support: "No secondary source corroboration found. Recommend dropping or heavily qualifying this claim in the Beat Plan."
 
@@ -361,7 +352,6 @@ Create the evidence table in this EXACT markdown format for each evidence point:
 | **Book Evidence** | [Paraphrased evidence from book, if any — leave blank if none] |
 | **Movie Evidence** | [Paraphrased evidence from movie transcript, if any — leave blank if none] |
 | **Contrast** | [What differs between book and movie, if both present] |
-| **Lexicon Support** | [Only if genuinely useful — mark as SECONDARY] |
 | **Secondary Source Support** | [REQUIRED when Confidence is Medium or Low — name the secondary source(s) + what they confirm in plain prose. If none corroborates, write: "No secondary source corroboration found. Recommend dropping or heavily qualifying this claim in the Beat Plan." Leave blank only when Confidence is High.] |
 | **Micro-Quote** | [Optional: verbatim quote UNDER 12 words, in quotation marks — leave blank if not essential] |
 | **Paraphrase** | [Paraphrased version of the evidence — REQUIRED for every point] |
@@ -377,7 +367,6 @@ Rules:
 - Never invent quotes
 - Never blur exact quote vs paraphrase
 - Paraphrase is the DEFAULT — exact quotes are the exception, not the rule
-- If Lexicon is the only source, set Confidence to Low and note it needs primary confirmation
 - If a point is only weakly related to the thesis, exclude it entirely
 - Commentary Transcripts CANNOT be used as primary evidence — only as angle inspiration
 - If an angle was inspired by a commentary transcript, it must be confirmed against books or movie transcripts before inclusion`,
@@ -429,7 +418,7 @@ ABSOLUTELY FORBIDDEN in the beat plan output
 - Markdown headings of any level (#, ##, ###)
 - Section labels (Hook, Introduction, Section 1, Outro, Conclusion)
 - The labels 'Section purpose:', 'New information revealed:', 'Word budget:', 'Emotional beat:', 'Visual opportunity:'
-- Editor or source tags ([BOOK:], [FILM:], [LEXICON:])
+- Editor or source tags ([BOOK:], [FILM:])
 - Time codes
 - Bullet points inside a beat paragraph
 - Numbered sub-points inside a beat paragraph
@@ -769,7 +758,7 @@ ENFORCEMENT (structural, runs before the Full Script step):
 
 ABSOLUTELY FORBIDDEN in the Script Evidence Pack output
 - Markdown headings or tables
-- Editor or source tags ([BOOK:], [FILM:], [LEXICON:])
+- Editor or source tags ([BOOK:], [FILM:])
 - Bullet lists or numbered sub-lists inside a beat paragraph
 - Bracketed citations (use prose attribution instead)
 - Raw quote dumps or evidence stacks (maximum one quote per beat)
@@ -864,7 +853,7 @@ HARD BAN inside the spoken script (MANDATORY)
 The following must NEVER appear in the spoken script body:
 - Markdown headings of any level (#, ##, ###)
 - Section labels (Hook, Introduction, Section 1, Conclusion, Outro, Part 1)
-- Editor or source tags ([BOOK:], [FILM:], [LEXICON:], [CLIP:], [B-ROLL:])
+- Editor or source tags ([BOOK:], [FILM:], [CLIP:], [B-ROLL:])
 - Time codes (0:00, 0:00-0:30)
 - Word count footers (Word count: ~X)
 - Bracketed visual cues
@@ -1149,14 +1138,6 @@ Additional fidelity rules:
 Requirements:
 - The body text must be PURELY NATURAL SPOKEN WORDS as if read aloud by a creator — conversational, authoritative, human
 - Build the script primarily from books and movie transcripts
-- Allow Lexicon only as background support for your understanding — it must NEVER be mentioned in the spoken narration
-- Do not include Lexicon-derived wording as if it were primary source dialogue or narration
-
-LEXICON MENTION BAN (CRITICAL):
-- The spoken narration must NEVER mention "the Lexicon", or use phrasing like "The Lexicon notes…", "According to the Lexicon…", etc.
-- Lexicon is background context only — it informs your understanding but is INVISIBLE in the voiceover text
-- If Lexicon supports a point, the ONLY allowed reference is as an editor metadata tag on its own line: [LEXICON: filename | context]
-- No other Lexicon callouts, citations, or attribution language may appear in the script body
 
 QUOTE DISCIPLINE (CRITICAL):
 - Do not overuse direct quotes. Most evidence must be paraphrased naturally.
@@ -1187,7 +1168,7 @@ FORBIDDEN IN OUTPUT:
 
 EDITOR REFERENCES
 
-Editor information does not appear inside the spoken script. After the script ends, add one section titled exactly EDITOR REFERENCES. Below that heading, list one bullet per beat with the source backing it (book chapter, film scene, lexicon page).
+Editor information does not appear inside the spoken script. After the script ends, add one section titled exactly EDITOR REFERENCES. Below that heading, list one bullet per beat with the source backing it (book chapter, film scene).
 
 The voiceover above must contain zero bracket tags, zero source labels, zero markdown. The EDITOR REFERENCES section is the only place editor information lives.
 
@@ -1397,7 +1378,7 @@ Your job is to analyze ONLY the secondary sources that the creator specifically 
 
 ABSOLUTE RULES — READ CAREFULLY:
 
-1. You are NOT the primary source evidence layer. The Insights & Research step already mined the books, movie transcripts, and lexicon. Do not re-do that work. Do not invent primary source claims. Do not promote a transcript's claim as confirmed fact.
+1. You are NOT the primary source evidence layer. The Insights & Research step already mined the books and movie transcripts. Do not re-do that work. Do not invent primary source claims. Do not promote a transcript's claim as confirmed fact.
 
 2. SECONDARY SOURCES ARE NOT PROOF. Selected topic transcripts and Alternative Sources are AUDIENCE INTELLIGENCE and INTERPRETIVE INPUT only. They reveal what the fandom is debating, what's been overdone, what objections exist, and what framings are unexplored. They do NOT confirm primary source facts. Any factual claim sourced from them must be flagged "needs primary source validation".
 
@@ -1443,7 +1424,7 @@ Concrete guidance on how this should shape: structure, pacing, re-hooks, escalat
 Specific phrases, jokes, transitions, structures, conclusions, or examples from the selected sources that the script should NOT imitate. Bullet list. Quote the imitable element briefly so downstream steps can recognize and avoid it.
 
 SOURCE HIERARCHY REMINDER:
-Books and movie transcripts are Tier 1 primary sources. Lexicon is secondary reference. Permanent commentary transcripts and the selected secondary sources are interpretive only. Your output flows into the Evidence Table, Outline, and Full Script — those steps will treat your candidate claims as leads to validate, NOT as final proof.
+Books and movie transcripts are Tier 1 primary sources. Permanent commentary transcripts and the selected secondary sources are interpretive only. Your output flows into the Evidence Table, Outline, and Full Script — those steps will treat your candidate claims as leads to validate, NOT as final proof.
 `;
 
 STEP_PROMPTS["angle_check"] = `You are a story editor stress-testing the argument for a YouTube video before any evidence is curated or structured.
@@ -1493,7 +1474,7 @@ const STEP_ORDER = [
   "full_script",
 ];
 
-type SearchSourceType = "book" | "transcript" | "lexicon" | "competitor_analysis";
+type SearchSourceType = "book" | "transcript" | "competitor_analysis";
 
 type QueryPack = {
   primaryQuery: string;
@@ -2486,17 +2467,14 @@ Generate the Creative Brief now.`;
     const isComparison = brief.comparison_mode || false;
     const bookPerQuery = isComparison ? 10 : 8;
     const transcriptPerQuery = isComparison ? 10 : 8;
-    const lexiconPerQuery = isComparison ? 3 : 4;
 
     // For transcript retrieval, use transcript-specific queries IN ADDITION to main queries
     const bookQueries = queryPack.allQueries;
     const transcriptSearchQueries = dedupeStrings([...queryPack.allQueries, ...queryPack.transcriptQueries], 35);
-    const lexiconQueries = queryPack.allQueries;
 
     const retrievalPlan: { query: string; sourceType: SearchSourceType; maxResults: number }[] = [
       ...bookQueries.map((query) => ({ query, sourceType: "book" as const, maxResults: bookPerQuery })),
       ...transcriptSearchQueries.map((query) => ({ query, sourceType: "transcript" as const, maxResults: transcriptPerQuery })),
-      ...lexiconQueries.map((query) => ({ query, sourceType: "lexicon" as const, maxResults: lexiconPerQuery })),
       // Commentary Transcripts — searched for idea discovery only, limited results
       ...queryPack.allQueries.slice(0, 5).map((query) => ({ query, sourceType: "competitor_analysis" as const, maxResults: 5 })),
     ];
@@ -2508,11 +2486,10 @@ Generate the Creative Brief now.`;
     const useVectorSearch = true;
     const hybridArmDiagnostics: any[] = [];
 
-    const perQueryCounts: Record<string, { book: number; transcript: number; lexicon: number }> = {};
+    const perQueryCounts: Record<string, { book: number; transcript: number }> = {};
     const mergedByType: Record<SearchSourceType, Map<string, any>> = {
       book: new Map(),
       transcript: new Map(),
-      lexicon: new Map(),
       competitor_analysis: new Map(),
     };
 
@@ -2541,7 +2518,7 @@ Generate the Creative Brief now.`;
         const rows = retrievalResponses[idx].data || [];
 
         if (!perQueryCounts[plan.query]) {
-          perQueryCounts[plan.query] = { book: 0, transcript: 0, lexicon: 0 };
+          perQueryCounts[plan.query] = { book: 0, transcript: 0 };
         }
         perQueryCounts[plan.query][plan.sourceType] = rows.length;
 
@@ -2614,7 +2591,7 @@ Generate the Creative Brief now.`;
       // 3. Per plan item: RRF-fuse FTS + vector, then apply existing boosts.
       armResults.forEach(({ plan, ftsRows, vecRows }) => {
         if (!perQueryCounts[plan.query]) {
-          perQueryCounts[plan.query] = { book: 0, transcript: 0, lexicon: 0 };
+          perQueryCounts[plan.query] = { book: 0, transcript: 0 };
         }
 
         // Build per-chunk RRF state for THIS plan item.
@@ -2699,7 +2676,6 @@ Generate the Creative Brief now.`;
     // Test mode caps every source type at 10 chunks (per spec).
     const bookLimit = isComparison ? 20 : 20;
     const transcriptLimit = isComparison ? 20 : 20;
-    const lexiconLimit = isComparison ? 5 : 10;
 
     const bookChunksSorted = Array.from(mergedByType.book.values())
       .sort((a, b) => b._score - a._score);
@@ -2714,25 +2690,20 @@ Generate the Creative Brief now.`;
     const transcriptPool = relevantTranscripts.length >= 3 ? relevantTranscripts : allTranscriptChunks;
     const transcriptChunks = applyFloorAndCeilingQuota(transcriptPool, prioritySources, transcriptLimit, "transcript", priorityLabelToToken);
 
-    const lexiconChunks = Array.from(mergedByType.lexicon.values())
-      .sort((a, b) => b._score - a._score)
-      .slice(0, lexiconLimit);
-
     // Commentary Transcripts — for idea discovery only, limited
     const commentaryChunks = Array.from(mergedByType.competitor_analysis.values())
       .sort((a, b) => b._score - a._score)
       .slice(0, 8);
 
     // Get total indexed chunk counts for debug
-    const [bookChunkCount, transcriptChunkCount, lexiconChunkCount] = await Promise.all([
+    const [bookChunkCount, transcriptChunkCount] = await Promise.all([
       getChunkCountByType(supabase, "book", brief.channel_id),
       getChunkCountByType(supabase, "transcript", brief.channel_id),
-      getChunkCountByType(supabase, "lexicon", brief.channel_id),
     ]);
 
     const matchesPerQuery = queryPack.allQueries.map((query) => ({
       query,
-      ...(perQueryCounts[query] || { book: 0, transcript: 0, lexicon: 0 }),
+      ...(perQueryCounts[query] || { book: 0, transcript: 0 }),
     }));
 
     // Debug block for retrieval diagnostics
@@ -2757,7 +2728,7 @@ Generate the Creative Brief now.`;
       },
       comparison_mode: isComparison,
       filters_applied: {
-        source_types_searched: ["book", "transcript", "lexicon"],
+        source_types_searched: ["book", "transcript"],
         instructions_excluded_from_evidence: true,
         priority_sources_mode: "soft_boost_plus_floor_quota",
         priority_sources_value: prioritySources,
@@ -2766,12 +2737,10 @@ Generate the Creative Brief now.`;
       indexed_chunks: {
         book: bookChunkCount,
         transcript: transcriptChunkCount,
-        lexicon: lexiconChunkCount,
       },
       matches_returned: {
         book: bookChunks.length,
         transcript: transcriptChunks.length,
-        lexicon: lexiconChunks.length,
       },
       transcript_debug: {
         transcript_specific_queries_used: queryPack.transcriptQueries,
@@ -2805,14 +2774,14 @@ Generate the Creative Brief now.`;
     }
 
     // Build context grouped by source type — NEVER include instructions as evidence
-    const totalMatches = bookChunks.length + transcriptChunks.length + lexiconChunks.length;
+    const totalMatches = bookChunks.length + transcriptChunks.length;
     let sourceContext: string;
 
     if (totalMatches === 0) {
       // STRICT: No fallback to general knowledge
       sourceContext = `## RETRIEVAL FAILURE — NO INDEXED MATCHES FOUND FOR DERIVED QUERY PACK
 - **Status**: No indexed matches found for the derived query pack
-- **Source types searched**: book, transcript, lexicon
+- **Source types searched**: book, transcript
 - **Filters applied**: file_type scoped search; priority_sources soft boost in ranking only (never a hard filter)
 - **Primary query**: ${queryPack.primaryQuery}
 - **Compact queries used**:
@@ -2833,12 +2802,11 @@ DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placehold
 - Comparison mode: ${isComparison ? "ON" : "OFF"}
 - Book matches: ${bookChunks.length}
 - Transcript matches: ${transcriptChunks.length}
-- Lexicon matches: ${lexiconChunks.length}
 - Priority sources mode: soft boost + floor quota (min 3 per priority file)
 - Transcript chunks indexed: ${transcriptChunkCount}
 - Transcript overwhelmed by books: ${transcriptChunks.length === 0 && bookChunks.length > 5 ? "YES — WARNING" : "No"}`);
 
-      sections.push("### Query-Level Match Counts\n" + matchesPerQuery.map((m) => `- ${m.query} → book=${m.book}, transcript=${m.transcript}, lexicon=${m.lexicon}`).join("\n"));
+      sections.push("### Query-Level Match Counts\n" + matchesPerQuery.map((m) => `- ${m.query} → book=${m.book}, transcript=${m.transcript}`).join("\n"));
 
       // Transcript-specific debug
       sections.push(`### Transcript Retrieval Debug
@@ -2882,11 +2850,6 @@ DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placehold
         if (contrastPairs.length > 0) {
           sections.push("### Possible Contrast Pairs\n" + contrastPairs.join("\n\n---\n\n"));
         }
-      }
-
-      if (lexiconChunks.length > 0) {
-        sections.push("### SECONDARY REFERENCE — Lexicon Support (use for context only, NOT as primary sources)\n" +
-          lexiconChunks.map((c: any) => `[${c.file_name} — LEXICON — SECONDARY]\n${c.content}`).join("\n\n---\n\n"));
       }
 
       // Commentary Angles — secondary commentary context, NOT evidence
@@ -2978,7 +2941,6 @@ DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placehold
             if (r.difference_note) block.push(`Contrast: ${r.difference_note}`);
             if (r.exact_quote) block.push(`Micro-Quote: ${r.exact_quote}`);
             if (r.paraphrase) block.push(`Paraphrase: ${r.paraphrase}`);
-            if (r.lexicon_support) block.push(`Lexicon Support: ${r.lexicon_support}`);
             if (r.secondary_source_support) block.push(`Secondary Source Support: ${r.secondary_source_support}`);
             if (r.why_this_matters) block.push(`Why This Matters: ${r.why_this_matters}`);
             if (r.commentary_angle) block.push(`Commentary Angle: ${r.commentary_angle}`);
@@ -3045,7 +3007,6 @@ DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placehold
             if (r.difference_note) block.push(`Contrast: ${r.difference_note}`);
             if (r.exact_quote) block.push(`Micro-Quote: ${r.exact_quote}`);
             if (r.paraphrase) block.push(`Paraphrase: ${r.paraphrase}`);
-            if (r.lexicon_support) block.push(`Lexicon Support: ${r.lexicon_support}`);
             if (r.secondary_source_support) block.push(`Secondary Source Support: ${r.secondary_source_support}`);
             if (r.why_this_matters) block.push(`Why This Matters: ${r.why_this_matters}`);
             if (r.commentary_angle) block.push(`Commentary Angle: ${r.commentary_angle}`);
@@ -3184,7 +3145,7 @@ If any answer reveals overreliance, revise toward a more original, primary-sourc
         `- Preserve the strongest material from the previous script. Rebuild weak or repetitive sections.\n` +
         `- Directly apply the user's feedback. Do not patch a few sentences cosmetically.\n` +
         `- Reuse the full pipeline context (Topic Brief, Creative Brief, Insights & Research, Evidence Table, Outline, source excerpts, Script Writing Instructions, Anti AI Guide, Host Persona, topic transcripts, commentary transcripts).\n` +
-        `- Maintain target word count, editor tags after evidence paragraphs, source specificity, quote discipline, and the Lexicon mention ban.\n` +
+        `- Maintain target word count, editor tags after evidence paragraphs, source specificity, and quote discipline.\n` +
         `- Output ONLY the revised Full Script. Do not include an explanation of changes, a diff, a changelog, or commentary about the revision.\n`;
     }
 
@@ -3339,7 +3300,7 @@ Please generate the ${stepType.replace(/_/g, " ")} based on the above informatio
       typeof revisionFeedback === "string" &&
       revisionFeedback.trim().length > 0;
     if (hasGenericRevisionFeedback) {
-      userMessage += `\n\n## Creator Revision Feedback (BINDING)\nThe creator reviewed the previous output of the ${stepType.replace(/_/g, " ")} step and provided the following feedback before regenerating. Treat it as a binding directive: directly apply it, rebuild affected sections rather than cosmetically patching them, and keep all other guardrails (source hierarchy, quote discipline, anti-AI rules, lexicon discipline) intact.\n\n${revisionFeedback.trim()}`;
+      userMessage += `\n\n## Creator Revision Feedback (BINDING)\nThe creator reviewed the previous output of the ${stepType.replace(/_/g, " ")} step and provided the following feedback before regenerating. Treat it as a binding directive: directly apply it, rebuild affected sections rather than cosmetically patching them, and keep all other guardrails (source hierarchy, quote discipline, anti-AI rules) intact.\n\n${revisionFeedback.trim()}`;
     }
 
     // Call Lovable AI
