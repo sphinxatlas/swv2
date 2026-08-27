@@ -117,6 +117,11 @@ export default function TopicBriefs() {
   const navigate = useNavigate();
   const { channelId, channel } = useChannel();
   const comparisonAvailable = !!channel?.comparison_mode_available;
+  const axis = (channel?.comparison_axis_labels ?? {}) as { side_a?: string; side_b?: string };
+  const comparisonLabel =
+    axis.side_a && axis.side_b
+      ? `${axis.side_a} vs ${axis.side_b} Comparison Mode`
+      : "Comparison Mode";
 
   // Priority source dropdowns are built from the channel's source_catalog,
   // grouped by `group` in first-appearance order. Ungrouped entries fall into a
