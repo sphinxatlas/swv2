@@ -19,7 +19,7 @@ export function AppSidebar() {
             <Sparkles className="w-4 h-4 text-gold" />
           </div>
           <div>
-            <h1 className="font-mono text-sm font-bold text-foreground tracking-tight">ScriptForge</h1>
+            <h1 className="font-mono text-sm font-bold text-foreground tracking-tight">ScriptLab</h1>
             <p className="text-xs text-muted-foreground">Source-Grounded Scripts</p>
           </div>
         </div>
