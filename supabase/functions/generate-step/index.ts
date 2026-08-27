@@ -1256,7 +1256,7 @@ FORMAT REFERENCE RULES:
 FORMAT REFERENCE SCOPE LIMIT
 The format reference informs pacing, hook rhythm, and tonal cadence
 only. It does NOT dictate argument structure, stacking technique,
-emotional arc, or escalation shape — those are determined by the HP
+emotional arc, or escalation shape — those are determined by the topic
 angle and (downstream) by the evidence retrieved in SEP. Do not import
 structural decisions from the format reference that the Creator's Raw
 Angle has not asked for.
