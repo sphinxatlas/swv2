@@ -23,6 +23,7 @@ const FIELD_MAP: Record<string, keyof EvidencePointDraft | "why_this_matters"> =
   "source type": "source_type",
   "source file": "source_file",
   "book evidence": "book_evidence",
+  "evidence": "book_evidence",
   "movie evidence": "movie_evidence",
   "contrast": "difference_note",
   "difference": "difference_note",
