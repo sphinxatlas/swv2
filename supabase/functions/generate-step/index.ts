@@ -68,14 +68,14 @@ function getModelForStep(stepType: string) {
 const SOURCE_HIERARCHY_INSTRUCTION = `
 IMPORTANT SOURCE HIERARCHY RULES:
 
-TIER 1 — PRIMARY CANON EVIDENCE:
+TIER 1 — PRIMARY SOURCE EVIDENCE:
 - Books = PRIMARY source (highest priority)
 - Movie Transcripts = PRIMARY source (highest priority)
 - Used for factual claims about story events, characterization, and exact quotes
 - Used for book vs film comparisons
 - ONLY these can be treated as primary evidence
 
-TIER 2 — SECONDARY CANON SUPPORT:
+TIER 2 — SECONDARY SOURCE SUPPORT:
 - Lexicon = SECONDARY reference only (lower priority)
 - Never overrides books or movie transcripts
 
@@ -92,12 +92,12 @@ The user has manually marked these sources as trustworthy. Treat their content a
 
 CAN do:
 - Inform factual claims, interpretive framings, audience-signal awareness, and recurring fandom observations
-- Be used as supporting evidence for claims when Tier 1 canon does not cover the specific detail
+- Be used as supporting evidence for claims when Tier 1 primary sources do not cover the specific detail
 - Provide the confirmation needed to promote a [USEFUL] or [LIMITED] observation into a usable claim
-- Shape the writer's confident voice on a topic, even where canon is thin
+- Shape the writer's confident voice on a topic, even where the primary sources are thin
 
 CANNOT do:
-- Override Tier 1 canon when Tier 1 evidence exists
+- Override Tier 1 primary sources when Tier 1 evidence exists
 - Supply Micro-Quotes attributed to primary Source Files (books or film transcripts) — that rule remains absolute
 - Be named, quoted, or paraphrased closely in the script
 
@@ -107,11 +107,11 @@ Default tier. The user has either marked them as Useful or hasn't tagged them ye
 CAN do:
 - Inform interpretation, framing, and audience-signal awareness
 - Shape the angle, identify overused framings to avoid, identify objections worth handling
-- Be used as supporting context when reinforced by a [STRONG] source OR by Tier 1 canon
+- Be used as supporting context when reinforced by a [STRONG] source OR by Tier 1 primary sources
 - Contribute to the writer's general understanding of the topic
 
 CANNOT do:
-- Be cited as standalone factual evidence for claims not also backed by [STRONG] sources or canon
+- Be cited as standalone factual evidence for claims not also backed by [STRONG] sources or primary sources
 - Be named, quoted, or paraphrased closely
 
 TIER 2.7 — LIMITED SECONDARY SOURCES (tagged [LIMITED]):
@@ -120,15 +120,15 @@ The user has flagged these as low-quality but still wants them read for inspirat
 CAN do:
 - Inform direction, mood, what the fandom is reacting to, recurring grievances
 - Identify common reactions and complaints that shape angle choices
-- Be promoted into supportable claims IF a [STRONG] source OR Tier 1 canon supports the same claim
+- Be promoted into supportable claims IF a [STRONG] source OR Tier 1 primary sources supports the same claim
 
 CANNOT do:
 - Be cited as standalone evidence
 - Be named, quoted, or paraphrased closely
-- Influence factual claims that are NOT also supported by [STRONG] sources or Tier 1 canon
+- Influence factual claims that are NOT also supported by [STRONG] sources or Tier 1 primary sources
 
 If you find a great point in a [LIMITED] source, you have three options:
-1. Find Tier 1 canon to back it up — then it becomes a canon-supported claim
+1. Find Tier 1 primary sources to back it up — then it becomes a source-supported claim
 2. Find a [STRONG] source to back it up — then it becomes a [STRONG]-backed claim usable in the writer's voice
 3. Drop it
 
@@ -138,22 +138,22 @@ TIER 3 — TIER ROUTING FOR ALL SECONDARY SOURCES:
 Every secondary source (Commentary Transcripts, Brief Topic Transcripts, Alternative Sources) appears in the prompt context with a quality tag in square brackets. The tag determines which subtier (2.5 / 2.6 / 2.7) applies.
 
 Reliability hierarchy for backing a claim:
-- Tier 1 canon (books + film transcripts) — strongest backing
-- [STRONG] secondary — can supplement canon, can stand in where canon is missing
-- [USEFUL] / [UNSET] — can support framing; needs [STRONG] or canon to back specific claims
-- [LIMITED] — inspiration only; needs [STRONG] or canon to back any specific claim
+- Tier 1 primary sources (books + film transcripts) — strongest backing
+- [STRONG] secondary — can supplement canon, can stand in where the primary sources are missing
+- [USEFUL] / [UNSET] — can support framing; needs [STRONG] or primary sources to back specific claims
+- [LIMITED] — inspiration only; needs [STRONG] or primary sources to back any specific claim
 
 Failure mode: a [STRONG] source treated identically to a [LIMITED] source means the tagging system is being ignored. Differentiate.
 
 TIER 4 — WRITING GUIDANCE ONLY (never evidence, never canon):
 - Script Instructions & Strategy = output behavior, writing constraints, hook quality, pacing, rehooks, argument structure, retention
 - Used only for tone, structure, hook, pacing, writing behavior
-- Never used as canon evidence
+- Never used as primary source evidence
 
 CRITICAL RULES:
-- Commentary Transcripts must NEVER be cited as canon evidence or used to prove {{SUBJECT_LABEL}} facts
+- Commentary Transcripts must NEVER be cited as primary source evidence or used to prove {{SUBJECT_LABEL}} facts
 - No competitor wording reuse — do NOT copy commentary transcript wording, structure, or phrasing
-- Script Instructions must NEVER be cited as canon evidence
+- Script Instructions must NEVER be cited as primary source evidence
 - They are layers that improve HOW the script is written, not WHAT it claims
 
 {{SOURCE_HIERARCHY_PROSE}}
@@ -169,7 +169,7 @@ QUOTE DISCIPLINE (CRITICAL):
 When citing evidence:
 - Clearly label whether evidence comes from a book, movie transcript, or Lexicon
 - If Lexicon is used, label it as "secondary support"
-- Never present Lexicon text as primary canon
+- Never present Lexicon text as primary sources
 - Never use Lexicon as a substitute for direct quotes from books or films
 - If a major claim relies mainly on Lexicon, flag it as needing primary confirmation
 `;
@@ -181,33 +181,33 @@ This script compares book and film versions. Do not force a paired book/movie st
 
 // ── BINDING WRITING / VOICE / THEORY INSTRUCTION BLOCKS ──
 // These wrap guidance documents (Host Persona, Script Instructions, Anti AI Guide)
-// and re-frame commentary + topic transcripts as theory/angle inputs rather than canon.
+// and re-frame commentary + topic transcripts as theory/angle inputs rather than the primary sources.
 
 const TOPIC_TRANSCRIPTS_FRAMING_INSTRUCTION = `
 BRIEF SPECIFIC TOPIC TRANSCRIPTS — THEORY, ANGLE, AND RESEARCH LEADS:
 These are topic relevant commentary, theory, or transcript materials about {{SUBJECT_LABEL}} selected for this brief.
 Use them to identify possible theories, conspiracy style arguments, interpretive angles, fandom questions, contradictions worth exploring, unusual readings of characters/scenes/adaptation choices, and argument structures that could make the video more compelling.
-They are NOT Tier 1 canon and must NOT be treated as direct proof of canon events.
-However, they do not need to be strictly confirmed by primary canon in every case, because some are theories, speculative arguments, or interpretive claims.
+They are NOT Tier 1 primary sources and must NOT be treated as direct proof of events in the primary sources.
+However, they do not need to be strictly confirmed by the primary sources in every case, because some are theories, speculative arguments, or interpretive claims.
 
 Rules:
-- If a point is presented as a canon fact, it MUST be supported by Tier 1 book or movie transcript evidence.
-- If a point is a theory, interpretation, conspiracy, or speculative reading, it may be used if it makes logical sense and does not ignore obvious canon.
+- If a point is presented as a primary source fact, it MUST be supported by Tier 1 book or movie transcript evidence.
+- If a point is a theory, interpretation, conspiracy, or speculative reading, it may be used if it makes logical sense and does not ignore obvious primary source details.
 - The script must clearly frame theories as theories, interpretations, possibilities, or readings.
-- Do not present topic transcript ideas as proven canon unless Tier 1 evidence supports them.
+- Do not present topic transcript ideas as proven primary source claims unless Tier 1 evidence supports them.
 - Do not let topic transcripts override clear book or movie evidence.
-- If a theory conflicts with canon, acknowledge the tension instead of hiding it.
+- If a theory conflicts with the primary sources, acknowledge the tension instead of hiding it.
 - Use these transcripts to make the script sharper, more interesting, and more fan aware — not to replace original analysis.
 `;
 
 const COMMENTARY_TRANSCRIPTS_FRAMING_INSTRUCTION = `
 COMMENTARY TRANSCRIPTS — INTERPRETIVE AND THEORY INPUT:
-These materials may contain analysis, theories, speculation, fandom interpretation, or competitor framing. They are NOT canon evidence.
+These materials may contain analysis, theories, speculation, fandom interpretation, or competitor framing. They are NOT primary source evidence.
 Use them to discover interesting angles, framings, and argument patterns.
 
-- For factual canon claims, verify with Tier 1 books or movie transcripts.
-- For theories and interpretive angles, do NOT require direct canon confirmation. Instead, check that the idea is plausible, logically coherent, interesting, and not obviously contradicted by primary canon.
-- Never present commentary material as proven canon unless Tier 1 evidence supports it.
+- For factual primary source claims, verify with Tier 1 books or movie transcripts.
+- For theories and interpretive angles, do NOT require direct primary source confirmation. Instead, check that the idea is plausible, logically coherent, interesting, and not obviously contradicted by the primary sources.
+- Never present commentary material as proven primary source claims unless Tier 1 evidence supports it.
 - Never copy commentary wording, structure, or phrasing into the script.
 `;
 
@@ -283,8 +283,8 @@ The Evidence Table must clearly separate four kinds of points. Group them under 
 
 1. CANON SUPPORTED CLAIMS — require Tier 1 book or movie transcript support. Confidence: High/Medium based on source clarity.
 2. ADAPTATION CONTRASTS — book vs movie differences. Use book and movie transcript evidence where possible.
-3. INTERPRETIVE / THEORY ANGLES — do NOT require direct canon confirmation. Check that the theory is plausible, interesting, logically coherent, and not obviously contradicted by canon. Clearly label as theory / interpretation / speculative angle. Note what canon detail, scene, omission, contradiction, or pattern makes the theory worth considering.
-4. SPECULATION / CONSPIRACY STYLE IDEAS — fan-aware, speculative readings. Label clearly as speculation. Must still be grounded in some canon detail or pattern, even if interpretive.
+3. INTERPRETIVE / THEORY ANGLES — do NOT require direct primary source confirmation. Check that the theory is plausible, interesting, logically coherent, and not obviously contradicted by canon. Clearly label as theory / interpretation / speculative angle. Note what primary source detail, scene, omission, contradiction, or pattern makes the theory worth considering.
+4. SPECULATION / CONSPIRACY STYLE IDEAS — fan-aware, speculative readings. Label clearly as speculation. Must still be grounded in some primary source detail or pattern, even if interpretive.
 
 Do not remove interesting theory based material just because it cannot be fully proven.
 Do not present theories as facts.
@@ -312,7 +312,7 @@ A Micro-Quote is a verbatim string. It must appear word-for-word in the retrieve
 A book Micro-Quote must come from a book chunk; a movie Micro-Quote must come from a movie transcript chunk.
 
 FACT VALIDATION VS QUOTATION — these are different operations:
-- Secondary sources (Lexicon, commentary transcripts, fan wikis) CAN validate that a scene, event, or visual fact exists in canon. Use them freely in Book Evidence, Movie Evidence, Contrast, and Paraphrase fields when they support the underlying claim.
+- Secondary sources (Lexicon, commentary transcripts, fan wikis) CAN validate that a scene, event, or visual fact exists in the primary sources. Use them freely in Book Evidence, Movie Evidence, Contrast, and Paraphrase fields when they support the underlying claim.
 - Secondary sources CANNOT supply a Micro-Quote attributed to a primary Source File. The Micro-Quote field is reserved for verbatim strings from the primary source's retrieved chunks only.
 
 Example — death scene:
@@ -320,23 +320,23 @@ Example — death scene:
 - INVALID: "slowly crumbles into ash" in the Micro-Quote field tagged to the DH2 transcript file, when that exact string is not in the retrieved DH2 chunks.
 
 SECONDARY SOURCE ESCALATION RULE (CRITICAL):
-When an evidence point is assigned Confidence: Medium or Low because primary canon retrieval does not fully support the claim, do NOT leave the secondary fields empty. Run the following escalation before finalising the evidence point:
+When an evidence point is assigned Confidence: Medium or Low because primary source retrieval does not fully support the claim, do NOT leave the secondary fields empty. Run the following escalation before finalising the evidence point:
 1. Check topic transcripts (commentary creators, fan analysis) for any reference to the same scene, moment, or claim.
-2. Check the Lexicon for a canonical entry covering the same claim.
+2. Check the Lexicon for a matching entry covering the same claim.
 3. Check secondary source blocks in the retrieved material for corroborating references.
 
 If secondary sources contain supporting evidence, populate the **Secondary Source Support** field for that evidence point with the source name(s) + what they confirm, in plain prose. Example: "MediaRetrospective confirms Voldemort prowls and rips Death Eater masks in the GOF graveyard film scene. Bretts Thoughts corroborates. Neither provides transcript timecode."
 
 Then update the Commentary Angle field to state explicitly:
 - What the secondary sources confirm
-- What still requires primary canon verification before the claim can be scripted as fact
+- What still requires primary primary source verification before the claim can be scripted as fact
 - Whether the secondary evidence is strong enough to use the claim as a qualified assertion ("according to commentary" / "widely noted by fans" / "per the Lexicon") rather than dropping it
 
 If no secondary source supports the claim either, write in Secondary Source Support: "No secondary source corroboration found. Recommend dropping or heavily qualifying this claim in the Beat Plan."
 
 WHAT SECONDARY SOURCES CAN AND CANNOT DO:
 Secondary sources CAN:
-- Confirm that a scene, moment, or visual beat exists in canon
+- Confirm that a scene, moment, or visual beat exists in the primary sources
 - Provide audience-level description of what happens on screen
 - Validate that a claim is widely accepted in fandom
 - Supply a qualified assertion ("the scene is widely described as…")
@@ -368,7 +368,7 @@ Create the evidence table in this EXACT markdown format for each evidence point:
 | **Why This Matters** | [Why this is a strong argument point for the video] |
 | **Confidence** | High / Medium / Low |
 | **Evidence Type** | paraphrase / exact quote (under 12 words) / summary / interpretation |
-| **Commentary Angle** | [If inspired by commentary transcript — needs canon confirmation] |
+| **Commentary Angle** | [If inspired by commentary transcript — needs primary source confirmation] |
 
 Rules:
 - Aim for 10-15 evidence points, curated for strength and relevance
@@ -419,7 +419,7 @@ Each beat is one paragraph of plain prose. No bullet points inside a beat. Each 
 
 Each beat paragraph must cover, in natural prose order:
 1. What argument move happens in this beat
-2. The canon point or evidence that anchors it (book chapter, film scene, specific moment)
+2. The primary source point or evidence that anchors it (book chapter, film scene, specific moment)
 3. What the viewer understands or feels at the end of the beat
 4. How this beat sets up the next beat
 
@@ -439,7 +439,7 @@ ARGUMENT REQUIREMENTS
 - The final beat must reframe the opening tension and give the viewer a new lens on the Contention stated at the top.
 - The hook beat (Beat 1) must confirm the title promise and open a curiosity loop without giving away the full answer.
 - Every beat must change the viewer's understanding. A beat that only adds information without shifting understanding is weak and must be strengthened or cut.
-- When Selected Source Analysis appears in previous context, use its Audience Objections, Recurring Fan Signals, and Underdeveloped Opportunities to shape rehooks, escalation rungs, and at least one beat that pre-empts a likely fan objection. Do not treat secondary-source claims as canon proof.
+- When Selected Source Analysis appears in previous context, use its Audience Objections, Recurring Fan Signals, and Underdeveloped Opportunities to shape rehooks, escalation rungs, and at least one beat that pre-empts a likely fan objection. Do not treat secondary-source claims as primary source proof.
 
 BEAT PLAN PRE-WRITE PROTOCOL
 
@@ -495,7 +495,7 @@ If the answer is "more evidence for the same point" or any synonym, the beat is 
 
 SECTION 3 — EVIDENCE LEDGER
 
-List every canon anchor planned for use. For each:
+List every source anchor planned for use. For each:
 
 - Beat assignment (primary use)
 
@@ -558,10 +558,10 @@ FINAL CHECK BEFORE REMOVING THE AUDIT BLOCK:
 If any check fails, restructure the beat plan and rewrite the audit. Only after all checks pass, remove the \`<beat_plan_audit>\` block from your final output.
 
 EVIDENCE REQUIREMENTS
-- Each beat must name the specific canon anchor (book chapter, film scene). No vague references.
+- Each beat must name the specific source anchor (book chapter, film scene). No vague references.
 - Evidence is paraphrased into the beat prose. No raw quotes in the beat plan. Quotes are reserved for the Full Script.
-- Secondary sources (other YouTube commentary, fan wikis, Reddit, Quora, blog posts) are not canon evidence. Factual/canon anchors must come from book and film canon only — never from secondary sources.
-- SSA-derived audience signals (Audience Objections, Recurring Fan Signals, Expected Surface Answers, Underdeveloped Opportunities) are required inputs for shaping rehooks, escalation rungs, and at least one pre-emption beat where relevant. Use them to design the argument's audience-facing moves, not to supply canon proof.
+- Secondary sources (other YouTube commentary, fan wikis, Reddit, Quora, blog posts) are not primary source evidence. Factual/source anchors must come from book and film primary sources only — never from secondary sources.
+- SSA-derived audience signals (Audience Objections, Recurring Fan Signals, Expected Surface Answers, Underdeveloped Opportunities) are required inputs for shaping rehooks, escalation rungs, and at least one pre-emption beat where relevant. Use them to design the argument's audience-facing moves, not to supply primary source proof.
 
 // BANNED CONSTRUCTIONS — keep in sync with full_script BANNED
 // CONSTRUCTIONS block. If one is updated, update both.
@@ -661,24 +661,24 @@ Note: Host Persona governs this step at medium intensity only. The Pack is write
 
 SCRIPT EVIDENCE PACK
 
-Produce a writer-facing brief that maps every beat from the Beat Plan to the canon evidence that anchors it. This brief is the only research document the Full Script step will read. The Full Script will not see the Evidence Table, the Beat Plan, the Selected Source Analysis, or the Six Category Extraction. Only this Pack.
+Produce a writer-facing brief that maps every beat from the Beat Plan to the primary source evidence that anchors it. This brief is the only research document the Full Script step will read. The Full Script will not see the Evidence Table, the Beat Plan, the Selected Source Analysis, or the Six Category Extraction. Only this Pack.
 
-That means the Pack must contain everything the writer needs. If a canon point is not in the Pack, it will not be in the script.
+That means the Pack must contain everything the writer needs. If a primary source point is not in the Pack, it will not be in the script.
 
 INPUTS YOU HAVE ACCESS TO
 - The Beat Plan (the argument structure, beat by beat)
-- The Evidence Table (the raw canon research)
+- The Evidence Table (the raw primary source research)
 - The Selected Source Analysis (source-level interpretation)
-- The Six Category Extraction (the canon mining)
+- The Six Category Extraction (the primary source mining)
 - The Creative Brief (the argument framing and angle)
 
-Evidence Table supplies canon proof; Selected Source Analysis supplies audience-side material such as objections, recurring fan signals, expected surface answers, emotional language, and underdeveloped opportunities. Both must be consulted for different purposes — Evidence Table for what is true in canon, Selected Source Analysis for what the audience already thinks, expects, or argues about.
+Evidence Table supplies primary source proof; Selected Source Analysis supplies audience-side material such as objections, recurring fan signals, expected surface answers, emotional language, and underdeveloped opportunities. Both must be consulted for different purposes — Evidence Table for what is true in the primary sources, Selected Source Analysis for what the audience already thinks, expects, or argues about.
 
 FORMAT
 
 For each beat in the Beat Plan, write one paragraph in plain prose. Number each paragraph to match the beat number. The paragraph must cover:
 1. What the beat is doing (one sentence paraphrasing the Beat Plan)
-2. The canon evidence woven into prose, not listed. Write it the way a writer would recall it: the book chapter, the film scene, the specific moment, paraphrased into natural language. The writer should be able to narrate from this without referring back to the original source.
+2. The primary source evidence woven into prose, not listed. Write it the way a writer would recall it: the book chapter, the film scene, the specific moment, paraphrased into natural language. The writer should be able to narrate from this without referring back to the original source.
 3. Any single direct quote worth considering verbatim, in quotation marks. Maximum one quote per beat. Most beats should have zero.
 4. Any meaningful contradiction between book and film worth noting in narration, in one sentence.
 5. Function: state in one short sentence whether this beat proves, complicates, reveals, rehooks, or pays off. Name what specifically it proves / complicates / reveals / rehooks / pays off.
@@ -756,7 +756,7 @@ If a beat fails the question chain test, restructure it before writing. Acceptab
 
 The question chain is internal — do not output it. The beat paragraphs must reflect it.
 
-Wherever a beat is relevant to a Selected Source Analysis Audience Objection, Recurring Fan Signal, Expected Surface Answer, or Underdeveloped Opportunity, you MUST surface that connection in plain prose inside the existing Function or Hook/payoff relation sentences. This is mandatory, not optional, for every beat where such a signal applies. Do not add a new format field. Do not create a table. Do not treat secondary-source claims as canon proof.
+Wherever a beat is relevant to a Selected Source Analysis Audience Objection, Recurring Fan Signal, Expected Surface Answer, or Underdeveloped Opportunity, you MUST surface that connection in plain prose inside the existing Function or Hook/payoff relation sentences. This is mandatory, not optional, for every beat where such a signal applies. Do not add a new format field. Do not create a table. Do not treat secondary-source claims as primary source proof.
 
 Do not write beat functions or hook payoff relation using mechanical contrast formulas such as "not X, but Y," "the problem is not X, the problem is Y," or "this is not X, this is Y." These upstream phrases leak into Full Script. Use concrete function language instead, such as "This beat proves," "This beat reveals," "This beat escalates," "This beat makes the audience question," or "This beat pays off."
 
@@ -780,8 +780,8 @@ EVIDENCE DISCIPLINE
 - Paraphrase by default. Quotes only when exact wording matters.
 - If a beat needs more than one piece of evidence, include the strongest one and note the second briefly in prose.
 - Do not include evidence that does not advance the beat's argument move. If it does not serve the beat, cut it.
-- Secondary sources (commentary, fan wikis, other YouTubers, Reddit, Quora, blog posts) cannot supply {{SUBJECT_LABEL}} facts, canon proof, quotes, or evidence. Never cite them as proof and never paste their content.
-- Audience-side signals synthesized through the Selected Source Analysis (objections, recurring fan signals, expected surface answers, emotional language, underdeveloped opportunities) are allowed and required where relevant. Use them only as framing, objection handling, or angle context in plain prose — never as factual proof for a canon claim.
+- Secondary sources (commentary, fan wikis, other YouTubers, Reddit, Quora, blog posts) cannot supply {{SUBJECT_LABEL}} facts, primary source proof, quotes, or evidence. Never cite them as proof and never paste their content.
+- Audience-side signals synthesized through the Selected Source Analysis (objections, recurring fan signals, expected surface answers, emotional language, underdeveloped opportunities) are allowed and required where relevant. Use them only as framing, objection handling, or angle context in plain prose — never as factual proof for a primary source claim.
 
 // BANNED CONSTRUCTIONS — keep in sync with full_script and beat_plan (outline)
 // versions. If one is updated, update all three.
@@ -1150,7 +1150,7 @@ Requirements:
 - The body text must be PURELY NATURAL SPOKEN WORDS as if read aloud by a creator — conversational, authoritative, human
 - Build the script primarily from books and movie transcripts
 - Allow Lexicon only as background support for your understanding — it must NEVER be mentioned in the spoken narration
-- Do not include Lexicon-derived wording as if it were canon dialogue or narration
+- Do not include Lexicon-derived wording as if it were primary source dialogue or narration
 
 LEXICON MENTION BAN (CRITICAL):
 - The spoken narration must NEVER mention "the Lexicon", or use phrasing like "The Lexicon notes…", "According to the Lexicon…", etc.
@@ -1263,15 +1263,15 @@ Angle has not asked for.
 
 TOPIC TRANSCRIPT RULES:
 - These are videos about {{SUBJECT_LABEL}} covering similar topics to this video
-- Use to understand: what angles exist, what claims have been made, what canon moments are relevant
-- Identify specific scenes or moments to verify against primary canon (books and movie transcripts)
-- Do NOT treat as proof of canon facts
+- Use to understand: what angles exist, what claims have been made, what primary source moments are relevant
+- Identify specific scenes or moments to verify against primary sources (books and movie transcripts)
+- Do NOT treat as proof of primary source facts
 
 ALTERNATIVE SOURCES (SECONDARY) RULES:
-- The block titled "## Alternative Sources (SECONDARY, NON-CANON)" contains pasted Reddit threads, forum comments, blog posts, fan articles, wiki extracts, and similar non-canon material the creator selected for this brief.
+- The block titled "## Alternative Sources (SECONDARY, NON-PRIMARY)" contains pasted Reddit threads, forum comments, blog posts, fan articles, wiki extracts, and similar non-primary source material the creator selected for this brief.
 - Mine this block for: fan debate signals, repeated viewer complaints, audience emotional language, common objections, the expected surface answer most viewers assume, the surprising deeper answer fans rarely reach, underdeveloped angles, and what fans already say too often (so the video can avoid repeating it).
 - Use those signals when filling: Viewer Click Question, Expected Answer, Surprising Actual Answer, Hook Shape, What To Avoid, Fairness Move, Emotional Arc, and Video Engine. The Creative Brief should feel sharpened by real audience tension, not floating in a vacuum.
-- Alternative sources cannot supply {{SUBJECT_LABEL}} facts. Any factual claim about canon must come from books, film transcripts, or other approved primary/canon sources. Fan claims from alternative sources can inspire angles or objections, but must be verified against primary canon before being treated as evidence.
+- Alternative sources cannot supply {{SUBJECT_LABEL}} facts. Any factual claim about canon must come from books, film transcripts, or other approved primary sources. Fan claims from alternative sources can inspire angles or objections, but must be verified against the primary sources before being treated as evidence.
 
 Generate the Creative Brief in this EXACT format:
 
@@ -1298,14 +1298,14 @@ Generate the Creative Brief in this EXACT format:
 ### Tone Temperature
 [How the host should feel in this video. Calibrated to the host persona.]
 
-### Canon Weight
+### Primary Source Weight
 [Which sources to lean on and why, based on the video type and thesis.]
 
 ### Fairness Move
 [Where in the argument to acknowledge the counterargument or concede something. Critical for credibility.]
 
 ### Key Claims to Investigate
-[5-8 specific claims, scenes, or moments from the angle note and topic transcripts that MUST be verified against primary canon. These become retrieval targets.]
+[5-8 specific claims, scenes, or moments from the angle note and topic transcripts that MUST be verified against the primary sources. These become retrieval targets.]
 
 ### What To Avoid
 [Specific angles or framings to avoid — drawn from what already exists in the topic transcripts.]
@@ -1318,7 +1318,7 @@ This section operationalizes the retention and escalation layer. Fill every fiel
 - **Viewer Click Question:** [The exact question, curiosity, or emotional promise the title triggers in a viewer's mind.]
 - **Title Promise:** [What the title implicitly promises to deliver by the end of the video.]
 - **Expected Answer:** [What a casual viewer probably expects the answer to be when they click.]
-- **Hypothesized Surprising Answer:** [Write this as a HYPOTHESIS, not a thesis. Begin with "The angle suggests…" or "Working guess:" and frame the answer as something to be tested. Do NOT write a committed verdict. One sentence. If you find yourself writing the script's conclusion, stop — that's SEP's job. Example shape: "The angle suggests the real mismatch is X, but this needs SEP to confirm whether the canon evidence supports X or points elsewhere."]
+- **Hypothesized Surprising Answer:** [Write this as a HYPOTHESIS, not a thesis. Begin with "The angle suggests…" or "Working guess:" and frame the answer as something to be tested. Do NOT write a committed verdict. One sentence. If you find yourself writing the script's conclusion, stop — that's SEP's job. Example shape: "The angle suggests the real mismatch is X, but this needs SEP to confirm whether the primary source evidence supports X or points elsewhere."]
 - **Emotional Arc:** [Ordered progression of feeling, e.g. curiosity → suspicion → tension → realization → payoff. 4–6 stages.]
 - **Escalation Logic:** [ONE sentence describing the SINGLE mechanism by which tension deepens — e.g. "stakes raise from aesthetic to ideological," or "each point exposes a deeper structural choice." Do NOT chain stages with arrows, "then," "move from… into… then into…" — that is a ladder, which is forbidden. Do NOT name sections, beats, or moments. If your sentence contains more than one "then," delete and rewrite. Beat Plan owns sequence; this field owns only the principle.]
 - **Hypothesized Final Payoff:** [Write this as a HYPOTHESIS, not a verdict. Begin with "If the hypothesis holds, the payoff could be…" One sentence. Do NOT write the script's closing argument. Do NOT cash out the thesis. If you find yourself writing the conclusion in committed language ("The book denies X" / "That single choice exposes Y"), stop and reframe as conditional.]
@@ -1326,20 +1326,20 @@ This section operationalizes the retention and escalation layer. Fill every fiel
 
 STEP_PROMPTS["six_category_extraction"] = `You are a research analyst for a {{SUBJECT_LABEL}} YouTube channel.
 
-Given the Creative Brief and retrieved canon material, mine the evidence across six specific categories. This output feeds the evidence table and outline. Be sharp, specific, and argument-useful. Rank everything by: how surprising it is, how specific it is, how argument-useful it is. Generic observations rank last.
+Given the Creative Brief and retrieved primary source material, mine the evidence across six specific categories. This output feeds the evidence table and outline. Be sharp, specific, and argument-useful. Rank everything by: how surprising it is, how specific it is, how argument-useful it is. Generic observations rank last.
 
 IMPORTANT SOURCE RULES:
-- Only draw confirmed factual claims from primary canon: books and movie transcripts
-- Topic transcripts and knowledge base sources can point you toward what to investigate but every claim must be confirmed in primary canon
+- Only draw confirmed factual claims from primary sources: books and movie transcripts
+- Topic transcripts and knowledge base sources can point you toward what to investigate but every claim must be confirmed in the primary sources
 - Do NOT invent or fabricate evidence
-- If canon material does not support a claim, say so explicitly
+- If primary source material does not support a claim, say so explicitly
 
 Produce output in this EXACT format:
 
 ## Six-Category Extraction
 
 ### 1. LITERAL RECORD
-The strongest direct evidence confirmed in primary canon.
+The strongest direct evidence confirmed in the primary sources.
 For each point:
 - **Claim**: [Precise statement]
 - **Source**: [Book or film title + location]
@@ -1382,24 +1382,24 @@ For each point:
 The most counterintuitive or non-obvious reading of this evidence.
 For each angle:
 - **The Non-Obvious Reading**: [The surprising interpretation]
-- **Evidence Basis**: [What canon supports this]
+- **Evidence Basis**: [What the primary sources support]
 - **Why Most People Miss It**: [The common assumption and why it is incomplete]
 - **Script Value**: [How this becomes an original line of thought]
 
 ## Evidence Gaps
-- What claims from the brief or topic transcripts could NOT be confirmed in primary canon?
+- What claims from the brief or topic transcripts could NOT be confirmed in the primary sources?
 - What should the creator know is unverified?
 `;
 
 STEP_PROMPTS["selected_source_analysis"] = `You are a senior research strategist for a {{SUBJECT_LABEL}} YouTube channel.
 
-Your job is to analyze ONLY the secondary sources that the creator specifically selected for this Topic Brief — selected topic transcripts (other creators' videos on this topic) and selected Alternative Sources (Reddit threads, comments, forum posts, blog posts, wiki pages, articles, notes). You are the SECONDARY interpretive layer that runs AFTER the canon-first Insights & Research step.
+Your job is to analyze ONLY the secondary sources that the creator specifically selected for this Topic Brief — selected topic transcripts (other creators' videos on this topic) and selected Alternative Sources (Reddit threads, comments, forum posts, blog posts, wiki pages, articles, notes). You are the SECONDARY interpretive layer that runs AFTER the primary-source-first Insights & Research step.
 
 ABSOLUTE RULES — READ CAREFULLY:
 
-1. You are NOT the canon evidence layer. The Insights & Research step already mined the books, movie transcripts, and lexicon. Do not re-do that work. Do not invent canon. Do not promote a transcript's claim as confirmed fact.
+1. You are NOT the primary source evidence layer. The Insights & Research step already mined the books, movie transcripts, and lexicon. Do not re-do that work. Do not invent primary source claims. Do not promote a transcript's claim as confirmed fact.
 
-2. SECONDARY SOURCES ARE NOT PROOF. Selected topic transcripts and Alternative Sources are AUDIENCE INTELLIGENCE and INTERPRETIVE INPUT only. They reveal what the fandom is debating, what's been overdone, what objections exist, and what framings are unexplored. They do NOT confirm canon facts. Any factual claim sourced from them must be flagged "needs canon validation".
+2. SECONDARY SOURCES ARE NOT PROOF. Selected topic transcripts and Alternative Sources are AUDIENCE INTELLIGENCE and INTERPRETIVE INPUT only. They reveal what the fandom is debating, what's been overdone, what objections exist, and what framings are unexplored. They do NOT confirm primary source facts. Any factual claim sourced from them must be flagged "needs primary source validation".
 
 3. ORIGINALITY IS THE POINT. Do not summarize the selected transcripts. Do not paraphrase their arguments closely. Do not copy creator phrasings, jokes, transitions, examples, structures, or conclusions. Your job is to help the host AVOID sounding like a remix of these creators.
 
@@ -1423,16 +1423,16 @@ Ideas the selected sources touch on but never fully exploit, escalate, or land. 
 ## 4. Audience Objections
 Objections, counterarguments, "well actually" pushback, or fan disagreements the final script should anticipate. Bullet list. Pull from comment-style alternative sources where available.
 
-## 5. Canon Validation Needed
+## 5. Primary Source Validation Needed
 Claims surfaced by selected sources that sound interesting but MUST be checked against books or movie transcripts before use. Bullet list. Tag each as: [book check] / [movie transcript check] / [either].
 
 ## 6. Original Synthesis Opportunities
-New conclusions or angles that emerge ONLY when the selected source signals are pressure-tested against the Insights & Research output (canon extraction). Bullet list. Each item must combine a fan/audience signal with a specific canon detail from Insights & Research and produce a non-obvious reading.
+New conclusions or angles that emerge ONLY when the selected source signals are pressure-tested against the Insights & Research output (primary source extraction). Bullet list. Each item must combine a fan/audience signal with a specific primary source detail from Insights & Research and produce a non-obvious reading.
 
 ## 7. Recommended Use in Evidence Table
 Candidate claims or evidence routes for the Evidence Table to consider. Bullet list. Each item MUST be labeled with one of:
 - [Canon-supported] — already confirmed by Insights & Research / canon
-- [Needs validation] — interesting but unverified against primary canon
+- [Needs validation] — interesting but unverified against the primary sources
 - [Theory / interpretation] — defensible reading, not provable
 - [Audience signal only] — useful framing or objection, not a factual claim
 
@@ -1443,7 +1443,7 @@ Concrete guidance on how this should shape: structure, pacing, re-hooks, escalat
 Specific phrases, jokes, transitions, structures, conclusions, or examples from the selected sources that the script should NOT imitate. Bullet list. Quote the imitable element briefly so downstream steps can recognize and avoid it.
 
 SOURCE HIERARCHY REMINDER:
-Books and movie transcripts are Tier 1 canon. Lexicon is secondary reference. Permanent commentary transcripts and the selected secondary sources are interpretive only. Your output flows into the Evidence Table, Outline, and Full Script — those steps will treat your candidate claims as leads to validate, NOT as final proof.
+Books and movie transcripts are Tier 1 primary sources. Lexicon is secondary reference. Permanent commentary transcripts and the selected secondary sources are interpretive only. Your output flows into the Evidence Table, Outline, and Full Script — those steps will treat your candidate claims as leads to validate, NOT as final proof.
 `;
 
 STEP_PROMPTS["angle_check"] = `You are a story editor stress-testing the argument for a YouTube video before any evidence is curated or structured.
@@ -1542,7 +1542,7 @@ const compressPhrase = (value: string, maxTerms = 8) => {
 };
 
 // Strip honorifics / titles from a character name so AND-token FTS does not
-// require the prefix to appear next to the name in canon text. Example:
+// require the prefix to appear next to the name in primary source text. Example:
 // "Lord Voldemort" → "Voldemort", "Professor McGonagall" → "McGonagall".
 // Most book/film chunks reference characters by surname or first name only,
 // so multi-word "Title Name" queries return zero hits via plainto_tsquery.
@@ -1714,7 +1714,7 @@ const deriveRetrievalQueryPack = (
   // Channel-configured expansion of focus areas. Editorial focus-area phrases
   // rarely appear verbatim in source text; channel.query_expansion_map
   // translates them into token strings that DO appear in indexed chunks.
-  const focusAreaCanonQueries = expandFocusAreas(focusAreas, channel);
+  const focusAreaExpandedQueries = expandFocusAreas(focusAreas, channel);
 
   // Character queries (only if characters provided)
   const characterQueries = characters.length > 0
@@ -1726,8 +1726,8 @@ const deriveRetrievalQueryPack = (
   if (targetCharacter && themeQueries.length > 0) {
     seededParts.push(...themeQueries.map((theme) => `${targetCharacter} ${theme}`));
   }
-  if (focusAreaCanonQueries.length > 0) {
-    seededParts.push(...focusAreaCanonQueries);
+  if (focusAreaExpandedQueries.length > 0) {
+    seededParts.push(...focusAreaExpandedQueries);
   }
   if (themeQueries.length > 0) {
     seededParts.push(...themeQueries);
@@ -2009,7 +2009,7 @@ serve(async (req) => {
     //   2. Anti AI Writing Instructions  (file_type: 'anti_ai_guide')
     //   3. Host Persona                  (file_type: 'host_persona')
     //
-    // None of these are evidence. They never override canon, source hierarchy,
+    // None of these are evidence. They never override the primary sources, source hierarchy,
     // or factual claims. Returns text + provenance metadata so we can log
     // chunks read vs total and surface truncation warnings.
     // ────────────────────────────────────────────────────────────────────────
@@ -2099,7 +2099,7 @@ serve(async (req) => {
       intensity === "none" || !text ? "" :
       `\n\n## SCRIPT WRITING INSTRUCTIONS (${intensity.toUpperCase()} BINDING)\n` +
       `Governs structure, argument, retention, escalation, evidence movement, emotional arc, and final payoff.\n` +
-      `Does NOT override source evidence or canon facts.\n\n${text}`;
+      `Does NOT override source evidence or primary source facts.\n\n${text}`;
 
     const ANTI_AI_WRAPPER = (text: string, intensity: Intensity) =>
       intensity === "none" || !text ? "" :
@@ -2113,7 +2113,7 @@ serve(async (req) => {
       `The host persona below is the voice speaking the entire script. Every sentence must sound like this person. Their reactions, rhythm, judgment, humor, and emotional register are the medium of the script, not decoration. The viewer should know who is talking by the second sentence without being told.\n\n` +
       `The persona does not introduce themselves unless the script genuinely needs it. They do not say 'hey guys' or 'what is up'. Their presence is felt through word choice, sentence rhythm, what they react to, when they get blunt, when they get quiet.\n\n` +
       `Use 2 to 4 recognizable persona-specific lines per script maximum. Do not overload. Do not invent new catchphrases. Pull from the persona document only.\n\n` +
-      `The persona does not override canon. If canon and the persona's instinct disagree, canon wins and the persona narrates the disagreement.\n\n` +
+      `The persona does not override the primary sources. If the primary sources and the persona's instinct disagree, the primary sources win and the persona narrates the disagreement.\n\n` +
       `PERSONA DOCUMENT FOLLOWS:\n\n${text}`;
 
     function buildGuidanceBlock(stepType: string, layers: GuidanceLayers): string {
@@ -2126,7 +2126,7 @@ serve(async (req) => {
       const block = parts.join("");
       const order =
         `\n\n## GUIDANCE PRECEDENCE LADDER (BINDING)\n` +
-        `1. Source hierarchy / canon evidence (highest)\n` +
+        `1. Source hierarchy / primary source evidence (highest)\n` +
         `2. Script Writing Instructions\n` +
         `3. Anti AI Writing Instructions\n` +
         `4. Host Persona\n` +
@@ -2364,7 +2364,7 @@ serve(async (req) => {
         footer = `\n\n${msg}`;
         truncationWarnings.push(`alt_sources_dropped:${skipped}:profile=${profile}`);
       }
-      return `\n\n## ${label} (SECONDARY, NON-CANON)\nThese are pasted secondary sources such as Reddit threads, fan comments, wiki extracts, blog posts, or research notes. Use ONLY for fan debate signals, audience language, jokes, cultural references, angle inspiration, and supporting interpretation. NEVER treat as Tier 1 canon. Do NOT cite as primary evidence. All factual canon claims must still be supported by book/movie sources.\n\n${parts.join("\n\n---\n\n")}${footer}`;
+      return `\n\n## ${label} (SECONDARY, NON-PRIMARY)\nThese are pasted secondary sources such as Reddit threads, fan comments, wiki extracts, blog posts, or research notes. Use ONLY for fan debate signals, audience language, jokes, cultural references, angle inspiration, and supporting interpretation. NEVER treat as Tier 1 primary sources. Do NOT cite as primary evidence. All factual primary source claims must still be supported by book/movie sources.\n\n${parts.join("\n\n---\n\n")}${footer}`;
     };
 
     const truncateTopicTranscripts = (items: any[], profile: BudgetProfile): any[] => {
@@ -2442,7 +2442,7 @@ ${brief.creative_brief_feedback ? `\n## Creator Feedback on Previous Creative Br
 ## Format Reference Transcripts (different subject — structure and positioning only)
 ${formatRefBlock}
 
-## Brief-Specific Topic Transcripts (research leads — confirm all claims in primary canon)
+## Brief-Specific Topic Transcripts (research leads — confirm all claims in primary sources)
 ${topicTranscriptBlock}${formatAlternativeSourcesBlock("Alternative Sources", "creative_brief")}${buildSecondarySkippedNotice()}
 
 Generate the Creative Brief now.`;
@@ -2885,7 +2885,7 @@ DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placehold
       }
 
       if (lexiconChunks.length > 0) {
-        sections.push("### SECONDARY REFERENCE — Lexicon Support (use for context only, NOT as primary canon)\n" +
+        sections.push("### SECONDARY REFERENCE — Lexicon Support (use for context only, NOT as primary sources)\n" +
           lexiconChunks.map((c: any) => `[${c.file_name} — LEXICON — SECONDARY]\n${c.content}`).join("\n\n---\n\n"));
       }
 
@@ -2996,7 +2996,7 @@ DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placehold
 
     // ── FULL SCRIPT TRANSFORMATION BOUNDARY ────────────────────────────────
     // The Full Script reads ONLY the Creative Brief (argument framing) and
-    // the Script Evidence Pack (canon, beat-mapped). It must NOT see the
+    // the Script Evidence Pack (primary source, beat-mapped). It must NOT see the
     // Evidence Table, Beat Plan (outline), Selected Source Analysis, or
     // Six Category Extraction directly. If the Pack is missing, fail loudly.
     if (stepType === "full_script") {
@@ -3091,7 +3091,7 @@ DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placehold
 
     // Originality safeguard — when the Selected Source Analysis output is in the
     // upstream context for outline / full_script / evidence_table, the model must
-    // treat secondary-source signals as audience intelligence, NOT as canon proof,
+    // treat secondary-source signals as audience intelligence, NOT as primary source proof,
     // and must silently self-check for over-reliance on selected transcripts.
     if (["evidence_table", "outline", "full_script"].includes(stepType)) {
       systemPrompt += `\n\nORIGINALITY SAFEGUARD (MANDATORY):
@@ -3099,29 +3099,29 @@ If a Selected Source Analysis output appears in the previous pipeline context, t
 
 Rules:
 - Do NOT copy or closely paraphrase claims, jokes, transitions, structures, or conclusions from the selected topic transcripts or Alternative Sources.
-- Do NOT promote any "candidate claim" or "needs validation" item from the Selected Source Analysis to a confirmed factual claim unless it is independently supported by Tier 1 canon (books / movie transcripts) in the retrieved Source Material Excerpts.
+- Do NOT promote any "candidate claim" or "needs validation" item from the Selected Source Analysis to a confirmed factual claim unless it is independently supported by Tier 1 primary sources (books / movie transcripts) in the retrieved Source Material Excerpts.
 - DO use the Selected Source Analysis to: avoid overdone angles, address likely audience objections, sharpen escalation, strengthen re-hooks, and produce a more original final argument in the host persona's voice.
 - Honour the "Do-Not-Copy Notes" section of the Selected Source Analysis if present.
 
 Before finalizing your output, silently self-check:
 1. Am I repeating a secondary source's exact argument too closely?
 2. Am I reusing their joke, phrase, structure, or conclusion?
-3. Is my conclusion an original synthesis grounded in the canon extraction (Insights & Research / Evidence Table)?
+3. Is my conclusion an original synthesis grounded in the primary source extraction (Insights & Research / Evidence Table)?
 4. Does this feel like the host persona's original take, not a remix of other creators?
 5. Are selected sources being used as audience intelligence rather than as substituted substance?
-If any answer reveals overreliance, revise toward a more original, canon-grounded argument before producing the final output. Do not mention this self-check in the output.`;
+If any answer reveals overreliance, revise toward a more original, primary-source-grounded argument before producing the final output. Do not mention this self-check in the output.`;
     }
 
     // Full Script source precedence: SEP controls; Creative Brief is directional only.
     if (stepType === "full_script") {
       systemPrompt += `\n\nSOURCE PRECEDENCE (BINDING): The Script Evidence Pack is the CONTROLLING source for argument route, beat sequence, evidence, source-grounded claims, fan objections, repetition control, and hook/payoff execution. The Creative Brief is DIRECTIONAL ONLY: title promise, thesis direction, tone, emotional arc, intended payoff. If they conflict, follow the Script Evidence Pack. Do not import Creative Brief sentences verbatim. Do not restate the thesis using Creative Brief phrasing more than once. Treat the Creative Brief as a compass, not as script copy. If an Angle Check appears in context via the Script Evidence Pack's framing, the SEP already encodes its contention — do not revert to Creative Brief thesis phrasing.`;
-      systemPrompt += `\n\nANTI-INVENTION RULE (BINDING):\nThe Script Evidence Pack contains every canon claim, scene, quote, and evidence point that the Full Script is permitted to use. You may not introduce any of the following if they are not present in the Script Evidence Pack:\n- Specific scenes from books or films\n- Direct or paraphrased quotes\n- Canon facts about characters, events, or settings\n- Specific moments framed as evidence\n- References to deleted scenes, behind-the-scenes material, or interviews\n\nIf a beat in the Script Evidence Pack is thin or has weak evidence, write the beat with the evidence available. Do not fill the gap by adding scenes, quotes, or details that are not in the Pack. If a beat genuinely cannot be written from the Pack alone, generate the beat as written and add a single bracketed flag at that point in the script: [FLAG: insufficient evidence in Pack].\n\nThe Source Material Excerpts section provided in the user message exists only as context. You may not introduce any claim from those excerpts that is not also present in the Script Evidence Pack. The Script Evidence Pack is the only source of permitted content.\n\nThis rule applies regardless of how natural, plausible, or argumentatively useful an additional claim might seem.`;
+      systemPrompt += `\n\nANTI-INVENTION RULE (BINDING):\nThe Script Evidence Pack contains every primary source claim, scene, quote, and evidence point that the Full Script is permitted to use. You may not introduce any of the following if they are not present in the Script Evidence Pack:\n- Specific scenes from books or films\n- Direct or paraphrased quotes\n- Canon facts about characters, events, or settings\n- Specific moments framed as evidence\n- References to deleted scenes, behind-the-scenes material, or interviews\n\nIf a beat in the Script Evidence Pack is thin or has weak evidence, write the beat with the evidence available. Do not fill the gap by adding scenes, quotes, or details that are not in the Pack. If a beat genuinely cannot be written from the Pack alone, generate the beat as written and add a single bracketed flag at that point in the script: [FLAG: insufficient evidence in Pack].\n\nThe Source Material Excerpts section provided in the user message exists only as context. You may not introduce any claim from those excerpts that is not also present in the Script Evidence Pack. The Script Evidence Pack is the only source of permitted content.\n\nThis rule applies regardless of how natural, plausible, or argumentatively useful an additional claim might seem.`;
       systemPrompt += `\n\nNO META-COMMENTARY RULE (BINDING — HARD):\nThe script is viewer-facing copy. The viewer must NEVER see any reference to the script's own research process, evidence pipeline, or source availability. Specifically, you must NOT:\n- Mention the evidence pack, Script Evidence Pack, source library, retrieval, transcripts, books-vs-films coverage gaps, or what sources were or were not available.\n- Say anything like "I can't prove this part", "the transcript doesn't show", "evidence is limited here", "the books don't confirm", "we don't have a scene for this", or any equivalent acknowledgement of a gap in the source material.\n- Reference the pipeline, the model, the system, instructions, or limitations of any kind.\n\nIf a beat lacks the evidence to make the comparison or claim it was meant to make, you have exactly three permitted moves: (1) work around the gap silently using whatever evidence IS available, (2) narrow the claim to what can actually be supported, or (3) omit the beat entirely and continue.\n\n[FLAG: ...] markers and any other bracketed flags are INTERNAL ONLY and must NEVER appear in the script output. This OVERRIDES the earlier instruction to insert [FLAG: insufficient evidence in Pack] — do not insert that marker or any equivalent. Handle gaps silently using the three moves above.`;
     }
 
     // Selected Hook binding — only when a hook direction is present for full_script.
     if (selectedHook) {
-      systemPrompt += `\n\nSELECTED HOOK DIRECTION (BINDING — VERBATIM, OVERRIDES PACK BEAT 1):\nA specific hook has been selected for this script. It is provided in the user message under "## Selected Hook / Opening Direction" and may include a short label line followed by the hook body.\n\nVERBATIM RULE (HARD):\n- The Full Script MUST open with the selected hook text reproduced verbatim, or as near to verbatim as possible.\n- Do NOT rewrite the hook for style, rhythm, voice, smoothness, anti-AI compliance, or persona fit. The hook has already been approved by the user as-is.\n- Do NOT paraphrase, condense, expand, reorder sentences, or "improve" the wording.\n- Do NOT prepend a setup sentence, greeting, throat-clear, or framing line before the hook. The script begins on the first word of the hook body.\n- Drop the label line if one is present at the top of the selected hook block. The label is internal metadata, not script copy. Only the hook body is spoken.\n- The ONLY edits permitted are: (a) trivial mechanical fixes (typos, obvious punctuation errors), and (b) correcting a factual claim in the hook that directly contradicts canon evidence in the Script Evidence Pack — in which case fix the minimum number of words required and leave everything else untouched.\n- After the hook lands verbatim, transition into the Script Evidence Pack beat sequence as written. Pack Beat 1 is overridden by the hook for the opening; subsequent beats run as the Pack specifies.\n\nThis rule activates only when a selected hook is provided. Without a selected hook, the Script Evidence Pack Beat 1 controls the opening as written.`;
+      systemPrompt += `\n\nSELECTED HOOK DIRECTION (BINDING — VERBATIM, OVERRIDES PACK BEAT 1):\nA specific hook has been selected for this script. It is provided in the user message under "## Selected Hook / Opening Direction" and may include a short label line followed by the hook body.\n\nVERBATIM RULE (HARD):\n- The Full Script MUST open with the selected hook text reproduced verbatim, or as near to verbatim as possible.\n- Do NOT rewrite the hook for style, rhythm, voice, smoothness, anti-AI compliance, or persona fit. The hook has already been approved by the user as-is.\n- Do NOT paraphrase, condense, expand, reorder sentences, or "improve" the wording.\n- Do NOT prepend a setup sentence, greeting, throat-clear, or framing line before the hook. The script begins on the first word of the hook body.\n- Drop the label line if one is present at the top of the selected hook block. The label is internal metadata, not script copy. Only the hook body is spoken.\n- The ONLY edits permitted are: (a) trivial mechanical fixes (typos, obvious punctuation errors), and (b) correcting a factual claim in the hook that directly contradicts primary source evidence in the Script Evidence Pack — in which case fix the minimum number of words required and leave everything else untouched.\n- After the hook lands verbatim, transition into the Script Evidence Pack beat sequence as written. Pack Beat 1 is overridden by the hook for the opening; subsequent beats run as the Pack specifies.\n\nThis rule activates only when a selected hook is provided. Without a selected hook, the Script Evidence Pack Beat 1 controls the opening as written.`;
     }
 
     // Add comparison mode instruction if enabled
@@ -3199,7 +3199,7 @@ If any answer reveals overreliance, revise toward a more original, canon-grounde
     // ─────────────────────────────────────────────────────────────────────
     const topicTranscriptUserBlock =
       stepType === "selected_source_analysis" && topicTranscripts.length > 0
-        ? `\n\n## Brief-Specific Topic Transcripts (THEORY, ANGLE, AND RESEARCH LEADS — not Tier 1 canon)\nTreat these as theory/angle/interpretation input. Factual canon claims still require Tier 1 book or movie transcript support. Theories may be used if plausible, coherent, and not obviously contradicted by canon. Frame theories honestly as theories.\n\n` +
+        ? `\n\n## Brief-Specific Topic Transcripts (THEORY, ANGLE, AND RESEARCH LEADS — not Tier 1 primary sources)\nTreat these as theory/angle/interpretation input. Factual primary source claims still require Tier 1 book or movie transcript support. Theories may be used if plausible, coherent, and not obviously contradicted by canon. Frame theories honestly as theories.\n\n` +
           truncateTopicTranscripts(topicTranscripts, "ssa")
             .map((r: any) => `### "${r.video_title}" by ${r.channel_name} ${qualityTag(r.script_strength)}\n${r.transcript}`)
             .join("\n\n---\n\n")
@@ -3249,13 +3249,13 @@ Thesis: ${brief.thesis || ""}
 ## Creative Brief Output
 ${creativeBriefContent || "(Creative Brief not yet generated — proceed using Topic Brief only.)"}
 
-## Insights & Research Output (canon-first extraction — your primary upstream context)
-${insightsContent || "(Insights & Research not yet generated — proceed cautiously and flag canon gaps.)"}
+## Insights & Research Output (primary-source-first extraction — your primary upstream context)
+${insightsContent || "(Insights & Research not yet generated — proceed cautiously and flag primary source gaps.)"}
 
 ${hasSelectedSecondary ? "## Selected Secondary Sources (analyze ONLY these)" : "## Selected Secondary Sources\n(None attached. Produce a minimal graceful analysis based on the Creative Brief and Insights & Research only — do not invent fan signals.)"}
 ${topicTranscriptUserBlock}${altSourceUserBlock}${buildSecondarySkippedNotice()}
 
-Now produce the Selected Source Analysis in the exact format specified. Be honest about source weight — never promote a secondary-source claim to canon. Surface what's overused, what's underdeveloped, what objections exist, and where original synthesis is possible against the canon extraction above.`;
+Now produce the Selected Source Analysis in the exact format specified. Be honest about source weight — never promote a secondary-source claim to the primary sources. Surface what's overused, what's underdeveloped, what objections exist, and where original synthesis is possible against the primary source extraction above.`;
     } else if (stepType === "six_category_extraction") {
       // Get creative brief output.
       let creativeBriefContent = "";
@@ -3277,12 +3277,12 @@ Now produce the Selected Source Analysis in the exact format specified. Be hones
       userMessage = `## Creative Brief
 ${creativeBriefContent || `Title: ${brief.title}\nAngle: ${brief.angle_note || brief.description || ""}`}
 
-(Note: Raw selected topic transcripts and Alternative Sources are NOT included here. They are deeply interpreted in the Selected Source Analysis step. This step focuses on canon-first extraction from the indexed primary corpus.)
+(Note: Raw selected topic transcripts and Alternative Sources are NOT included here. They are deeply interpreted in the Selected Source Analysis step. This step focuses on primary-source-first extraction from the indexed primary corpus.)
 
 ## Creator Feedback on Brief
 ${brief.creative_brief_feedback || "None provided."}
 
-## Retrieved Canon Material (books and movie transcripts — primary evidence only)
+## Retrieved Primary Source Material (books and movie transcripts — primary evidence only)
 ${sourceContext}
 
 Mine all six categories now. Rank everything by surprise value, specificity, and argument usefulness. Be precise about sources.`;
