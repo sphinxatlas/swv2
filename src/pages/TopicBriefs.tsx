@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -44,26 +44,15 @@ const blankForm = (): CreateBriefInput => ({
   priority_sources: [],
 });
 
-const BOOK_OPTIONS = [
-  "Book 1: Philosopher's Stone",
-  "Book 2: Chamber of Secrets",
-  "Book 3: Prisoner of Azkaban",
-  "Book 4: Goblet of Fire",
-  "Book 5: Order of the Phoenix",
-  "Book 6: Half-Blood Prince",
-  "Book 7: Deathly Hallows",
-];
+const UNGROUPED_LABEL = "Priority Sources";
 
-const MOVIE_OPTIONS = [
-  "Movie 1: Philosopher's Stone",
-  "Movie 2: Chamber of Secrets",
-  "Movie 3: Prisoner of Azkaban",
-  "Movie 4: Goblet of Fire",
-  "Movie 5: Order of the Phoenix",
-  "Movie 6: Half-Blood Prince",
-  "Movie 7.1: Deathly Hallows Part 1",
-  "Movie 7.2: Deathly Hallows Part 2",
-];
+interface SourceCatalogEntry {
+  label: string;
+  token?: string;
+  group?: string | null;
+}
+
+
 
 interface InlineTranscriptFormProps {
   label: string;
@@ -126,7 +115,37 @@ function InlineTranscriptForm({ label, onSave, onCancel }: InlineTranscriptFormP
 
 export default function TopicBriefs() {
   const navigate = useNavigate();
-  const { channelId } = useChannel();
+  const { channelId, channel } = useChannel();
+  const comparisonAvailable = !!channel?.comparison_mode_available;
+
+  // Priority source dropdowns are built from the channel's source_catalog,
+  // grouped by `group` in first-appearance order. Ungrouped entries fall into a
+  // single trailing group.
+  const sourceGroups = useMemo(() => {
+    const raw: SourceCatalogEntry[] = Array.isArray(channel?.source_catalog)
+      ? (channel!.source_catalog as SourceCatalogEntry[])
+      : [];
+    const order: string[] = [];
+    const map = new Map<string, string[]>();
+    const ungrouped: string[] = [];
+    for (const entry of raw) {
+      const label = typeof entry?.label === "string" ? entry.label.trim() : "";
+      if (!label) continue;
+      const group = typeof entry?.group === "string" ? entry.group.trim() : "";
+      if (!group) {
+        ungrouped.push(label);
+        continue;
+      }
+      if (!map.has(group)) {
+        map.set(group, []);
+        order.push(group);
+      }
+      map.get(group)!.push(label);
+    }
+    const groups = order.map((name) => ({ name, labels: map.get(name)! }));
+    if (ungrouped.length > 0) groups.push({ name: UNGROUPED_LABEL, labels: ungrouped });
+    return groups;
+  }, [channel]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<CreateBriefInput>(blankForm());
   const [creating, setCreating] = useState(false);
