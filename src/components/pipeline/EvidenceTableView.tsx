@@ -34,22 +34,34 @@ interface Props {
   ) => void;
 }
 
-const FIELDS: { key: keyof EvidencePointDraft | "why_this_matters"; label: string }[] = [
-  { key: "claim", label: "Claim" },
-  { key: "source_file", label: "Source File" },
-  { key: "source_type", label: "Source Type" },
-  { key: "confidence", label: "Confidence" },
-  { key: "evidence_type", label: "Evidence Type" },
-  { key: "why_this_matters", label: "Why This Matters" },
-  { key: "book_evidence", label: "Book Evidence" },
-  { key: "movie_evidence", label: "Movie Evidence" },
-  { key: "difference_note", label: "Contrast" },
-  { key: "lexicon_support", label: "Lexicon Support" },
-  { key: "secondary_source_support", label: "Secondary Source Support" },
-  { key: "exact_quote", label: "Micro-Quote" },
-  { key: "paraphrase", label: "Paraphrase" },
-  { key: "commentary_angle", label: "Commentary Angle" },
-];
+type FieldDef = { key: keyof EvidencePointDraft | "why_this_matters"; label: string };
+
+// The axis columns keep their database keys; only the display labels come from
+// the channel's comparison_axis_labels.
+function buildFields(sideA: string | null, sideB: string | null): FieldDef[] {
+  const axisFields: FieldDef[] =
+    sideA && sideB
+      ? [
+          { key: "book_evidence", label: `${sideA} Evidence` },
+          { key: "movie_evidence", label: `${sideB} Evidence` },
+          { key: "difference_note", label: "Contrast" },
+        ]
+      : [];
+  return [
+    { key: "claim", label: "Claim" },
+    { key: "source_file", label: "Source File" },
+    { key: "source_type", label: "Source Type" },
+    { key: "confidence", label: "Confidence" },
+    { key: "evidence_type", label: "Evidence Type" },
+    { key: "why_this_matters", label: "Why This Matters" },
+    ...axisFields,
+    { key: "lexicon_support", label: "Lexicon Support" },
+    { key: "secondary_source_support", label: "Secondary Source Support" },
+    { key: "exact_quote", label: "Micro-Quote" },
+    { key: "paraphrase", label: "Paraphrase" },
+    { key: "commentary_angle", label: "Commentary Angle" },
+  ];
+}
 
 const COLLAPSED_KEYS = new Set(["claim", "source_file", "confidence", "why_this_matters"]);
 
