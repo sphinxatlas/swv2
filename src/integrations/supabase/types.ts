@@ -31,7 +31,7 @@ export type Database = {
           url: string | null
         }
         Insert: {
-          channel_id: string
+          channel_id?: string
           char_count?: number | null
           content: string
           created_at?: string
@@ -158,7 +158,7 @@ export type Database = {
           video_title: string
         }
         Insert: {
-          channel_id: string
+          channel_id?: string
           channel_name: string
           char_count?: number | null
           created_at?: string
@@ -368,7 +368,7 @@ export type Database = {
           video_title: string
         }
         Insert: {
-          channel_id: string
+          channel_id?: string
           channel_name: string
           created_at?: string
           id?: string
@@ -440,7 +440,7 @@ export type Database = {
           storage_path: string
         }
         Insert: {
-          channel_id: string
+          channel_id?: string
           char_count?: number | null
           created_at?: string
           estimated_tokens?: number | null
@@ -505,7 +505,7 @@ export type Database = {
         }
         Insert: {
           angle_note?: string | null
-          channel_id: string
+          channel_id?: string
           characters?: string[] | null
           comparison_mode?: boolean
           competitor_script_1?: string | null
