@@ -227,7 +227,7 @@ B. TITLE PROMISE
 - Do not let the script wander into adjacent topics that dilute the title.
 
 C. CASUAL VIEWER CONTEXT
-- Before building any argument that depends on a specific HP concept, person, object, or rule, briefly explain it in 1–2 clear sentences for casual viewers.
+- Before building any argument that depends on a specific {{SUBJECT_LABEL}} concept, person, object, or rule, briefly explain it in 1–2 clear sentences for casual viewers.
 - Example: if the argument depends on the Marauder's Map, explain what the Map is and what it does before analyzing it.
 - Do not assume only hardcore fans are watching. Hardcore fans will tolerate a brief refresher; casual viewers will not tolerate confusion.
 
@@ -1142,7 +1142,7 @@ If the Beat Plan has 10 beats, the Full Script has 10 corresponding movements. B
 
 Additional fidelity rules:
 - Honor the Creative Brief's Video Engine where the SEP supports it: Viewer Click Question and Title Promise are binding (the script must answer the question and deliver the title's promise). Hypothesized Surprising Answer, Hypothesized Final Payoff, and Escalation Logic are provisional — if SEP evidence and Beat Plan structure point elsewhere, follow the evidence. The brief sets intent; SEP and Beat Plan set truth.
-- Include casual viewer context for any HP concept the argument depends on, EARLY — before the first beat that relies on it.
+- Include casual viewer context for any {{SUBJECT_LABEL}} concept the argument depends on, EARLY — before the first beat that relies on it.
 - Build toward ONE clear climax in the final third of the script. The conclusion must feel like a payoff and a verdict, not a summary.
 - Avoid circular argumentation. If two beats are saying the same thing, the second one must escalate or be cut.
 
@@ -1212,7 +1212,7 @@ IMPORTANT — WORD COUNT INSTRUCTIONS (injected dynamically per brief):
 
 STEP_PROMPTS["creative_brief"] = `You are a creative director for a {{SUBJECT_LABEL}} YouTube channel.
 
-Your job: take the video title, angle note, format reference transcript(s), and any brief-specific HP topic transcripts provided, and generate a structured Creative Brief that will guide every subsequent step of the script pipeline.
+Your job: take the video title, angle note, format reference transcript(s), and any brief-specific topic transcripts provided, and generate a structured Creative Brief that will guide every subsequent step of the script pipeline.
 
 PRESERVATION RULE
 The Creator's Raw Angle is the source of truth for intent, framing, and
@@ -1250,19 +1250,19 @@ ${VIDEO_RETENTION_STRUCTURE_INSTRUCTION}
 FORMAT REFERENCE RULES:
 - Analyze format reference transcript(s) for argumentative DNA ONLY
 - Extract: hook shape, argument structure, emotional arc, stacking technique, fairness move, closing reframe
-- NEVER use format references for HP content, facts, or information of any kind
+- NEVER use format references for {{SUBJECT_LABEL}} content, facts, or information of any kind
 - Format references are from completely different topics — structural templates only
 
 FORMAT REFERENCE SCOPE LIMIT
 The format reference informs pacing, hook rhythm, and tonal cadence
 only. It does NOT dictate argument structure, stacking technique,
-emotional arc, or escalation shape — those are determined by the HP
+emotional arc, or escalation shape — those are determined by the topic
 angle and (downstream) by the evidence retrieved in SEP. Do not import
 structural decisions from the format reference that the Creator's Raw
 Angle has not asked for.
 
-HP TOPIC TRANSCRIPT RULES:
-- These are HP videos covering similar topics to this video
+TOPIC TRANSCRIPT RULES:
+- These are videos about {{SUBJECT_LABEL}} covering similar topics to this video
 - Use to understand: what angles exist, what claims have been made, what canon moments are relevant
 - Identify specific scenes or moments to verify against primary canon (books and movie transcripts)
 - Do NOT treat as proof of canon facts
@@ -1287,13 +1287,13 @@ Generate the Creative Brief in this EXACT format:
 [One of: Comparison / Movie-Focus / Book-Focus / Character Study / Plot Hole Dive / Grievance Analysis]
 
 ### Emotional Arc
-[The emotional journey the viewer goes on. Drawn from the HP angle, not the format reference.]
+[The emotional journey the viewer goes on. Drawn from the topic angle, not the format reference.]
 
 ### Argument Structure
-[2–3 sentences describing the SHAPE of the argument's logic — e.g. "an accumulation argument that layers three contrast spines before paying off on a final reversal." Do NOT name specific scenes, moments, or beats. Do NOT use sequencing language ("start with… then… escalate into… cash out with…") — that is beat-writing, which Beat Plan owns. If your description could be turned into a numbered outline, you've over-specified. Drawn from the HP angle, not the format reference.]
+[2–3 sentences describing the SHAPE of the argument's logic — e.g. "an accumulation argument that layers three contrast spines before paying off on a final reversal." Do NOT name specific scenes, moments, or beats. Do NOT use sequencing language ("start with… then… escalate into… cash out with…") — that is beat-writing, which Beat Plan owns. If your description could be turned into a numbered outline, you've over-specified. Drawn from the topic angle, not the format reference.]
 
 ### Hook Shape
-[The concrete moment, contradiction, or scene the hook should land on. Drawn from the HP angle. Format reference informs rhythm only, not subject.]
+[The concrete moment, contradiction, or scene the hook should land on. Drawn from the topic angle. Format reference informs rhythm only, not subject.]
 
 ### Tone Temperature
 [How the host should feel in this video. Calibrated to the host persona.]
@@ -1330,7 +1330,7 @@ Given the Creative Brief and retrieved canon material, mine the evidence across 
 
 IMPORTANT SOURCE RULES:
 - Only draw confirmed factual claims from primary canon: books and movie transcripts
-- HP topic transcripts and knowledge base sources can point you toward what to investigate but every claim must be confirmed in primary canon
+- Topic transcripts and knowledge base sources can point you toward what to investigate but every claim must be confirmed in primary canon
 - Do NOT invent or fabricate evidence
 - If canon material does not support a claim, say so explicitly
 
@@ -1393,19 +1393,19 @@ For each angle:
 
 STEP_PROMPTS["selected_source_analysis"] = `You are a senior research strategist for a {{SUBJECT_LABEL}} YouTube channel.
 
-Your job is to analyze ONLY the secondary sources that the creator specifically selected for this Topic Brief — selected HP topic transcripts (other creators' videos on this topic) and selected Alternative Sources (Reddit threads, comments, forum posts, blog posts, wiki pages, articles, notes). You are the SECONDARY interpretive layer that runs AFTER the canon-first Insights & Research step.
+Your job is to analyze ONLY the secondary sources that the creator specifically selected for this Topic Brief — selected topic transcripts (other creators' videos on this topic) and selected Alternative Sources (Reddit threads, comments, forum posts, blog posts, wiki pages, articles, notes). You are the SECONDARY interpretive layer that runs AFTER the canon-first Insights & Research step.
 
 ABSOLUTE RULES — READ CAREFULLY:
 
 1. You are NOT the canon evidence layer. The Insights & Research step already mined the books, movie transcripts, and lexicon. Do not re-do that work. Do not invent canon. Do not promote a transcript's claim as confirmed fact.
 
-2. SECONDARY SOURCES ARE NOT PROOF. Selected HP topic transcripts and Alternative Sources are AUDIENCE INTELLIGENCE and INTERPRETIVE INPUT only. They reveal what the fandom is debating, what's been overdone, what objections exist, and what framings are unexplored. They do NOT confirm canon facts. Any factual claim sourced from them must be flagged "needs canon validation".
+2. SECONDARY SOURCES ARE NOT PROOF. Selected topic transcripts and Alternative Sources are AUDIENCE INTELLIGENCE and INTERPRETIVE INPUT only. They reveal what the fandom is debating, what's been overdone, what objections exist, and what framings are unexplored. They do NOT confirm canon facts. Any factual claim sourced from them must be flagged "needs canon validation".
 
 3. ORIGINALITY IS THE POINT. Do not summarize the selected transcripts. Do not paraphrase their arguments closely. Do not copy creator phrasings, jokes, transitions, examples, structures, or conclusions. Your job is to help the host AVOID sounding like a remix of these creators.
 
 4. FORMAT REFERENCE VIDEOS (if any appear in context) are STRUCTURE-ONLY references. Never treat their {{SUBJECT_LABEL}} content as factual evidence and never extract {{SUBJECT_LABEL}} claims from them.
 
-5. If NO selected HP topic transcripts and NO selected Alternative Sources are attached, complete gracefully: state plainly that no selected secondary sources were provided, and produce a minimal analysis based on the Creative Brief and Insights & Research only. Do not block the pipeline. Do not invent fan signals.
+5. If NO selected topic transcripts and NO selected Alternative Sources are attached, complete gracefully: state plainly that no selected secondary sources were provided, and produce a minimal analysis based on the Creative Brief and Insights & Research only. Do not block the pipeline. Do not invent fan signals.
 
 OUTPUT FORMAT — produce this exact structure in markdown:
 
@@ -2309,7 +2309,7 @@ serve(async (req) => {
     // We have TWO budget profiles:
     //   1. SSA_PROFILE — used ONLY by selected_source_analysis. This is the
     //      "deep interpretation gateway" step. We allow much more raw text
-    //      through here so the model can read selected HP topic transcripts
+    //      through here so the model can read selected topic transcripts
     //      and Alternative Sources thoroughly. If material is still too
     //      large, we add a visible truncation marker rather than silently
     //      dropping content.
@@ -2318,7 +2318,7 @@ serve(async (req) => {
     //      keep the budget moderate to avoid prompt overload.
     //
     // No other step (evidence_table, outline, full_script, revision,
-    // final pass) receives raw selected HP topic transcripts or raw
+    // final pass) receives raw selected topic transcripts or raw
     // Alternative Sources. They consume the Selected Source Analysis
     // OUTPUT instead, via previousContext.
     // ─────────────────────────────────────────────────────────────────────
@@ -2339,7 +2339,7 @@ serve(async (req) => {
       const parts: string[] = [];
       let skipped = 0;
       for (const s of alternativeSources) {
-        // Expand HP installment abbreviations (PS/CoS/HBP/OotP/DH/...) in
+        // Expand channel-configured abbreviations in
         // the source body before the per-item cap. The original text is
         // preserved verbatim; expansions are appended in a trailing note.
         const raw = expandAbbreviations((s.content || "").toString(), abbrPatterns);
@@ -2377,14 +2377,14 @@ serve(async (req) => {
         let perCap = raw;
         if (raw.length > perItem) {
           perCap = raw.slice(0, perItem) +
-            `\n\n[!! HP TOPIC TRANSCRIPT TRUNCATED — read ${perItem} of ${raw.length} chars (profile=${profile}). Material beyond this point was not included.]`;
+            `\n\n[!! TOPIC TRANSCRIPT TRUNCATED — read ${perItem} of ${raw.length} chars (profile=${profile}). Material beyond this point was not included.]`;
           truncationWarnings.push(`topic_transcript_per_item_truncated:${r.video_title}:${raw.length}->${perItem}`);
         }
         if (total + perCap.length > maxTotal) {
           const remaining = Math.max(0, maxTotal - total);
           if (remaining > 1000) {
             const tail = perCap.slice(0, remaining) +
-              `\n\n[!! HP TOPIC TRANSCRIPT TRUNCATED at total budget — added ${remaining} of ${perCap.length} chars from this item (profile=${profile}).]`;
+              `\n\n[!! TOPIC TRANSCRIPT TRUNCATED at total budget — added ${remaining} of ${perCap.length} chars from this item (profile=${profile}).]`;
             out.push({ ...r, transcript: tail });
             total += remaining;
             truncationWarnings.push(`topic_transcript_total_budget_clip:${r.video_title}:profile=${profile}`);
@@ -2417,14 +2417,14 @@ serve(async (req) => {
       }
 
       const formatRefBlock = formatRefs
-        .map((r: any) => `### Format Reference: "${r.video_title}" by ${r.channel_name}\nIMPORTANT: This is from a non-HP topic. Use for structure and positioning only — never for HP content.\n\n${r.transcript}`)
+        .map((r: any) => `### Format Reference: "${r.video_title}" by ${r.channel_name}\nIMPORTANT: This is from a different subject. Use for structure and positioning only — never for {{SUBJECT_LABEL}} content.\n\n${r.transcript}`)
         .join("\n\n---\n\n");
 
       const topicTranscriptBlock = topicTranscripts.length > 0
         ? truncateTopicTranscripts(topicTranscripts, "creative_brief")
-            .map((r: any) => `### HP Topic Transcript: "${r.video_title}" by ${r.channel_name} ${qualityTag(r.script_strength)}\nUse for research leads and angle awareness. Tier behavior governed by quality tag — see Source Hierarchy.\n\n${r.transcript}`)
+            .map((r: any) => `### Topic Transcript: "${r.video_title}" by ${r.channel_name} ${qualityTag(r.script_strength)}\nUse for research leads and angle awareness. Tier behavior governed by quality tag — see Source Hierarchy.\n\n${r.transcript}`)
             .join("\n\n---\n\n")
-        : "No brief-specific HP topic transcripts provided for this brief.";
+        : "No brief-specific topic transcripts provided for this brief.";
 
       // Guidance (Script Writing, Anti-AI, Host Persona) is injected solely via
       // the unified buildGuidanceBlock() output (`layeredGuidanceBlock`).
@@ -2439,10 +2439,10 @@ ${brief.title}
 ## Creator's Raw Angle (preserve framings and wording where fields allow)
 ${brief.angle_note || brief.description || "(No angle note provided)"}
 ${brief.creative_brief_feedback ? `\n## Creator Feedback on Previous Creative Brief (BINDING — address these revisions in this regeneration)\n${brief.creative_brief_feedback}\n` : ""}
-## Format Reference Transcripts (non-HP — structure and positioning only)
+## Format Reference Transcripts (different subject — structure and positioning only)
 ${formatRefBlock}
 
-## Brief-Specific HP Topic Transcripts (research leads — confirm all claims in primary canon)
+## Brief-Specific Topic Transcripts (research leads — confirm all claims in primary canon)
 ${topicTranscriptBlock}${formatAlternativeSourcesBlock("Alternative Sources", "creative_brief")}${buildSecondarySkippedNotice()}
 
 Generate the Creative Brief now.`;
@@ -3098,7 +3098,7 @@ DO NOT use general ${channel.subject_label} knowledge. DO NOT generate placehold
 If a Selected Source Analysis output appears in the previous pipeline context, treat it as AUDIENCE INTELLIGENCE only — recurring fan signals, overused angles to avoid, audience objections to address, candidate claims to validate, and original synthesis opportunities.
 
 Rules:
-- Do NOT copy or closely paraphrase claims, jokes, transitions, structures, or conclusions from the selected HP topic transcripts or Alternative Sources.
+- Do NOT copy or closely paraphrase claims, jokes, transitions, structures, or conclusions from the selected topic transcripts or Alternative Sources.
 - Do NOT promote any "candidate claim" or "needs validation" item from the Selected Source Analysis to a confirmed factual claim unless it is independently supported by Tier 1 canon (books / movie transcripts) in the retrieved Source Material Excerpts.
 - DO use the Selected Source Analysis to: avoid overdone angles, address likely audience objections, sharpen escalation, strengthen re-hooks, and produce a more original final argument in the host persona's voice.
 - Honour the "Do-Not-Copy Notes" section of the Selected Source Analysis if present.
@@ -3183,7 +3183,7 @@ If any answer reveals overreliance, revise toward a more original, canon-grounde
         `- The previous Full Script and the user's revision feedback are included in the user message.\n` +
         `- Preserve the strongest material from the previous script. Rebuild weak or repetitive sections.\n` +
         `- Directly apply the user's feedback. Do not patch a few sentences cosmetically.\n` +
-        `- Reuse the full pipeline context (Topic Brief, Creative Brief, Insights & Research, Evidence Table, Outline, source excerpts, Script Writing Instructions, Anti AI Guide, Host Persona, HP topic transcripts, commentary transcripts).\n` +
+        `- Reuse the full pipeline context (Topic Brief, Creative Brief, Insights & Research, Evidence Table, Outline, source excerpts, Script Writing Instructions, Anti AI Guide, Host Persona, topic transcripts, commentary transcripts).\n` +
         `- Maintain target word count, editor tags after evidence paragraphs, source specificity, quote discipline, and the Lexicon mention ban.\n` +
         `- Output ONLY the revised Full Script. Do not include an explanation of changes, a diff, a changelog, or commentary about the revision.\n`;
     }
@@ -3191,7 +3191,7 @@ If any answer reveals overreliance, revise toward a more original, canon-grounde
     // ─────────────────────────────────────────────────────────────────────
     // RAW SELECTED SECONDARY SOURCES — GATED TO SSA ONLY
     //
-    // Raw selected HP topic transcripts and raw Alternative Sources are
+    // Raw selected topic transcripts and raw Alternative Sources are
     // ONLY injected into selected_source_analysis (the deep-interpretation
     // gateway). Downstream steps (evidence_table, outline, full_script,
     // revision, final pass, six_category_extraction) consume the SSA OUTPUT
@@ -3199,7 +3199,7 @@ If any answer reveals overreliance, revise toward a more original, canon-grounde
     // ─────────────────────────────────────────────────────────────────────
     const topicTranscriptUserBlock =
       stepType === "selected_source_analysis" && topicTranscripts.length > 0
-        ? `\n\n## Brief-Specific HP Topic Transcripts (THEORY, ANGLE, AND RESEARCH LEADS — not Tier 1 canon)\nTreat these as theory/angle/interpretation input. Factual canon claims still require Tier 1 book or movie transcript support. Theories may be used if plausible, coherent, and not obviously contradicted by canon. Frame theories honestly as theories.\n\n` +
+        ? `\n\n## Brief-Specific Topic Transcripts (THEORY, ANGLE, AND RESEARCH LEADS — not Tier 1 canon)\nTreat these as theory/angle/interpretation input. Factual canon claims still require Tier 1 book or movie transcript support. Theories may be used if plausible, coherent, and not obviously contradicted by canon. Frame theories honestly as theories.\n\n` +
           truncateTopicTranscripts(topicTranscripts, "ssa")
             .map((r: any) => `### "${r.video_title}" by ${r.channel_name} ${qualityTag(r.script_strength)}\n${r.transcript}`)
             .join("\n\n---\n\n")
@@ -3277,7 +3277,7 @@ Now produce the Selected Source Analysis in the exact format specified. Be hones
       userMessage = `## Creative Brief
 ${creativeBriefContent || `Title: ${brief.title}\nAngle: ${brief.angle_note || brief.description || ""}`}
 
-(Note: Raw selected HP topic transcripts and Alternative Sources are NOT included here. They are deeply interpreted in the Selected Source Analysis step. This step focuses on canon-first extraction from the indexed primary corpus.)
+(Note: Raw selected topic transcripts and Alternative Sources are NOT included here. They are deeply interpreted in the Selected Source Analysis step. This step focuses on canon-first extraction from the indexed primary corpus.)
 
 ## Creator Feedback on Brief
 ${brief.creative_brief_feedback || "None provided."}
@@ -3323,7 +3323,7 @@ Please generate the ${stepType.replace(/_/g, " ")} based on the above informatio
         prevScript = prevOut?.content || "";
       }
 
-      userMessage += `\n\n## Previous Full Script\n${prevScript || "(No previous Full Script available.)"}\n\n## User Revision Feedback\n${revisionFeedback.trim()}\n\n## Revision Task\nRevise the previous Full Script using the user feedback. Do not simply patch a few sentences. Rebuild the script where necessary while preserving the strongest material. Use the full pipeline context again, including the Topic Brief, Creative Brief, Insights & Research, Evidence Table, Outline, source excerpts, Script Writing Instructions, Anti AI Guide, Host Persona, HP topic transcripts, and commentary transcripts where relevant.\n\nThe revised script must directly address the feedback and produce a cleaner, stronger, less repetitive, more source-grounded, more host-voiced final script.\n\nOutput only the revised Full Script.`;
+      userMessage += `\n\n## Previous Full Script\n${prevScript || "(No previous Full Script available.)"}\n\n## User Revision Feedback\n${revisionFeedback.trim()}\n\n## Revision Task\nRevise the previous Full Script using the user feedback. Do not simply patch a few sentences. Rebuild the script where necessary while preserving the strongest material. Use the full pipeline context again, including the Topic Brief, Creative Brief, Insights & Research, Evidence Table, Outline, source excerpts, Script Writing Instructions, Anti AI Guide, Host Persona, topic transcripts, and commentary transcripts where relevant.\n\nThe revised script must directly address the feedback and produce a cleaner, stronger, less repetitive, more source-grounded, more host-voiced final script.\n\nOutput only the revised Full Script.`;
     }
 
     // ── GENERIC PER-STEP REVISION FEEDBACK ──
