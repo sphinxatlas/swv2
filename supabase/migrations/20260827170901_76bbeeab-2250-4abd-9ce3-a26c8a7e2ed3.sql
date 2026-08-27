@@ -1,0 +1,4 @@
+UPDATE public.channels
+SET source_hierarchy = $j${"tiers": [{"file_type": "book", "rank": 1, "authority": "primary"}, {"file_type": "transcript", "rank": 2, "authority": "primary"}], "prose": "The books and film transcripts are the primary sources. Prioritise them for factual claims, exact quotes, and core comparisons. Commentary transcripts, alternative sources, fan wikis, forums, and other creators can never supply a factual claim, proof, or quote. They may shape framing, objections, and angle context only, and no secondary source is ever named in script output."}$j$::jsonb,
+    updated_at = now()
+WHERE slug = 'harry-potter';
