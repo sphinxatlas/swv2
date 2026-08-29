@@ -43,6 +43,37 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
   const [renameValue, setRenameValue] = useState<string>("");
   const [renameSaving, setRenameSaving] = useState(false);
 
+  // Paste-text dialog state
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteName, setPasteName] = useState("");
+  const [pasteText, setPasteText] = useState("");
+  const [pasteSaving, setPasteSaving] = useState(false);
+
+  const handlePasteSubmit = useCallback(async () => {
+    const trimmedName = pasteName.trim();
+    const trimmedText = pasteText.trim();
+    if (!trimmedName || !trimmedText || !channelId) return;
+    setPasteSaving(true);
+    try {
+      const created = await createSourceFileFromText(trimmedName, pasteText, fileType, channelId, briefId ?? null);
+      toast.success(`Created ${created.name}`);
+      setProcessing(created.id);
+      await processFile(created.id);
+      toast.success(`Indexed ${created.name} (chunked for search)`);
+      onRefresh();
+      setPasteOpen(false);
+      setPasteName("");
+      setPasteText("");
+    } catch (err: any) {
+      toast.error(err.message || "Create failed");
+    } finally {
+      setPasteSaving(false);
+      setProcessing(null);
+    }
+  }, [pasteName, pasteText, channelId, fileType, briefId, onRefresh]);
+
+  const pasteSubmitDisabled = pasteSaving || !pasteName.trim() || !pasteText.trim();
+
   const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (!fileList?.length) return;
