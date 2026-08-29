@@ -36,11 +36,14 @@ async function loadLayer(
   supabase: any,
   fileTypes: string[],
   label: string,
+  channelId: string,
 ): Promise<LayerMeta> {
   const { data: files } = await supabase
     .from("source_files")
     .select("id, file_type")
-    .in("file_type", fileTypes);
+    .in("file_type", fileTypes)
+    .eq("channel_id", channelId)
+    .is("brief_id", null);
   const empty: LayerMeta = { text: "", sourceUsed: "none", chunksRead: 0, totalChunks: 0, truncated: false };
   if (!files || files.length === 0) return empty;
   const ids = files.map((f: any) => f.id);
@@ -129,11 +132,25 @@ serve(async (req) => {
       );
     }
 
+    // Load the brief's channel so guidance is channel-scoped.
+    const { data: briefRow, error: briefErr } = await supabase
+      .from("topic_briefs")
+      .select("channel_id")
+      .eq("id", briefId)
+      .single();
+    if (briefErr || !briefRow?.channel_id) {
+      return new Response(JSON.stringify({ error: "Brief not found" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const channelId: string = briefRow.channel_id;
+
     // Load guidance docs
     const [scriptInstructions, antiAi, hostPersona] = await Promise.all([
-      loadLayer(supabase, ["instructions", "script_strategy"], "instructions"),
-      loadLayer(supabase, ["anti_ai_guide"], "anti_ai_guide"),
-      loadLayer(supabase, ["host_persona"], "host_persona"),
+      loadLayer(supabase, ["instructions", "script_strategy"], "instructions", channelId),
+      loadLayer(supabase, ["anti_ai_guide"], "anti_ai_guide", channelId),
+      loadLayer(supabase, ["host_persona"], "host_persona", channelId),
     ]);
 
     const guidanceBlock = [

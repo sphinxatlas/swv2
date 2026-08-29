@@ -547,7 +547,7 @@ export default function PipelineView() {
     let acc = "";
     try {
       await streamPolishPass(
-        { passType: "anti_ai", scope: "full_script", scriptText: antiAiInput },
+        { passType: "anti_ai", scope: "full_script", scriptText: antiAiInput, briefId: briefId! },
         (delta) => {
           acc += delta;
           setAntiAiStream(acc);
@@ -583,7 +583,7 @@ export default function PipelineView() {
     let acc = "";
     try {
       await streamPolishPass(
-        { passType: "melty_voice", scope: "full_script", scriptText: fullScriptContent },
+        { passType: "melty_voice", scope: "full_script", scriptText: fullScriptContent, briefId: briefId! },
         (delta) => {
           acc += delta;
           setMeltyStream(acc);
@@ -628,6 +628,7 @@ export default function PipelineView() {
           scope: "passage",
           scriptText: passageInput,
           userFeedback: passageFeedback,
+          briefId: briefId!,
         },
         (delta) => {
           acc += delta;

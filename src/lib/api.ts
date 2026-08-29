@@ -456,7 +456,7 @@ export async function refineHookOption(
 }
 
 export async function streamPolishPass(
-  input: { passType: PolishPassType; scriptText: string; scope?: "full_script" | "passage"; userFeedback?: string },
+  input: { passType: PolishPassType; scriptText: string; briefId: string; scope?: "full_script" | "passage"; userFeedback?: string },
   onDelta: (text: string) => void,
   onDone: () => void,
 ) {
