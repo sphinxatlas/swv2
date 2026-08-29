@@ -318,11 +318,11 @@ The Evidence Table must clearly separate {{#IF_COMPARISON}}four{{/IF_COMPARISON}
 {{#IF_COMPARISON}}2. ADAPTATION CONTRASTS — {{SIDE_A_LOWER}} vs {{SIDE_B_LOWER}} differences. Use {{SIDE_A_LOWER}} and {{SIDE_B_LOWER}} transcript evidence where possible.
 3. INTERPRETIVE / THEORY ANGLES — do NOT require direct primary source confirmation. Check that the theory is plausible, interesting, logically coherent, and not obviously contradicted by the primary sources. Clearly label as theory / interpretation / speculative angle. Note what primary source detail, scene, omission, contradiction, or pattern makes the theory worth considering.
 4. SPECULATION / CONSPIRACY STYLE IDEAS — fan-aware, speculative readings. Label clearly as speculation. Must still be grounded in some primary source detail or pattern, even if interpretive.
+
 {{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}2. INTERPRETIVE / THEORY ANGLES — do NOT require direct primary source confirmation. Check that the theory is plausible, interesting, logically coherent, and not obviously contradicted by the primary sources. Clearly label as theory / interpretation / speculative angle. Note what primary source detail, scene, omission, contradiction, or pattern makes the theory worth considering.
 3. SPECULATION / CONSPIRACY STYLE IDEAS — fan-aware, speculative readings. Label clearly as speculation. Must still be grounded in some primary source detail or pattern, even if interpretive.
-{{/IF_NO_COMPARISON}}
 
-Do not remove interesting theory based material just because it cannot be fully proven.
+{{/IF_NO_COMPARISON}}Do not remove interesting theory based material just because it cannot be fully proven.
 Do not present theories as facts.
 The goal is compelling, defensible {{SUBJECT_LABEL}} video argumentation, not only academic confirmation.
 
@@ -345,9 +345,9 @@ PARAPHRASE-FIRST DISCIPLINE (CRITICAL):
 MICRO-QUOTE PROVENANCE RULE (CRITICAL):
 A Micro-Quote is a verbatim string. It must appear word-for-word in the retrieved chunks of the Source File listed for that evidence point. If the phrase appears only in upstream pipeline steps (Brief, SSA), in secondary sources, or in your own paraphrase, it is NOT a valid Micro-Quote — leave the field empty and set Evidence Type to "paraphrase" or "interpretation."
 
-{{#IF_COMPARISON}}A {{SIDE_A_LOWER}} Micro-Quote must come from a {{SIDE_A_LOWER}} chunk; a {{SIDE_B_LOWER}} Micro-Quote must come from a {{SIDE_B_LOWER}} transcript chunk.{{/IF_COMPARISON}}
+{{#IF_COMPARISON}}A {{SIDE_A_LOWER}} Micro-Quote must come from a {{SIDE_A_LOWER}} chunk; a {{SIDE_B_LOWER}} Micro-Quote must come from a {{SIDE_B_LOWER}} transcript chunk.
 
-FACT VALIDATION VS QUOTATION — these are different operations:
+{{/IF_COMPARISON}}FACT VALIDATION VS QUOTATION — these are different operations:
 - Secondary sources (commentary transcripts, fan wikis) CAN validate that a scene, event, or visual fact exists in the primary sources. Use them freely in the evidence, contrast, and paraphrase fields when they support the underlying claim.
 - Secondary sources CANNOT supply a Micro-Quote attributed to a primary Source File. The Micro-Quote field is reserved for verbatim strings from the primary source's retrieved chunks only.
 
