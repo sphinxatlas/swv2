@@ -1,10 +1,13 @@
 import { useCallback, useState } from "react";
-import { Upload, FileText, Loader2, CheckCircle2, AlertCircle, Trash2, Eye, Download, Pencil, Check, X } from "lucide-react";
+import { Upload, FileText, Loader2, CheckCircle2, AlertCircle, Trash2, Eye, Download, Pencil, Check, X, ClipboardPaste } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
   uploadSourceFile,
+  createSourceFileFromText,
   processFile,
   deleteSourceFile,
   getSourceFileContent,
@@ -39,6 +42,37 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState<string>("");
   const [renameSaving, setRenameSaving] = useState(false);
+
+  // Paste-text dialog state
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteName, setPasteName] = useState("");
+  const [pasteText, setPasteText] = useState("");
+  const [pasteSaving, setPasteSaving] = useState(false);
+
+  const handlePasteSubmit = useCallback(async () => {
+    const trimmedName = pasteName.trim();
+    const trimmedText = pasteText.trim();
+    if (!trimmedName || !trimmedText || !channelId) return;
+    setPasteSaving(true);
+    try {
+      const created = await createSourceFileFromText(trimmedName, pasteText, fileType, channelId, briefId ?? null);
+      toast.success(`Created ${created.name}`);
+      setProcessing(created.id);
+      await processFile(created.id);
+      toast.success(`Indexed ${created.name} (chunked for search)`);
+      onRefresh();
+      setPasteOpen(false);
+      setPasteName("");
+      setPasteText("");
+    } catch (err: any) {
+      toast.error(err.message || "Create failed");
+    } finally {
+      setPasteSaving(false);
+      setProcessing(null);
+    }
+  }, [pasteName, pasteText, channelId, fileType, briefId, onRefresh]);
+
+  const pasteSubmitDisabled = pasteSaving || !pasteName.trim() || !pasteText.trim();
 
   const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
@@ -164,18 +198,30 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
           </div>
           <p className="text-xs text-muted-foreground mt-1">{description}</p>
         </div>
-        <div className="relative">
-          <input
-            type="file"
-            accept={accept}
-            multiple={fileType !== "instructions"}
-            onChange={handleUpload}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            disabled={uploading}
-          />
-          <Button size="sm" variant="outline" disabled={uploading} className="gap-1.5">
-            {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-            Upload
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="relative">
+            <input
+              type="file"
+              accept={accept}
+              multiple={fileType !== "instructions"}
+              onChange={handleUpload}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              disabled={uploading}
+            />
+            <Button size="sm" variant="outline" disabled={uploading} className="gap-1.5">
+              {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+              Upload
+            </Button>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setPasteOpen(true)}
+            disabled={uploading || pasteSaving}
+            className="gap-1.5"
+          >
+            {pasteSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ClipboardPaste className="w-3.5 h-3.5" />}
+            Paste text
           </Button>
         </div>
       </div>
@@ -349,6 +395,61 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
           fallbackDownloadName={`${viewing.name}.txt`}
         />
       )}
+
+      <Dialog open={pasteOpen} onOpenChange={(o) => { setPasteOpen(o); if (!o) { setPasteName(""); setPasteText(""); } }}>
+        <DialogContent className="max-w-2xl flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="font-mono text-base">Paste {title}</DialogTitle>
+            <DialogDescription className="text-xs">
+              Create a source file from pasted text. Saved to storage and indexed for search.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Filename</label>
+              <Input
+                autoFocus
+                value={pasteName}
+                onChange={(e) => setPasteName(e.target.value)}
+                placeholder="my-source"
+                disabled={pasteSaving}
+                className="font-mono text-xs"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Content</label>
+              <Textarea
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                placeholder="Paste your source text here…"
+                disabled={pasteSaving}
+                className="font-mono text-xs min-h-[280px] max-h-[50vh] resize-y"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setPasteOpen(false); setPasteName(""); setPasteText(""); }}
+              disabled={pasteSaving}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handlePasteSubmit}
+              disabled={pasteSubmitDisabled}
+              className="gap-1.5"
+            >
+              {pasteSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+              Create & index
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
