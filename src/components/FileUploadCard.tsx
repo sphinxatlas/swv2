@@ -198,18 +198,30 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
           </div>
           <p className="text-xs text-muted-foreground mt-1">{description}</p>
         </div>
-        <div className="relative">
-          <input
-            type="file"
-            accept={accept}
-            multiple={fileType !== "instructions"}
-            onChange={handleUpload}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            disabled={uploading}
-          />
-          <Button size="sm" variant="outline" disabled={uploading} className="gap-1.5">
-            {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-            Upload
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="relative">
+            <input
+              type="file"
+              accept={accept}
+              multiple={fileType !== "instructions"}
+              onChange={handleUpload}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              disabled={uploading}
+            />
+            <Button size="sm" variant="outline" disabled={uploading} className="gap-1.5">
+              {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+              Upload
+            </Button>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setPasteOpen(true)}
+            disabled={uploading || pasteSaving}
+            className="gap-1.5"
+          >
+            {pasteSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ClipboardPaste className="w-3.5 h-3.5" />}
+            Paste text
           </Button>
         </div>
       </div>
