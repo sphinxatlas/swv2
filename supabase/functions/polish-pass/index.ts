@@ -254,11 +254,13 @@ Output ALL logs first, in the order given above (HOOK AUDIT LOG, PERSONALITY BEA
 
 
 
-async function loadGuidanceText(supabase: any, fileTypes: string[]): Promise<{ text: string; chunks: number; truncated: boolean }> {
+async function loadGuidanceText(supabase: any, fileTypes: string[], channelId: string): Promise<{ text: string; chunks: number; truncated: boolean }> {
   const { data: files } = await supabase
     .from("source_files")
     .select("id")
-    .in("file_type", fileTypes);
+    .in("file_type", fileTypes)
+    .eq("channel_id", channelId)
+    .is("brief_id", null);
   if (!files || files.length === 0) return { text: "", chunks: 0, truncated: false };
 
   const { data: chunkRows, count } = await supabase
@@ -319,6 +321,14 @@ serve(async (req) => {
     const scope: PassScope = body.scope === "passage" ? "passage" : "full_script";
     const userFeedback: string = (body.userFeedback || "").toString().trim();
 
+    const briefId: string = (body.briefId || "").toString();
+    if (!briefId) {
+      return new Response(JSON.stringify({ error: "briefId is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const minLen = scope === "passage" ? 10 : 50;
     if (!scriptText || scriptText.trim().length < minLen) {
       const minMsg = scope === "passage"
@@ -335,15 +345,28 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
+    const { data: briefRow } = await supabase
+      .from("topic_briefs")
+      .select("channel_id")
+      .eq("id", briefId)
+      .single();
+    if (!briefRow?.channel_id) {
+      return new Response(JSON.stringify({ error: "Brief not found" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const channelId: string = briefRow.channel_id;
+
     let systemPrompt: string;
     let userPrompt: string;
 
     if (scope === "passage") {
       // Passage Rewrite: load ALL THREE guidance documents.
       const [scriptWriting, antiAi, hostPersona] = await Promise.all([
-        loadGuidanceText(supabase, ["instructions", "script_strategy"]),
-        loadGuidanceText(supabase, ["anti_ai_guide"]),
-        loadGuidanceText(supabase, ["host_persona"]),
+        loadGuidanceText(supabase, ["instructions", "script_strategy"], channelId),
+        loadGuidanceText(supabase, ["anti_ai_guide"], channelId),
+        loadGuidanceText(supabase, ["host_persona"], channelId),
       ]);
 
       const missing: string[] = [];
@@ -392,7 +415,7 @@ ${scriptText}`;
       // Host Voice Pass (API passType "melty_voice" for compatibility).
       // The persona document is the ONLY voice authority; the procedure
       // above (HOST_VOICE_PASS_PROCEDURE) defines the mechanics in code.
-      const hostPersona = await loadGuidanceText(supabase, ["host_persona"]);
+      const hostPersona = await loadGuidanceText(supabase, ["host_persona"], channelId);
 
       if (!hostPersona.text || hostPersona.text.trim().length < 20) {
         return new Response(
@@ -434,7 +457,7 @@ ${scriptText}`;
         passType === "anti_ai" ? "Anti AI Writing Instructions" :
         "Script Writing Instructions";
 
-      const guidance = await loadGuidanceText(supabase, docFileTypes);
+      const guidance = await loadGuidanceText(supabase, docFileTypes, channelId);
 
       if (!guidance.text || guidance.text.trim().length < 20) {
         return new Response(
