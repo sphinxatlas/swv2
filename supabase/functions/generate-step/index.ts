@@ -209,8 +209,7 @@ When citing evidence:
 const COMPARISON_MODE_INSTRUCTION = `
 {{#IF_COMPARISON}}COMPARISON MODE ACTIVE:
 This script compares the {{SIDE_A_LOWER}} and {{SIDE_B_LOWER}} versions. Do not force a paired {{SIDE_A_LOWER}}/{{SIDE_B_LOWER}} structure sentence by sentence. Lead with the strongest argument. However: every major {{SIDE_A_LOWER}} claim must have a corresponding {{SIDE_B_LOWER}} observation somewhere in the same section — what the {{SIDE_B_LOWER}} does instead, what it omits, or what it changes. A section that builds a {{SIDE_A_LOWER}} case for 400+ words without any {{SIDE_B_LOWER}} contrast has failed. The contrast does not need to be immediate, but it must land before the section closes. Where {{SIDE_B_LOWER}} evidence is missing, narrow the claim or use available {{SIDE_B_LOWER}} evidence from other moments. Never tell the viewer that {{SIDE_B_LOWER}} evidence is missing.
-{{/IF_COMPARISON}}
-`;
+{{/IF_COMPARISON}}`;
 
 // ── BINDING WRITING / VOICE / THEORY INSTRUCTION BLOCKS ──
 // These wrap guidance documents (Host Persona, Script Instructions, Anti AI Guide)
@@ -318,11 +317,11 @@ The Evidence Table must clearly separate {{#IF_COMPARISON}}four{{/IF_COMPARISON}
 {{#IF_COMPARISON}}2. ADAPTATION CONTRASTS — {{SIDE_A_LOWER}} vs {{SIDE_B_LOWER}} differences. Use {{SIDE_A_LOWER}} and {{SIDE_B_LOWER}} transcript evidence where possible.
 3. INTERPRETIVE / THEORY ANGLES — do NOT require direct primary source confirmation. Check that the theory is plausible, interesting, logically coherent, and not obviously contradicted by the primary sources. Clearly label as theory / interpretation / speculative angle. Note what primary source detail, scene, omission, contradiction, or pattern makes the theory worth considering.
 4. SPECULATION / CONSPIRACY STYLE IDEAS — fan-aware, speculative readings. Label clearly as speculation. Must still be grounded in some primary source detail or pattern, even if interpretive.
+
 {{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}2. INTERPRETIVE / THEORY ANGLES — do NOT require direct primary source confirmation. Check that the theory is plausible, interesting, logically coherent, and not obviously contradicted by the primary sources. Clearly label as theory / interpretation / speculative angle. Note what primary source detail, scene, omission, contradiction, or pattern makes the theory worth considering.
 3. SPECULATION / CONSPIRACY STYLE IDEAS — fan-aware, speculative readings. Label clearly as speculation. Must still be grounded in some primary source detail or pattern, even if interpretive.
-{{/IF_NO_COMPARISON}}
 
-Do not remove interesting theory based material just because it cannot be fully proven.
+{{/IF_NO_COMPARISON}}Do not remove interesting theory based material just because it cannot be fully proven.
 Do not present theories as facts.
 The goal is compelling, defensible {{SUBJECT_LABEL}} video argumentation, not only academic confirmation.
 
@@ -345,9 +344,9 @@ PARAPHRASE-FIRST DISCIPLINE (CRITICAL):
 MICRO-QUOTE PROVENANCE RULE (CRITICAL):
 A Micro-Quote is a verbatim string. It must appear word-for-word in the retrieved chunks of the Source File listed for that evidence point. If the phrase appears only in upstream pipeline steps (Brief, SSA), in secondary sources, or in your own paraphrase, it is NOT a valid Micro-Quote — leave the field empty and set Evidence Type to "paraphrase" or "interpretation."
 
-{{#IF_COMPARISON}}A {{SIDE_A_LOWER}} Micro-Quote must come from a {{SIDE_A_LOWER}} chunk; a {{SIDE_B_LOWER}} Micro-Quote must come from a {{SIDE_B_LOWER}} transcript chunk.{{/IF_COMPARISON}}
+{{#IF_COMPARISON}}A {{SIDE_A_LOWER}} Micro-Quote must come from a {{SIDE_A_LOWER}} chunk; a {{SIDE_B_LOWER}} Micro-Quote must come from a {{SIDE_B_LOWER}} transcript chunk.
 
-FACT VALIDATION VS QUOTATION — these are different operations:
+{{/IF_COMPARISON}}FACT VALIDATION VS QUOTATION — these are different operations:
 - Secondary sources (commentary transcripts, fan wikis) CAN validate that a scene, event, or visual fact exists in the primary sources. Use them freely in the evidence, contrast, and paraphrase fields when they support the underlying claim.
 - Secondary sources CANNOT supply a Micro-Quote attributed to a primary Source File. The Micro-Quote field is reserved for verbatim strings from the primary source's retrieved chunks only.
 
@@ -397,8 +396,7 @@ Create the evidence table in this EXACT markdown format for each evidence point:
 | **{{SIDE_B}} Evidence** | [Paraphrased evidence from the {{SIDE_B_LOWER}} transcript, if any — leave blank if none] |
 | **Contrast** | [What differs between the {{SIDE_A_LOWER}} and the {{SIDE_B_LOWER}}, if both present] |
 {{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}| **Evidence** | [Paraphrased evidence from the primary source] |
-{{/IF_NO_COMPARISON}}
-| **Secondary Source Support** | [REQUIRED when Confidence is Medium or Low — name the secondary source(s) + what they confirm in plain prose. If none corroborates, write: "No secondary source corroboration found. Recommend dropping or heavily qualifying this claim in the Beat Plan." Leave blank only when Confidence is High.] |
+{{/IF_NO_COMPARISON}}| **Secondary Source Support** | [REQUIRED when Confidence is Medium or Low — name the secondary source(s) + what they confirm in plain prose. If none corroborates, write: "No secondary source corroboration found. Recommend dropping or heavily qualifying this claim in the Beat Plan." Leave blank only when Confidence is High.] |
 | **Micro-Quote** | [Optional: verbatim quote UNDER 12 words, in quotation marks — leave blank if not essential] |
 | **Paraphrase** | [Paraphrased version of the evidence — REQUIRED for every point] |
 | **Why This Matters** | [Why this is a strong argument point for the video] |
@@ -408,8 +406,8 @@ Create the evidence table in this EXACT markdown format for each evidence point:
 
 Rules:
 - Aim for 10-15 evidence points, curated for strength and relevance
-{{#IF_COMPARISON}}- Majority should include both {{SIDE_A_LOWER}} AND {{SIDE_B_LOWER}} evidence where possible{{/IF_COMPARISON}}
-- Every evidence point must have a source trace (which file it came from)
+{{#IF_COMPARISON}}- Majority should include both {{SIDE_A_LOWER}} AND {{SIDE_B_LOWER}} evidence where possible
+{{/IF_COMPARISON}}- Every evidence point must have a source trace (which file it came from)
 - Never invent quotes
 - Never blur exact quote vs paraphrase
 - Paraphrase is the DEFAULT — exact quotes are the exception, not the rule
@@ -540,9 +538,9 @@ Hard rules:
 
 - No scene serves as primary anchor in more than one beat.
 
-{{#IF_COMPARISON}}- No {{SIDE_A_LOWER}}↔{{SIDE_B_LOWER}} contrast pair serves as primary contrast in more than one beat.{{/IF_COMPARISON}}
+{{#IF_COMPARISON}}- No {{SIDE_A_LOWER}}↔{{SIDE_B_LOWER}} contrast pair serves as primary contrast in more than one beat.
 
-- If a single source appears as contrast anchor in more than 3 beats: STOP. The plan is a contrast monoculture. Restructure or surface this as a retrieval gap in the audit.
+{{/IF_COMPARISON}}- If a single source appears as contrast anchor in more than 3 beats: STOP. The plan is a contrast monoculture. Restructure or surface this as a retrieval gap in the audit.
 
 SECTION 4 — FUNCTION-NOT-TOPIC CHECK
 
@@ -552,9 +550,9 @@ If a beat's job can only be described as "covers [topic]," it is topic-assigned.
 
 {{#IF_COMPARISON}}SECTION 5 — CONTRAST CLOSURE
 
-For {{SIDE_A_LOWER}} vs. {{SIDE_B_LOWER}} comparison scripts: confirm each beat plans a contrast landing before it closes. Mark which acceptable contrast form each beat uses (what the other version does instead / omits / changes in emphasis / why the difference matters).{{/IF_COMPARISON}}
+For {{SIDE_A_LOWER}} vs. {{SIDE_B_LOWER}} comparison scripts: confirm each beat plans a contrast landing before it closes. Mark which acceptable contrast form each beat uses (what the other version does instead / omits / changes in emphasis / why the difference matters).
 
-SECTION 6 — REHOOK FORWARD-MOTION
+{{/IF_COMPARISON}}SECTION 6 — REHOOK FORWARD-MOTION
 
 For each beat's planned rehook, confirm it does one of:
 
@@ -715,8 +713,8 @@ For each beat in the Beat Plan, write one paragraph in plain prose. Number each 
 1. What the beat is doing (one sentence paraphrasing the Beat Plan)
 2. The primary source evidence woven into prose, not listed. Write it the way a writer would recall it: the specific passage, the specific scene, the specific moment, paraphrased into natural language. The writer should be able to narrate from this without referring back to the original source.
 3. Any single direct quote worth considering verbatim, in quotation marks. Maximum one quote per beat. Most beats should have zero.
-{{#IF_COMPARISON}}4. Any meaningful contradiction between the {{SIDE_A_LOWER}} and the {{SIDE_B_LOWER}} worth noting in narration, in one sentence.{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}4. Any meaningful tension or contradiction inside the primary source evidence worth noting in narration, in one sentence.{{/IF_NO_COMPARISON}}
-5. Function: state in one short sentence whether this beat proves, complicates, reveals, rehooks, or pays off. Name what specifically it proves / complicates / reveals / rehooks / pays off.
+{{#IF_COMPARISON}}4. Any meaningful contradiction between the {{SIDE_A_LOWER}} and the {{SIDE_B_LOWER}} worth noting in narration, in one sentence.{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}4. Any meaningful tension or contradiction inside the primary source evidence worth noting in narration, in one sentence.
+{{/IF_NO_COMPARISON}}5. Function: state in one short sentence whether this beat proves, complicates, reveals, rehooks, or pays off. Name what specifically it proves / complicates / reveals / rehooks / pays off.
 6. Hook/payoff relation: state in one short sentence how this beat keeps the opening hook question alive, complicates it, or moves toward paying it off.
 Write items 5 and 6 as natural writer-facing sentences inside the same paragraph. Do not turn the beat into a table. Do not add markdown headings or labels like "Function:" inside the paragraph — embed the information in prose the writer can read in one pass.
 
@@ -1062,7 +1060,7 @@ Compare the opening 3 sentences against the final 3 paragraphs. If the opening c
 
 Search for these banned rehook patterns and rewrite any matches:
 
-- "And the {{SIDE_A_PLURAL_LOWER}} are ruthless about showing you"
+- "And the sources are ruthless about showing you"
 
 - "And once you notice that"
 
@@ -1381,14 +1379,16 @@ For each delta:
 - **{{SIDE_A}} Version**: [What the {{SIDE_A_LOWER}} does — source cited]
 - **{{SIDE_B}} Version**: [What the {{SIDE_B_LOWER}} does — source cited]
 - **What Changed**: [Specifically what was altered, removed, or added]
-- **Effect on Argument**: [What this change does to characterization or the thesis]{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}### 2. THE SHIFT
+- **Effect on Argument**: [What this change does to characterization or the thesis]
+
+{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}### 2. THE SHIFT
 Where the primary sources revise, complicate, or contradict their own account of the same moment.
 For each shift:
 - **Moment**: [What moment]
 - **What Changed**: [Specifically what was altered, removed, or added]
-- **Effect on Argument**: [What this change does to the thesis]{{/IF_NO_COMPARISON}}
+- **Effect on Argument**: [What this change does to the thesis]
 
-### 3. THE PATTERN
+{{/IF_NO_COMPARISON}}### 3. THE PATTERN
 Recurring behavior or adaptation choices across multiple {{#IF_COMPARISON}}{{SIDE_A_PLURAL_LOWER}}/{{SIDE_B_PLURAL_LOWER}}{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}primary sources{{/IF_NO_COMPARISON}} that prove the thesis is not a one-off.
 For each pattern:
 - **Pattern**: [The recurring behavior]
