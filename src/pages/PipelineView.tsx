@@ -51,6 +51,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useChannel } from "@/contexts/ChannelContext";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { FileUploadCard } from "@/components/FileUploadCard";
+import { ChevronDown } from "lucide-react";
 
 type ActiveStep = PipelineStepType;
 
@@ -125,6 +128,7 @@ function splitMeltyVoicePassOutput(text: string): { scriptBody: string; changeLo
 
 export default function PipelineView() {
   const { briefId } = useParams<{ briefId: string }>();
+  const [briefSourcesOpen, setBriefSourcesOpen] = useState(false);
   const { channelId, setChannelId } = useChannel();
   const [activeStep, setActiveStep] = useState<ActiveStep>("creative_brief");
   const [generating, setGenerating] = useState(false);
@@ -195,12 +199,15 @@ export default function PipelineView() {
     enabled: !!briefId,
   });
 
-  const { data: sourceFiles = [] } = useQuery({
+  const { data: sourceFiles = [], refetch: refetchAllSourceFiles } = useQuery({
     queryKey: ["source-files-all", channelId, briefId],
     queryFn: () => getSourceFilesForBrief(channelId!, briefId!),
     enabled: !!channelId && !!briefId,
   });
+  const refetchSourceFiles = () => refetchAllSourceFiles();
   const libraryFileNames = sourceFiles.map((f: any) => f.name);
+  const briefBooks = sourceFiles.filter((f: any) => f.brief_id === briefId && f.file_type === "book");
+  const briefTranscripts = sourceFiles.filter((f: any) => f.brief_id === briefId && f.file_type === "transcript");
 
   const getStepOutput = (step: PipelineStepType) =>
     outputs.find((o) => o.step_type === step);
@@ -709,6 +716,39 @@ export default function PipelineView() {
               </Button>
             </div>
           </div>
+
+          {/* Brief Sources */}
+          <Collapsible open={briefSourcesOpen} onOpenChange={setBriefSourcesOpen}>
+            <CollapsibleTrigger className="flex w-full items-center gap-2 border-b border-border px-6 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${briefSourcesOpen ? "" : "-rotate-90"}`} />
+              Brief Sources
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="border-b border-border px-6 py-4 space-y-4">
+                <p className="text-xs text-muted-foreground">
+                  Files here are used only by this brief. Channel-wide sources live in the Source Library.
+                </p>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FileUploadCard
+                    fileType="book"
+                    title="Primary documents (this brief)"
+                    description="Documents attached to this brief only."
+                    files={briefBooks}
+                    onRefresh={refetchSourceFiles}
+                    briefId={briefId!}
+                  />
+                  <FileUploadCard
+                    fileType="transcript"
+                    title="Primary transcripts (this brief)"
+                    description="Transcripts attached to this brief only."
+                    files={briefTranscripts}
+                    onRefresh={refetchSourceFiles}
+                    briefId={briefId!}
+                  />
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* Content area */}
           <div className="flex-1 overflow-hidden">
