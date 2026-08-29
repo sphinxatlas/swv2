@@ -2124,10 +2124,10 @@ serve(async (req) => {
       creative_brief:              { script: "strong",  antiAi: "light",   persona: "light"   },
       six_category_extraction:     { script: "medium",  antiAi: "light",   persona: "light"   },
       selected_source_analysis:    { script: "medium",  antiAi: "light",   persona: "light"   },
-      angle_check:                 { script: "medium",  antiAi: "light",   persona: "none"   },
+      angle_check:                 { script: "medium",  antiAi: "light",   persona: "medium"  },
       evidence_table:              { script: "medium",  antiAi: "light",   persona: "light"   },
-      outline:                     { script: "highest", antiAi: "strong",  persona: "none"  },
-      script_evidence_pack:        { script: "strong",  antiAi: "strong",  persona: "medium"  },
+      outline:                     { script: "highest", antiAi: "strong",  persona: "strong"  },
+      script_evidence_pack:        { script: "strong",  antiAi: "strong",  persona: "strong"  },
       full_script:                 { script: "highest", antiAi: "highest", persona: "highest" },
       full_script_revision:        { script: "highest", antiAi: "highest", persona: "highest" },
     };
