@@ -188,6 +188,19 @@ export async function getSourceFiles(channelId: string) {
     .from("source_files")
     .select("*")
     .eq("channel_id", channelId)
+    .is("brief_id", null)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+// Channel-level corpus plus this brief's own attached sources.
+export async function getSourceFilesForBrief(channelId: string, briefId: string) {
+  const { data, error } = await supabase
+    .from("source_files")
+    .select("*")
+    .eq("channel_id", channelId)
+    .or(`brief_id.is.null,brief_id.eq.${briefId}`)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data;
