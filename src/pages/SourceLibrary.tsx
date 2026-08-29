@@ -15,7 +15,7 @@ export default function SourceLibrary() {
 
   const books = files.filter((f) => f.file_type === "book");
   const transcripts = files.filter((f) => f.file_type === "transcript");
-  
+
   const instructions = files.filter((f) => f.file_type === "instructions" || f.file_type === "script_strategy");
   const antiAiGuide = files.filter((f) => f.file_type === "anti_ai_guide");
   const competitorAnalysis = files.filter((f) => f.file_type === "competitor_analysis");

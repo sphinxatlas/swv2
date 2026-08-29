@@ -74,7 +74,13 @@ export const PIPELINE_STEPS: {
   },
 ];
 
-export async function uploadSourceFile(file: File, fileType: "book" | "transcript" | "instructions" | "competitor_analysis" | "host_persona" | "anti_ai_guide" | "melty_voice_pass", channelId: string) {
+const GUIDANCE_FILE_TYPES = ["instructions", "script_strategy", "anti_ai_guide", "host_persona", "melty_voice_pass"];
+
+export async function uploadSourceFile(file: File, fileType: "book" | "transcript" | "instructions" | "competitor_analysis" | "host_persona" | "anti_ai_guide" | "melty_voice_pass", channelId: string, briefId?: string | null) {
+  if (briefId && GUIDANCE_FILE_TYPES.includes(fileType)) {
+    throw new Error("Guidance documents are channel-level and cannot be attached to a brief");
+  }
+
   const storagePath = `${fileType}/${Date.now()}-${file.name}`;
 
   const { error: uploadError } = await supabase.storage
@@ -92,6 +98,7 @@ export async function uploadSourceFile(file: File, fileType: "book" | "transcrip
       file_size: file.size,
       status: "uploaded",
       channel_id: channelId,
+      brief_id: briefId ?? null,
     })
     .select()
     .single();
@@ -181,6 +188,19 @@ export async function getSourceFiles(channelId: string) {
     .from("source_files")
     .select("*")
     .eq("channel_id", channelId)
+    .is("brief_id", null)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+// Channel-level corpus plus this brief's own attached sources.
+export async function getSourceFilesForBrief(channelId: string, briefId: string) {
+  const { data, error } = await supabase
+    .from("source_files")
+    .select("*")
+    .eq("channel_id", channelId)
+    .or(`brief_id.is.null,brief_id.eq.${briefId}`)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data;
