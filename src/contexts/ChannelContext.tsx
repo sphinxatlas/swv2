@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "scriptlab.channelId";
@@ -19,6 +19,7 @@ interface ChannelContextValue {
   channelId: string | null;
   channel: Channel | null;
   setChannelId: (id: string) => void;
+  refreshChannels: () => void;
   loading: boolean;
 }
 
