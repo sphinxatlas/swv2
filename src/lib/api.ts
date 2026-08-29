@@ -74,7 +74,13 @@ export const PIPELINE_STEPS: {
   },
 ];
 
-export async function uploadSourceFile(file: File, fileType: "book" | "transcript" | "instructions" | "competitor_analysis" | "host_persona" | "anti_ai_guide" | "melty_voice_pass", channelId: string) {
+const GUIDANCE_FILE_TYPES = ["instructions", "script_strategy", "anti_ai_guide", "host_persona", "melty_voice_pass"];
+
+export async function uploadSourceFile(file: File, fileType: "book" | "transcript" | "instructions" | "competitor_analysis" | "host_persona" | "anti_ai_guide" | "melty_voice_pass", channelId: string, briefId?: string | null) {
+  if (briefId && GUIDANCE_FILE_TYPES.includes(fileType)) {
+    throw new Error("Guidance documents are channel-level and cannot be attached to a brief");
+  }
+
   const storagePath = `${fileType}/${Date.now()}-${file.name}`;
 
   const { error: uploadError } = await supabase.storage
@@ -92,6 +98,7 @@ export async function uploadSourceFile(file: File, fileType: "book" | "transcrip
       file_size: file.size,
       status: "uploaded",
       channel_id: channelId,
+      brief_id: briefId ?? null,
     })
     .select()
     .single();
