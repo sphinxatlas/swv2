@@ -899,3 +899,58 @@ export async function setEvidencePointApproval(
   if (error) throw error;
 }
 
+// ── Channel configuration ──
+
+export async function updateChannelDescription(channelId: string, description: string) {
+  const { error } = await supabase
+    .from("channels")
+    .update({ description, updated_at: new Date().toISOString() })
+    .eq("id", channelId);
+  if (error) throw error;
+}
+
+export async function updateChannelSourceHierarchyProse(channelId: string, prose: string) {
+  // Read-modify-write: preserve the tiers array, replace only the prose key.
+  const { data: row, error: readError } = await supabase
+    .from("channels")
+    .select("source_hierarchy")
+    .eq("id", channelId)
+    .single();
+  if (readError) throw readError;
+
+  const current =
+    row?.source_hierarchy && typeof row.source_hierarchy === "object"
+      ? row.source_hierarchy
+      : {};
+
+  const { error } = await supabase
+    .from("channels")
+    .update({ source_hierarchy: { ...current, prose }, updated_at: new Date().toISOString() })
+    .eq("id", channelId);
+  if (error) throw error;
+}
+
+export async function getChannelConfig(
+  channelId: string,
+): Promise<{ description: string; source_hierarchy_prose: string }> {
+  const { data, error } = await supabase
+    .from("channels")
+    .select("description, source_hierarchy")
+    .eq("id", channelId)
+    .single();
+  if (error) throw error;
+
+  const hierarchy =
+    data?.source_hierarchy && typeof data.source_hierarchy === "object"
+      ? (data.source_hierarchy as Record<string, unknown>)
+      : {};
+  const prose =
+    typeof hierarchy.prose === "string" ? hierarchy.prose : "";
+
+  return {
+    description: data?.description ?? "",
+    source_hierarchy_prose: prose,
+  };
+}
+
+
