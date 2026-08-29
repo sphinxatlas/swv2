@@ -1,12 +1,17 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { FileUploadCard } from "@/components/FileUploadCard";
+import { ChannelConfigCard } from "@/components/ChannelConfigCard";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { getSourceFiles } from "@/lib/api";
-import { Database } from "lucide-react";
+import { ChevronDown, Database } from "lucide-react";
 import { useChannel } from "@/contexts/ChannelContext";
+import { cn } from "@/lib/utils";
 
 export default function SourceLibrary() {
   const { channelId, loading: channelLoading } = useChannel();
+  const [configOpen, setConfigOpen] = useState(true);
   const { data: files = [], refetch } = useQuery({
     queryKey: ["source-files", channelId],
     queryFn: () => getSourceFiles(channelId!),
@@ -43,6 +48,21 @@ export default function SourceLibrary() {
             </div>
           )}
         </div>
+
+        <Collapsible open={configOpen} onOpenChange={setConfigOpen} className="mb-6">
+          <CollapsibleTrigger className="flex items-center gap-2 text-sm font-semibold text-foreground hover:opacity-80 transition-opacity">
+            <ChevronDown
+              className={cn(
+                "w-4 h-4 transition-transform",
+                configOpen ? "rotate-0" : "-rotate-90",
+              )}
+            />
+            Channel Configuration
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-3">
+            <ChannelConfigCard />
+          </CollapsibleContent>
+        </Collapsible>
 
         <div className="space-y-6">
           <FileUploadCard
