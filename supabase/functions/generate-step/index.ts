@@ -209,8 +209,7 @@ When citing evidence:
 const COMPARISON_MODE_INSTRUCTION = `
 {{#IF_COMPARISON}}COMPARISON MODE ACTIVE:
 This script compares the {{SIDE_A_LOWER}} and {{SIDE_B_LOWER}} versions. Do not force a paired {{SIDE_A_LOWER}}/{{SIDE_B_LOWER}} structure sentence by sentence. Lead with the strongest argument. However: every major {{SIDE_A_LOWER}} claim must have a corresponding {{SIDE_B_LOWER}} observation somewhere in the same section — what the {{SIDE_B_LOWER}} does instead, what it omits, or what it changes. A section that builds a {{SIDE_A_LOWER}} case for 400+ words without any {{SIDE_B_LOWER}} contrast has failed. The contrast does not need to be immediate, but it must land before the section closes. Where {{SIDE_B_LOWER}} evidence is missing, narrow the claim or use available {{SIDE_B_LOWER}} evidence from other moments. Never tell the viewer that {{SIDE_B_LOWER}} evidence is missing.
-{{/IF_COMPARISON}}
-`;
+{{/IF_COMPARISON}}`;
 
 // ── BINDING WRITING / VOICE / THEORY INSTRUCTION BLOCKS ──
 // These wrap guidance documents (Host Persona, Script Instructions, Anti AI Guide)
