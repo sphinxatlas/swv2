@@ -107,6 +107,42 @@ export async function uploadSourceFile(file: File, fileType: "book" | "transcrip
   return data;
 }
 
+export async function createSourceFileFromText(
+  name: string,
+  text: string,
+  fileType: "book" | "transcript" | "instructions" | "competitor_analysis" | "host_persona" | "anti_ai_guide" | "melty_voice_pass",
+  channelId: string,
+  briefId?: string | null,
+) {
+  if (briefId && GUIDANCE_FILE_TYPES.includes(fileType)) {
+    throw new Error("Guidance documents are channel-level and cannot be attached to a brief");
+  }
+
+  const safeName = name.trim().endsWith(".txt") ? name.trim() : `${name.trim()}.txt`;
+  const blob = new Blob([text], { type: "text/plain" });
+  const storagePath = `${fileType}/${Date.now()}-${safeName}`;
+
+  const { error: uploadError } = await supabase.storage.from("source-files").upload(storagePath, blob);
+  if (uploadError) throw uploadError;
+
+  const { data, error } = await supabase
+    .from("source_files")
+    .insert({
+      name: safeName,
+      file_type: fileType,
+      storage_path: storagePath,
+      file_size: blob.size,
+      status: "uploaded",
+      channel_id: channelId,
+      brief_id: briefId ?? null,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function processFile(fileId: string) {
   const response = await supabase.functions.invoke("process-file", {
     body: { fileId },
