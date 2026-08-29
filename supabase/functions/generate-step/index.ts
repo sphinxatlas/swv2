@@ -396,8 +396,7 @@ Create the evidence table in this EXACT markdown format for each evidence point:
 | **{{SIDE_B}} Evidence** | [Paraphrased evidence from the {{SIDE_B_LOWER}} transcript, if any — leave blank if none] |
 | **Contrast** | [What differs between the {{SIDE_A_LOWER}} and the {{SIDE_B_LOWER}}, if both present] |
 {{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}| **Evidence** | [Paraphrased evidence from the primary source] |
-{{/IF_NO_COMPARISON}}
-| **Secondary Source Support** | [REQUIRED when Confidence is Medium or Low — name the secondary source(s) + what they confirm in plain prose. If none corroborates, write: "No secondary source corroboration found. Recommend dropping or heavily qualifying this claim in the Beat Plan." Leave blank only when Confidence is High.] |
+{{/IF_NO_COMPARISON}}| **Secondary Source Support** | [REQUIRED when Confidence is Medium or Low — name the secondary source(s) + what they confirm in plain prose. If none corroborates, write: "No secondary source corroboration found. Recommend dropping or heavily qualifying this claim in the Beat Plan." Leave blank only when Confidence is High.] |
 | **Micro-Quote** | [Optional: verbatim quote UNDER 12 words, in quotation marks — leave blank if not essential] |
 | **Paraphrase** | [Paraphrased version of the evidence — REQUIRED for every point] |
 | **Why This Matters** | [Why this is a strong argument point for the video] |
@@ -407,8 +406,8 @@ Create the evidence table in this EXACT markdown format for each evidence point:
 
 Rules:
 - Aim for 10-15 evidence points, curated for strength and relevance
-{{#IF_COMPARISON}}- Majority should include both {{SIDE_A_LOWER}} AND {{SIDE_B_LOWER}} evidence where possible{{/IF_COMPARISON}}
-- Every evidence point must have a source trace (which file it came from)
+{{#IF_COMPARISON}}- Majority should include both {{SIDE_A_LOWER}} AND {{SIDE_B_LOWER}} evidence where possible
+{{/IF_COMPARISON}}- Every evidence point must have a source trace (which file it came from)
 - Never invent quotes
 - Never blur exact quote vs paraphrase
 - Paraphrase is the DEFAULT — exact quotes are the exception, not the rule
@@ -539,9 +538,9 @@ Hard rules:
 
 - No scene serves as primary anchor in more than one beat.
 
-{{#IF_COMPARISON}}- No {{SIDE_A_LOWER}}↔{{SIDE_B_LOWER}} contrast pair serves as primary contrast in more than one beat.{{/IF_COMPARISON}}
+{{#IF_COMPARISON}}- No {{SIDE_A_LOWER}}↔{{SIDE_B_LOWER}} contrast pair serves as primary contrast in more than one beat.
 
-- If a single source appears as contrast anchor in more than 3 beats: STOP. The plan is a contrast monoculture. Restructure or surface this as a retrieval gap in the audit.
+{{/IF_COMPARISON}}- If a single source appears as contrast anchor in more than 3 beats: STOP. The plan is a contrast monoculture. Restructure or surface this as a retrieval gap in the audit.
 
 SECTION 4 — FUNCTION-NOT-TOPIC CHECK
 
@@ -551,9 +550,9 @@ If a beat's job can only be described as "covers [topic]," it is topic-assigned.
 
 {{#IF_COMPARISON}}SECTION 5 — CONTRAST CLOSURE
 
-For {{SIDE_A_LOWER}} vs. {{SIDE_B_LOWER}} comparison scripts: confirm each beat plans a contrast landing before it closes. Mark which acceptable contrast form each beat uses (what the other version does instead / omits / changes in emphasis / why the difference matters).{{/IF_COMPARISON}}
+For {{SIDE_A_LOWER}} vs. {{SIDE_B_LOWER}} comparison scripts: confirm each beat plans a contrast landing before it closes. Mark which acceptable contrast form each beat uses (what the other version does instead / omits / changes in emphasis / why the difference matters).
 
-SECTION 6 — REHOOK FORWARD-MOTION
+{{/IF_COMPARISON}}SECTION 6 — REHOOK FORWARD-MOTION
 
 For each beat's planned rehook, confirm it does one of:
 
@@ -714,8 +713,8 @@ For each beat in the Beat Plan, write one paragraph in plain prose. Number each 
 1. What the beat is doing (one sentence paraphrasing the Beat Plan)
 2. The primary source evidence woven into prose, not listed. Write it the way a writer would recall it: the specific passage, the specific scene, the specific moment, paraphrased into natural language. The writer should be able to narrate from this without referring back to the original source.
 3. Any single direct quote worth considering verbatim, in quotation marks. Maximum one quote per beat. Most beats should have zero.
-{{#IF_COMPARISON}}4. Any meaningful contradiction between the {{SIDE_A_LOWER}} and the {{SIDE_B_LOWER}} worth noting in narration, in one sentence.{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}4. Any meaningful tension or contradiction inside the primary source evidence worth noting in narration, in one sentence.{{/IF_NO_COMPARISON}}
-5. Function: state in one short sentence whether this beat proves, complicates, reveals, rehooks, or pays off. Name what specifically it proves / complicates / reveals / rehooks / pays off.
+{{#IF_COMPARISON}}4. Any meaningful contradiction between the {{SIDE_A_LOWER}} and the {{SIDE_B_LOWER}} worth noting in narration, in one sentence.{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}4. Any meaningful tension or contradiction inside the primary source evidence worth noting in narration, in one sentence.
+{{/IF_NO_COMPARISON}}5. Function: state in one short sentence whether this beat proves, complicates, reveals, rehooks, or pays off. Name what specifically it proves / complicates / reveals / rehooks / pays off.
 6. Hook/payoff relation: state in one short sentence how this beat keeps the opening hook question alive, complicates it, or moves toward paying it off.
 Write items 5 and 6 as natural writer-facing sentences inside the same paragraph. Do not turn the beat into a table. Do not add markdown headings or labels like "Function:" inside the paragraph — embed the information in prose the writer can read in one pass.
 
@@ -1061,7 +1060,7 @@ Compare the opening 3 sentences against the final 3 paragraphs. If the opening c
 
 Search for these banned rehook patterns and rewrite any matches:
 
-- "And the {{SIDE_A_PLURAL_LOWER}} are ruthless about showing you"
+- "And the sources are ruthless about showing you"
 
 - "And once you notice that"
 
@@ -1380,14 +1379,16 @@ For each delta:
 - **{{SIDE_A}} Version**: [What the {{SIDE_A_LOWER}} does — source cited]
 - **{{SIDE_B}} Version**: [What the {{SIDE_B_LOWER}} does — source cited]
 - **What Changed**: [Specifically what was altered, removed, or added]
-- **Effect on Argument**: [What this change does to characterization or the thesis]{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}### 2. THE SHIFT
+- **Effect on Argument**: [What this change does to characterization or the thesis]
+
+{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}### 2. THE SHIFT
 Where the primary sources revise, complicate, or contradict their own account of the same moment.
 For each shift:
 - **Moment**: [What moment]
 - **What Changed**: [Specifically what was altered, removed, or added]
-- **Effect on Argument**: [What this change does to the thesis]{{/IF_NO_COMPARISON}}
+- **Effect on Argument**: [What this change does to the thesis]
 
-### 3. THE PATTERN
+{{/IF_NO_COMPARISON}}### 3. THE PATTERN
 Recurring behavior or adaptation choices across multiple {{#IF_COMPARISON}}{{SIDE_A_PLURAL_LOWER}}/{{SIDE_B_PLURAL_LOWER}}{{/IF_COMPARISON}}{{#IF_NO_COMPARISON}}primary sources{{/IF_NO_COMPARISON}} that prove the thesis is not a one-off.
 For each pattern:
 - **Pattern**: [The recurring behavior]
