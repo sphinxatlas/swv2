@@ -84,9 +84,10 @@ export function ChannelProvider({ children }: { children: ReactNode }) {
       channelId,
       channel: channels.find((c) => c.id === channelId) ?? null,
       setChannelId,
+      refreshChannels,
       loading,
     }),
-    [channels, channelId, loading],
+    [channels, channelId, loading, refreshChannels],
   );
 
   return <ChannelContext.Provider value={value}>{children}</ChannelContext.Provider>;
