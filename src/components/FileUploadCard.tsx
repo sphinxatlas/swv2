@@ -1,10 +1,13 @@
 import { useCallback, useState } from "react";
-import { Upload, FileText, Loader2, CheckCircle2, AlertCircle, Trash2, Eye, Download, Pencil, Check, X } from "lucide-react";
+import { Upload, FileText, Loader2, CheckCircle2, AlertCircle, Trash2, Eye, Download, Pencil, Check, X, ClipboardPaste } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
   uploadSourceFile,
+  createSourceFileFromText,
   processFile,
   deleteSourceFile,
   getSourceFileContent,
