@@ -31,7 +31,7 @@ import {
   getEvidencePoints,
   replaceEvidencePoints,
   setEvidencePointApproval,
-  getSourceFiles,
+  getSourceFilesForBrief,
 } from "@/lib/api";
 import { parseEvidenceTable } from "@/lib/parseEvidenceTable";
 import { EvidenceTableView } from "@/components/pipeline/EvidenceTableView";
@@ -196,9 +196,9 @@ export default function PipelineView() {
   });
 
   const { data: sourceFiles = [] } = useQuery({
-    queryKey: ["source-files-all", channelId],
-    queryFn: () => getSourceFiles(channelId!),
-    enabled: !!channelId,
+    queryKey: ["source-files-all", channelId, briefId],
+    queryFn: () => getSourceFilesForBrief(channelId!, briefId!),
+    enabled: !!channelId && !!briefId,
   });
   const libraryFileNames = sourceFiles.map((f: any) => f.name);
 

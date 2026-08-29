@@ -27,9 +27,10 @@ interface FileUploadCardProps {
   files: SourceFile[];
   onRefresh: () => void;
   badge?: string;
+  briefId?: string;
 }
 
-export function FileUploadCard({ fileType, title, description, accept = ".txt,.md,.pdf", files, onRefresh, badge }: FileUploadCardProps) {
+export function FileUploadCard({ fileType, title, description, accept = ".txt,.md,.pdf", files, onRefresh, badge, briefId }: FileUploadCardProps) {
   const { channelId } = useChannel();
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState<string | null>(null);
@@ -46,7 +47,7 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
     setUploading(true);
     try {
       for (const file of Array.from(fileList)) {
-        const uploaded = await uploadSourceFile(file, fileType, channelId!);
+        const uploaded = await uploadSourceFile(file, fileType, channelId!, briefId ?? null);
         toast.success(`Uploaded ${file.name}`);
         
         // Auto-process
@@ -61,7 +62,7 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
       setUploading(false);
       setProcessing(null);
     }
-  }, [fileType, onRefresh, channelId]);
+  }, [fileType, onRefresh, channelId, briefId]);
 
   const handleDelete = async (file: SourceFile) => {
     try {
