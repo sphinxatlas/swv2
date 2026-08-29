@@ -433,6 +433,7 @@ export type Database = {
       }
       source_files: {
         Row: {
+          brief_id: string | null
           channel_id: string
           char_count: number | null
           created_at: string
@@ -446,6 +447,7 @@ export type Database = {
           storage_path: string
         }
         Insert: {
+          brief_id?: string | null
           channel_id?: string
           char_count?: number | null
           created_at?: string
@@ -459,6 +461,7 @@ export type Database = {
           storage_path: string
         }
         Update: {
+          brief_id?: string | null
           channel_id?: string
           char_count?: number | null
           created_at?: string
@@ -472,6 +475,13 @@ export type Database = {
           storage_path?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "source_files_brief_id_fkey"
+            columns: ["brief_id"]
+            isOneToOne: false
+            referencedRelation: "topic_briefs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "source_files_channel_id_fkey"
             columns: ["channel_id"]
@@ -581,6 +591,7 @@ export type Database = {
       match_chunks: {
         Args: {
           k?: number
+          p_brief_id?: string
           p_channel_id: string
           query_embedding: string
           source_type: Database["public"]["Enums"]["source_file_type"]
@@ -598,6 +609,7 @@ export type Database = {
       search_chunks_by_type: {
         Args: {
           max_results?: number
+          p_brief_id?: string
           p_channel_id: string
           search_query: string
           source_type: Database["public"]["Enums"]["source_file_type"]
