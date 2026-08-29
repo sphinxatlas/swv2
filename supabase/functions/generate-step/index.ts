@@ -1860,12 +1860,13 @@ const deriveRetrievalQueryPack = (
   };
 };
 
-const getChunkCountByType = async (supabase: any, sourceType: SearchSourceType, channelId: string) => {
+const getChunkCountByType = async (supabase: any, sourceType: SearchSourceType, channelId: string, briefId: string) => {
   const { data: files } = await supabase
     .from("source_files")
     .select("id")
     .eq("file_type", sourceType)
-    .eq("channel_id", channelId);
+    .eq("channel_id", channelId)
+    .or(`brief_id.is.null,brief_id.eq.${briefId}`);
 
   const fileIds = files?.map((f: any) => f.id) || [];
   if (fileIds.length === 0) return 0;
@@ -2073,7 +2074,8 @@ serve(async (req) => {
         .from("source_files")
         .select("id, file_type")
         .in("file_type", fileTypes)
-        .eq("channel_id", brief.channel_id);
+        .eq("channel_id", brief.channel_id)
+        .is("brief_id", null);
       const empty: LayerMeta = { text: "", sourceUsed: "none", chunksRead: 0, totalChunks: 0, truncated: false };
       if (!files || files.length === 0) return empty;
       const ids = files.map((f: any) => f.id);
@@ -2298,7 +2300,8 @@ serve(async (req) => {
       .from("source_files")
       .select("id")
       .eq("file_type", "host_persona")
-      .eq("channel_id", brief.channel_id);
+      .eq("channel_id", brief.channel_id)
+      .is("brief_id", null);
     let hostPersonaContext = "";
     if (personaFiles && personaFiles.length > 0) {
       const { data: personaChunks } = await supabase
@@ -2566,6 +2569,7 @@ Generate the Creative Brief now.`;
             source_type: plan.sourceType,
             p_channel_id: brief.channel_id,
             max_results: plan.maxResults,
+            p_brief_id: briefId,
           }),
         ),
       );
@@ -2626,6 +2630,7 @@ Generate the Creative Brief now.`;
               source_type: plan.sourceType,
               p_channel_id: brief.channel_id,
               max_results: plan.maxResults,
+              p_brief_id: briefId,
             }),
             emb
               ? supabase.rpc("match_chunks", {
@@ -2633,6 +2638,7 @@ Generate the Creative Brief now.`;
                   source_type: plan.sourceType,
                   p_channel_id: brief.channel_id,
                   k: plan.maxResults,
+                  p_brief_id: briefId,
                 })
               : Promise.resolve({ data: [] as any[], error: null }),
           ]);
@@ -2753,8 +2759,8 @@ Generate the Creative Brief now.`;
 
     // Get total indexed chunk counts for debug
     const [bookChunkCount, transcriptChunkCount] = await Promise.all([
-      getChunkCountByType(supabase, "book", brief.channel_id),
-      getChunkCountByType(supabase, "transcript", brief.channel_id),
+      getChunkCountByType(supabase, "book", brief.channel_id, brief.id),
+      getChunkCountByType(supabase, "transcript", brief.channel_id, brief.id),
     ]);
 
     const matchesPerQuery = queryPack.allQueries.map((query) => ({
