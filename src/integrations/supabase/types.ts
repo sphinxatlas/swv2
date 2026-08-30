@@ -442,6 +442,7 @@ export type Database = {
           file_type: Database["public"]["Enums"]["source_file_type"]
           id: string
           name: string
+          processing_error: string | null
           script_strength: string | null
           status: string
           storage_path: string
@@ -456,6 +457,7 @@ export type Database = {
           file_type: Database["public"]["Enums"]["source_file_type"]
           id?: string
           name: string
+          processing_error?: string | null
           script_strength?: string | null
           status?: string
           storage_path: string
@@ -470,6 +472,7 @@ export type Database = {
           file_type?: Database["public"]["Enums"]["source_file_type"]
           id?: string
           name?: string
+          processing_error?: string | null
           script_strength?: string | null
           status?: string
           storage_path?: string
