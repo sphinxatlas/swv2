@@ -775,7 +775,7 @@ export default function PipelineView() {
         />
 
 
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 min-w-0 flex flex-col">
           <>
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
@@ -881,24 +881,28 @@ export default function PipelineView() {
             <CollapsibleContent>
               <div className="border-b border-border px-6 py-4 space-y-6">
                 <div className="grid gap-4 xl:grid-cols-2">
-                  <FileUploadCard
-                    fileType="book"
-                    title="Primary Documents (this video)"
-                    description="Reports, filings, books, papers, datasets, court records, articles of record. Claim-grade evidence that can be named in the script. Attached to this video only."
-                    files={briefBooks}
-                    onRefresh={refetchSourceFiles}
-                    briefId={briefId!}
-                    compactHelp
-                  />
-                  <FileUploadCard
-                    fileType="transcript"
-                    title="Primary Recordings & Transcripts (this video)"
-                    description="Transcripts of the primary material itself: films, hearings, earnings calls, interviews, speeches. Same evidentiary weight as Primary Documents. Attached to this video only."
-                    files={briefTranscripts}
-                    onRefresh={refetchSourceFiles}
-                    briefId={briefId!}
-                    compactHelp
-                  />
+                  <div className="min-w-0">
+                    <FileUploadCard
+                      fileType="book"
+                      title="Primary Documents (this video)"
+                      description="Reports, filings, books, papers, datasets, court records, articles of record. Claim-grade evidence that can be named in the script. Attached to this video only."
+                      files={briefBooks}
+                      onRefresh={refetchSourceFiles}
+                      briefId={briefId!}
+                      compactHelp
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <FileUploadCard
+                      fileType="transcript"
+                      title="Primary Recordings & Transcripts (this video)"
+                      description="Transcripts of the primary material itself: films, hearings, earnings calls, interviews, speeches. Same evidentiary weight as Primary Documents. Attached to this video only."
+                      files={briefTranscripts}
+                      onRefresh={refetchSourceFiles}
+                      briefId={briefId!}
+                      compactHelp
+                    />
+                  </div>
                 </div>
 
                 {/* Brief Research (this video) */}
