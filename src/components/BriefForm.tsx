@@ -296,16 +296,11 @@ export function BriefForm({ brief, onSave, onCancel, busy, submitLabel }: BriefF
         <p className="text-[11px] text-muted-foreground/70 mb-1">
           Key themes, moments, or topics this video covers.
         </p>
-        <Input
+        <TagInput
+          values={form.focus_areas || []}
+          onChange={(vals) => updateForm("focus_areas", vals)}
           placeholder=""
-          value={(form.focus_areas || []).join(", ")}
-          onChange={(e) =>
-            updateForm(
-              "focus_areas",
-              e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-            )
-          }
-          className="bg-secondary border-border mt-1"
+          className="mt-1"
         />
       </div>
 
