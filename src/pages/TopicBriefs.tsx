@@ -410,19 +410,45 @@ export default function TopicBriefs() {
 
   return (
     <Layout>
-      <div className="p-8 max-w-4xl">
+      <div className="p-8 max-w-6xl">
         <div className="flex items-start justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-mono font-bold text-foreground mb-2">Topic Briefs</h1>
+            <h1 className="text-2xl font-mono font-bold text-foreground mb-2">Videos</h1>
             <p className="text-sm text-muted-foreground">
-              Define your video topics. Each brief drives a full research and script generation pipeline.
+              One workspace per video. Sources, brief, and pipeline live inside each video.
             </p>
           </div>
-          <Button onClick={() => setShowForm(true)} className="gap-1.5" disabled={showForm}>
+          <Button onClick={() => setNewVideoOpen(true)} className="gap-1.5">
             <Plus className="w-4 h-4" />
-            New Brief
+            New Video
           </Button>
         </div>
+
+        <Dialog open={newVideoOpen} onOpenChange={setNewVideoOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>New Video</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Video Title</Label>
+              <Input
+                autoFocus
+                placeholder="Video title"
+                value={newVideoTitle}
+                onChange={(e) => setNewVideoTitle(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleNewVideo(); }}
+                className="bg-secondary border-border"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setNewVideoOpen(false)} disabled={creatingVideo}>Cancel</Button>
+              <Button onClick={handleNewVideo} disabled={creatingVideo}>
+                {creatingVideo ? "Creating..." : "Create Video"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
 
         {showForm && (
           <div className="border border-primary/30 rounded-lg p-5 mb-6 bg-card">
