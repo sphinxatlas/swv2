@@ -278,29 +278,25 @@ export default function PipelineView() {
     }
   };
 
-  const handleFormatLinkChange = async (vals: string[]) => {
-    if (vals.length > 2) {
-      toast.error("Maximum 2 format references");
-      return;
-    }
+  const handleSaveBrief = async (payload: any, links: { formatIds: string[]; topicIds: string[]; altIds: string[] }) => {
+    setSavingBrief(true);
     try {
-      await linkFormatReferencesToBrief(briefId!, vals);
-      await refetchBriefLinks();
+      await updateTopicBrief(briefId!, payload, channelId!);
+      await linkFormatReferencesToBrief(briefId!, links.formatIds);
+      await linkTopicTranscriptsToBrief(briefId!, links.topicIds);
+      await linkAlternativeSourcesToBrief(briefId!, links.altIds);
+      await Promise.all([refetchBrief(), refetchBriefLinks(), refetchLinkedResearch()]);
+      toast.success("Brief saved");
+      setBriefOpen(false);
     } catch (err: any) {
-      toast.error(err.message || "Failed to update links");
-    }
-  };
-
-  const handleAltLinkChange = async (vals: string[]) => {
-    try {
-      await linkAlternativeSourcesToBrief(briefId!, vals);
-      await refetchBriefLinks();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update links");
+      toast.error(err.message || "Failed to save brief");
+    } finally {
+      setSavingBrief(false);
     }
   };
 
   const sourcesOpen = briefSourcesOpen ?? outputs.length === 0;
+  const briefSectionOpen = briefOpen ?? !((brief?.angle_note ?? "") as string).trim();
 
 
   const getStepOutput = (step: PipelineStepType) =>
