@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { MultiSelectChips, type MultiSelectOption } from "@/components/MultiSelectChips";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   getTopicBriefs,
   createTopicBrief,
@@ -18,6 +19,7 @@ import {
   duplicateTopicBrief,
   type CreateBriefInput,
   TARGET_LENGTH_OPTIONS,
+  PIPELINE_STEPS,
   getFormatReferenceTranscripts,
   saveFormatReferenceTranscript,
   getBriefTopicTranscripts,
@@ -26,8 +28,10 @@ import {
   linkFormatReferencesToBrief,
   linkTopicTranscriptsToBrief,
   linkAlternativeSourcesToBrief,
+  getBriefLinks,
+  getPipelineStepsForBriefs,
 } from "@/lib/api";
-import { Plus, Trash2, ArrowRight, FileText, GitCompare, Clock, Copy } from "lucide-react";
+import { Plus, Trash2, FileText, GitCompare, Clock, Copy, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useChannel } from "@/contexts/ChannelContext";
