@@ -39,7 +39,7 @@ export default function SourceLibrary() {
         <div className="mb-8">
           <h1 className="text-2xl font-mono font-bold text-foreground mb-2">Source Library</h1>
           <p className="text-sm text-muted-foreground">
-            Upload your source files to build the knowledge base for script generation.
+            Primary evidence and the documents that govern how scripts are written. Anything that cannot back a claim belongs in the Secondary Source Library.
           </p>
           {files.length > 0 && (
             <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
@@ -67,16 +67,16 @@ export default function SourceLibrary() {
         <div className="space-y-6">
           <FileUploadCard
             fileType="book"
-            title="📚 Primary Texts"
-            description="Upload primary source text files (.txt, .md). Each file is chunked and indexed for semantic search, and is treated as primary evidence."
+            title="📚 Primary Documents"
+            description="Reports, filings, books, papers, datasets, court records, articles of record. Chunked and indexed for semantic search. This is claim-grade evidence and can be named in the script."
             files={books}
             onRefresh={refetch}
           />
 
           <FileUploadCard
             fileType="transcript"
-            title="🎬 Transcripts"
-            description="Upload transcript files (.txt, .md) of primary material. These provide spoken content and scene or segment detail for reference."
+            title="🎬 Primary Recordings & Transcripts"
+            description="Transcripts of the primary material itself: films, hearings, earnings calls, interviews, speeches. Same evidentiary weight as Primary Documents. Separated because spoken material is retrieved differently."
             files={transcripts}
             onRefresh={refetch}
           />
@@ -110,8 +110,8 @@ export default function SourceLibrary() {
             </p>
             <FileUploadCard
               fileType="competitor_analysis"
-              title="🎙️ Commentary Transcripts (Secondary)"
-              description="Upload raw YouTube commentary transcripts (.txt, .md) for additional angles and context. Used for interpretation, framing, and idea discovery only. Never used as primary evidence or as a source for exact quotes from the primary material."
+            title="🎙️ Commentary & Interpretation (Secondary)"
+            description="Other people's commentary on your topic. Used for angles, framing, and idea discovery only. Never claim-grade evidence and never a source of exact quotes from the primary material."
               accept=".txt,.md"
               files={competitorAnalysis}
               onRefresh={refetch}
