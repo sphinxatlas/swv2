@@ -294,7 +294,66 @@ export default function TopicBriefs() {
     }
   };
 
+  const handleNewVideo = async () => {
+    if (!newVideoTitle.trim()) {
+      toast.error("Video title is required");
+      return;
+    }
+    setCreatingVideo(true);
+    try {
+      const created = await createTopicBrief(
+        {
+          title: newVideoTitle.trim(),
+          angle_note: "",
+          target_minutes: 10,
+          target_min_words: 1400,
+          target_max_words: 1600,
+          comparison_mode: false,
+          characters: [],
+          focus_areas: [],
+          priority_sources: [],
+        },
+        channelId!,
+      );
+      toast.success("Video created");
+      setNewVideoOpen(false);
+      setNewVideoTitle("");
+      refetch();
+      navigate(`/briefs/${created.id}`);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setCreatingVideo(false);
+    }
+  };
+
+  const handleEdit = async (brief: any) => {
+    try {
+      const links = await getBriefLinks(brief.id);
+      setForm({
+        title: brief.title ?? "",
+        angle_note: brief.angle_note ?? "",
+        target_minutes: brief.target_minutes ?? 10,
+        target_min_words: brief.target_min_words ?? 1400,
+        target_max_words: brief.target_max_words ?? 1600,
+        comparison_mode: !!brief.comparison_mode,
+        characters: brief.characters ?? [],
+        focus_areas: brief.focus_areas ?? [],
+        priority_sources: brief.priority_sources ?? [],
+      });
+      setSelectedFormatIds(links.formatIds);
+      setSelectedTopicIds(links.topicIds);
+      setSelectedAltIds(links.altIds);
+      setEditingBriefId(brief.id);
+      setShowForm(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load brief");
+    }
+  };
+
   const handleDelete = async (id: string) => {
+    if (!window.confirm("Delete this video and all its pipeline data? This cannot be undone.")) return;
     try {
       await deleteTopicBrief(id, channelId!);
       toast.success("Brief deleted");
