@@ -244,6 +244,8 @@ serve(async (req) => {
         status: "indexed",
         char_count: charCount,
         estimated_tokens: estimatedTokens,
+        processing_error: null,
+
       })
       .eq("id", fileId);
 
