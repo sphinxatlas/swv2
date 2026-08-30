@@ -86,6 +86,7 @@ function TranscriptSection({ section }: { section: Section }) {
   const [busy, setBusy] = useState(false);
   const [viewing, setViewing] = useState<any | null>(null);
   const [editing, setEditing] = useState<any | null>(null);
+  const [usageFilter, setUsageFilter] = useState("all");
 
   const queryKey = section === "format" ? "format-references" : "topic-transcripts";
   const fetchFn = section === "format" ? getFormatReferenceTranscripts : getBriefTopicTranscripts;
@@ -98,6 +99,16 @@ function TranscriptSection({ section }: { section: Section }) {
     queryFn: () => fetchFn(channelId!),
     enabled: !!channelId,
   });
+
+  const { data: usage } = useQuery({
+    queryKey: ["secondary-source-usage", channelId],
+    queryFn: () => getSecondarySourceUsage(channelId!),
+    enabled: !!channelId,
+  });
+  const usageMap = section === "format" ? usage?.formatReferences ?? {} : usage?.topicTranscripts ?? {};
+  const filteredItems = usageFilter === "all"
+    ? items
+    : items.filter((item: any) => (usageMap[item.id] || []).includes(usageFilter));
 
   const label =
     section === "format"
