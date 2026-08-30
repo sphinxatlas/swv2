@@ -620,7 +620,8 @@ function AlternativeSourcesSection() {
               ))}
             </TableBody>
           </Table>
-        </div>
+          </div>
+        </>
       )}
 
       {viewing && (
