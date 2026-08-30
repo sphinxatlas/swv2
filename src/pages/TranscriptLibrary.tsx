@@ -125,7 +125,7 @@ function InlineAddForm({ onSave, onCancel, busy }: InlineFormProps) {
           Cancel
         </Button>
         <Button size="sm" onClick={handleSave} disabled={busy}>
-          {busy ? "Saving..." : "Save Transcript"}
+          {busy ? "Saving..." : "Save Source"}
         </Button>
       </div>
     </div>
@@ -291,8 +291,8 @@ function TranscriptSection({ section }: { section: Section }) {
           title={viewing.video_title}
           subtitle={sectionLabel}
           meta={[
-            { label: "Channel", value: viewing.channel_name },
-            { label: "Video title", value: viewing.video_title },
+            { label: "Source", value: viewing.channel_name },
+            { label: "Title", value: viewing.video_title },
             { label: "Category", value: sectionLabel },
             { label: "Date added", value: new Date(viewing.created_at).toLocaleString() },
             { label: "Length", value: `${(viewing.transcript || "").length.toLocaleString()} chars` },
