@@ -34,6 +34,7 @@ import {
   setEvidencePointApproval,
   getSourceFilesForBrief,
   getBriefLinks,
+  getBriefTopicTranscripts,
   getBriefTopicTranscriptLinks,
   saveBriefTopicTranscript,
   updateBriefTopicTranscriptStrength,
