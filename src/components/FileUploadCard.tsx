@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { Upload, FileText, Loader2, CheckCircle2, AlertCircle, Trash2, Eye, Download, Pencil, Check, X, ClipboardPaste } from "lucide-react";
+import { Upload, FileText, Loader2, CheckCircle2, AlertCircle, Trash2, Eye, Download, Pencil, Check, X, ClipboardPaste, HelpCircle } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,6 +32,7 @@ interface FileUploadCardProps {
   onRefresh: () => void;
   badge?: string;
   briefId?: string;
+  compactHelp?: boolean;
 }
 
 type QueueState = "queued" | "uploading" | "indexing" | "done" | "failed";
