@@ -323,6 +323,48 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
         </div>
       </div>
 
+      {queue.length > 0 && (
+        <div className="mb-4 rounded-md border border-border bg-secondary/40 p-3 space-y-1.5">
+          <p className="text-[11px] font-medium text-muted-foreground">
+            {uploading
+              ? `Processing ${queue.filter((q) => q.state === "done" || q.state === "failed").length + 1} of ${queue.length}`
+              : `${queue.filter((q) => q.state === "done").length} of ${queue.length} indexed`}
+          </p>
+          {queue.map((item, i) => (
+            <div key={`${item.name}-${i}`} className="flex items-start gap-2 text-xs">
+              <div className="mt-0.5 shrink-0">
+                {item.state === "uploading" || item.state === "indexing" ? (
+                  <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+                ) : item.state === "done" ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-success" />
+                ) : item.state === "failed" ? (
+                  <AlertCircle className="w-3.5 h-3.5 text-destructive" />
+                ) : (
+                  <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="truncate font-mono text-foreground">{item.name}</span>
+                  <span
+                    className={cn(
+                      "ml-auto shrink-0 text-[11px]",
+                      item.state === "failed" ? "text-destructive" : "text-muted-foreground",
+                    )}
+                  >
+                    {QUEUE_LABELS[item.state]}
+                  </span>
+                </div>
+                {item.state === "failed" && item.error && (
+                  <p className="text-[11px] leading-snug text-destructive">{item.error}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+
       {files.length === 0 ? (
         <div className="border border-dashed border-border rounded-md p-6 text-center">
           <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
