@@ -28,11 +28,24 @@ import {
   refineHookOption,
   type HookOption,
   type PipelineStepType,
+  type ScriptStrength,
   getEvidencePoints,
   replaceEvidencePoints,
   setEvidencePointApproval,
   getSourceFilesForBrief,
+  getBriefLinks,
+  getBriefTopicTranscriptLinks,
+  getFormatReferenceTranscripts,
+  getBriefTopicTranscripts,
+  getAlternativeSources,
+  saveBriefTopicTranscript,
+  updateBriefTopicTranscriptStrength,
+  linkFormatReferencesToBrief,
+  linkTopicTranscriptsToBrief,
+  linkAlternativeSourcesToBrief,
 } from "@/lib/api";
+import { MultiSelectChips, type MultiSelectOption } from "@/components/MultiSelectChips";
+import { SourceEntryForm, QualitySelect } from "@/components/SourceEntryForm";
 import { parseEvidenceTable } from "@/lib/parseEvidenceTable";
 import { EvidenceTableView } from "@/components/pipeline/EvidenceTableView";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +61,8 @@ import {
   Wand2,
   Lightbulb,
   AlertTriangle,
+  Plus,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useChannel } from "@/contexts/ChannelContext";
@@ -128,7 +143,9 @@ function splitMeltyVoicePassOutput(text: string): { scriptBody: string; changeLo
 
 export default function PipelineView() {
   const { briefId } = useParams<{ briefId: string }>();
-  const [briefSourcesOpen, setBriefSourcesOpen] = useState(false);
+  const [briefSourcesOpen, setBriefSourcesOpen] = useState<boolean | null>(null);
+  const [showAddResearch, setShowAddResearch] = useState(false);
+  const [savingResearch, setSavingResearch] = useState(false);
   const { channelId, setChannelId } = useChannel();
   const [activeStep, setActiveStep] = useState<ActiveStep>("creative_brief");
   const [generating, setGenerating] = useState(false);
@@ -208,6 +225,109 @@ export default function PipelineView() {
   const libraryFileNames = sourceFiles.map((f: any) => f.name);
   const briefBooks = sourceFiles.filter((f: any) => f.brief_id === briefId && f.file_type === "book");
   const briefTranscripts = sourceFiles.filter((f: any) => f.brief_id === briefId && f.file_type === "transcript");
+
+  // ── Sources section: linked + channel-level material ──
+  const { data: linkedResearch = [], refetch: refetchLinkedResearch } = useQuery({
+    queryKey: ["brief-topic-transcript-links", briefId],
+    queryFn: () => getBriefTopicTranscriptLinks(briefId!),
+    enabled: !!briefId,
+  });
+  const { data: briefLinks, refetch: refetchBriefLinks } = useQuery({
+    queryKey: ["brief-links", briefId],
+    queryFn: () => getBriefLinks(briefId!),
+    enabled: !!briefId,
+  });
+  const { data: channelFormatRefs = [] } = useQuery({
+    queryKey: ["format-references", channelId],
+    queryFn: () => getFormatReferenceTranscripts(channelId!),
+    enabled: !!channelId,
+  });
+  const { data: channelResearch = [], refetch: refetchChannelResearch } = useQuery({
+    queryKey: ["topic-transcripts", channelId],
+    queryFn: () => getBriefTopicTranscripts(channelId!),
+    enabled: !!channelId,
+  });
+  const { data: channelAltSources = [] } = useQuery({
+    queryKey: ["alternative-sources", channelId],
+    queryFn: () => getAlternativeSources(channelId!),
+    enabled: !!channelId,
+  });
+
+  const linkedFormatIds: string[] = briefLinks?.formatIds ?? [];
+  const linkedAltIds: string[] = briefLinks?.altIds ?? [];
+  const linkedResearchIds: string[] = (linkedResearch as any[]).map((r) => r.id);
+
+  const formatOptions: MultiSelectOption[] = (channelFormatRefs as any[]).map((r) => ({
+    value: r.id,
+    label: r.video_title,
+    sublabel: r.channel_name,
+  }));
+  const altOptions: MultiSelectOption[] = (channelAltSources as any[]).map((r) => ({
+    value: r.id,
+    label: r.title,
+    sublabel: [r.source_type || r.source_author, r.script_strength ? `Quality: ${r.script_strength}` : null]
+      .filter(Boolean)
+      .join(" · ") || undefined,
+  }));
+
+  const channelBooksCount = sourceFiles.filter((f: any) => !f.brief_id && f.file_type === "book").length;
+  const channelRecordingsCount = sourceFiles.filter((f: any) => !f.brief_id && f.file_type === "transcript").length;
+  const governingDocs = [
+    { label: "Script Instructions", present: sourceFiles.some((f: any) => !f.brief_id && (f.file_type === "instructions" || f.file_type === "script_strategy")) },
+    { label: "Anti-AI Guide", present: sourceFiles.some((f: any) => !f.brief_id && f.file_type === "anti_ai_guide") },
+    { label: "Host Persona", present: sourceFiles.some((f: any) => !f.brief_id && f.file_type === "host_persona") },
+    { label: "Voice Pass", present: sourceFiles.some((f: any) => !f.brief_id && f.file_type === "melty_voice_pass") },
+  ];
+
+  const handleUnlinkResearch = async (id: string) => {
+    try {
+      await linkTopicTranscriptsToBrief(briefId!, linkedResearchIds.filter((x) => x !== id));
+      await Promise.all([refetchLinkedResearch(), refetchBriefLinks()]);
+      toast.success("Unlinked from this video");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to unlink");
+    }
+  };
+
+  const handleAddResearch = async (input: { channel_name: string; video_title: string; transcript: string }) => {
+    setSavingResearch(true);
+    try {
+      const created = await saveBriefTopicTranscript(input, channelId!);
+      await linkTopicTranscriptsToBrief(briefId!, [...linkedResearchIds, created.id]);
+      await Promise.all([refetchLinkedResearch(), refetchBriefLinks(), refetchChannelResearch()]);
+      setShowAddResearch(false);
+      toast.success("Brief research added and linked");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save");
+    } finally {
+      setSavingResearch(false);
+    }
+  };
+
+  const handleFormatLinkChange = async (vals: string[]) => {
+    if (vals.length > 2) {
+      toast.error("Maximum 2 format references");
+      return;
+    }
+    try {
+      await linkFormatReferencesToBrief(briefId!, vals);
+      await refetchBriefLinks();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update links");
+    }
+  };
+
+  const handleAltLinkChange = async (vals: string[]) => {
+    try {
+      await linkAlternativeSourcesToBrief(briefId!, vals);
+      await refetchBriefLinks();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update links");
+    }
+  };
+
+  const sourcesOpen = briefSourcesOpen ?? outputs.length === 0;
+
 
   const getStepOutput = (step: PipelineStepType) =>
     outputs.find((o) => o.step_type === step);
@@ -718,34 +838,164 @@ export default function PipelineView() {
             </div>
           </div>
 
-          {/* Brief Sources */}
-          <Collapsible open={briefSourcesOpen} onOpenChange={setBriefSourcesOpen}>
+          {/* Sources */}
+          <Collapsible open={sourcesOpen} onOpenChange={setBriefSourcesOpen}>
             <CollapsibleTrigger className="flex w-full items-center gap-2 border-b border-border px-6 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${briefSourcesOpen ? "" : "-rotate-90"}`} />
-              Brief Sources
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${sourcesOpen ? "" : "-rotate-90"}`} />
+              Sources
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="border-b border-border px-6 py-4 space-y-4">
+              <div className="border-b border-border px-6 py-4 space-y-6">
                 <p className="text-xs text-muted-foreground">
-                  Files here are used only by this brief. Channel-wide sources live in the Source Library.
+                  Everything this video runs on. Uploads here belong to this video only.
                 </p>
+
                 <div className="grid gap-4 md:grid-cols-2">
                   <FileUploadCard
                     fileType="book"
-                    title="Primary documents (this brief)"
-                    description="Documents attached to this brief only."
+                    title="Primary Documents (this video)"
+                    description="Reports, filings, books, papers, datasets, court records, articles of record. Claim-grade evidence that can be named in the script. Attached to this video only."
                     files={briefBooks}
                     onRefresh={refetchSourceFiles}
                     briefId={briefId!}
                   />
                   <FileUploadCard
                     fileType="transcript"
-                    title="Primary transcripts (this brief)"
-                    description="Transcripts attached to this brief only."
+                    title="Primary Recordings & Transcripts (this video)"
+                    description="Transcripts of the primary material itself: films, hearings, earnings calls, interviews, speeches. Same evidentiary weight as Primary Documents. Attached to this video only."
                     files={briefTranscripts}
                     onRefresh={refetchSourceFiles}
                     briefId={briefId!}
                   />
+                </div>
+
+                {/* Brief Research (this video) */}
+                <div className="rounded-lg border border-border bg-card p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="font-mono text-sm font-semibold text-foreground">Brief Research (this video)</h3>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Research leads and supplementary material linked to this video. Never cited directly in scripts.
+                      </p>
+                    </div>
+                    {!showAddResearch && (
+                      <Button size="sm" variant="outline" className="gap-1.5 shrink-0" onClick={() => setShowAddResearch(true)}>
+                        <Plus className="w-3.5 h-3.5" />
+                        Add Brief Research
+                      </Button>
+                    )}
+                  </div>
+
+                  {showAddResearch && (
+                    <SourceEntryForm
+                      onSave={handleAddResearch}
+                      onCancel={() => setShowAddResearch(false)}
+                      busy={savingResearch}
+                    />
+                  )}
+
+                  {(linkedResearch as any[]).length === 0 ? (
+                    <div className="border border-dashed border-border rounded-md p-6 text-center text-xs text-muted-foreground">
+                      No brief research linked to this video yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {(linkedResearch as any[]).map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center gap-3 px-3 py-2 rounded-md bg-secondary/50 border border-border"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-mono text-foreground truncate">{item.video_title}</p>
+                            <p className="text-[11px] text-muted-foreground truncate">{item.channel_name}</p>
+                          </div>
+                          <QualitySelect
+                            value={item.script_strength as ScriptStrength | undefined}
+                            onChange={async (next) => {
+                              await updateBriefTopicTranscriptStrength(item.id, next, channelId!);
+                              await refetchLinkedResearch();
+                            }}
+                          />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-destructive"
+                            title="Unlink from this video"
+                            onClick={() => handleUnlinkResearch(item.id)}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Linked from channel */}
+                <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+                  <h3 className="font-mono text-sm font-semibold text-foreground">Linked from channel</h3>
+
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Format References</Label>
+                    <p className="text-[11px] text-muted-foreground/70 mb-2">
+                      Used for argument structure and positioning only — never as a source of content. Optional but recommended; max 2.
+                    </p>
+                    <MultiSelectChips
+                      options={formatOptions}
+                      selected={linkedFormatIds}
+                      onChange={handleFormatLinkChange}
+                      placeholder={formatOptions.length === 0 ? "No format references available" : "Select format references…"}
+                      emptyText="No format references available."
+                      searchable
+                      searchPlaceholder="Search format references..."
+                      emptySearchMessage="No matching sources found."
+                    />
+                    {linkedFormatIds.length >= 2 && (
+                      <p className="text-xs text-muted-foreground mt-1">Maximum 2 format references selected.</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Channel Research</Label>
+                    <p className="text-[11px] text-muted-foreground/70 mb-2">
+                      Channel-level secondary sources. Used as context and angle support, never as claim-grade evidence. No maximum.
+                    </p>
+                    <MultiSelectChips
+                      options={altOptions}
+                      selected={linkedAltIds}
+                      onChange={handleAltLinkChange}
+                      placeholder={altOptions.length === 0 ? "No channel research available" : "Select channel research…"}
+                      emptyText="No channel research yet. Add some in the Secondary Source Library."
+                      searchable
+                      searchPlaceholder="Search channel research..."
+                      emptySearchMessage="No matching sources found."
+                    />
+                  </div>
+                </div>
+
+                {/* Inherited from channel */}
+                <div className="rounded-lg border border-border bg-secondary/30 p-4">
+                  <p className="text-xs font-medium text-foreground mb-2">Inherited from channel</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                      Primary Documents: {channelBooksCount}
+                    </span>
+                    <span className="text-[11px] px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                      Primary Recordings: {channelRecordingsCount}
+                    </span>
+                    {governingDocs.map((d) => (
+                      <span
+                        key={d.label}
+                        className={
+                          d.present
+                            ? "text-[11px] px-2 py-0.5 rounded bg-muted text-muted-foreground"
+                            : "text-[11px] px-2 py-0.5 rounded bg-warning/10 text-warning"
+                        }
+                      >
+                        {d.label}{d.present ? "" : " — missing"}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             </CollapsibleContent>
