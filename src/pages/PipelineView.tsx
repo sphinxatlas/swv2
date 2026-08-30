@@ -66,8 +66,9 @@ import {
 import { toast } from "sonner";
 import { useChannel } from "@/contexts/ChannelContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FileUploadCard } from "@/components/FileUploadCard";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, HelpCircle } from "lucide-react";
 
 type ActiveStep = PipelineStepType;
 
