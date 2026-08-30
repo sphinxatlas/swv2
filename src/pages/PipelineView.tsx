@@ -38,6 +38,7 @@ import {
   getBriefTopicTranscriptLinks,
   saveBriefTopicTranscript,
   updateBriefTopicTranscriptStrength,
+  updateBriefTopicTranscript,
   updateTopicBrief,
   linkFormatReferencesToBrief,
   linkTopicTranscriptsToBrief,
@@ -62,6 +63,7 @@ import {
   AlertTriangle,
   Plus,
   X,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useChannel } from "@/contexts/ChannelContext";
@@ -148,6 +150,7 @@ export default function PipelineView() {
   const [savingBrief, setSavingBrief] = useState(false);
   const [showAddResearch, setShowAddResearch] = useState(false);
   const [savingResearch, setSavingResearch] = useState(false);
+  const [editingResearch, setEditingResearch] = useState<any | null>(null);
   const { channelId, setChannelId } = useChannel();
   const [activeStep, setActiveStep] = useState<ActiveStep>("creative_brief");
   const [generating, setGenerating] = useState(false);
@@ -275,6 +278,20 @@ export default function PipelineView() {
       await Promise.all([refetchLinkedResearch(), refetchBriefLinks(), refetchChannelResearch()]);
       setShowAddResearch(false);
       toast.success("Brief research added and linked");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save");
+    } finally {
+      setSavingResearch(false);
+    }
+  };
+
+  const handleEditResearch = async (input: { channel_name: string; video_title: string; transcript: string }) => {
+    setSavingResearch(true);
+    try {
+      await updateBriefTopicTranscript(editingResearch.id, input, channelId!);
+      await Promise.all([refetchLinkedResearch(), refetchChannelResearch()]);
+      setEditingResearch(null);
+      toast.success("Changes saved");
     } catch (err: any) {
       toast.error(err.message || "Failed to save");
     } finally {
@@ -922,6 +939,20 @@ export default function PipelineView() {
                     />
                   )}
 
+                  {editingResearch && (
+                    <SourceEntryForm
+                      mode="edit"
+                      initial={{
+                        channel_name: editingResearch.channel_name,
+                        video_title: editingResearch.video_title,
+                        transcript: editingResearch.transcript,
+                      }}
+                      onSave={handleEditResearch}
+                      onCancel={() => setEditingResearch(null)}
+                      busy={savingResearch}
+                    />
+                  )}
+
                   {(linkedResearch as any[]).length === 0 ? (
                     <div className="border border-dashed border-border rounded-md p-6 text-center text-xs text-muted-foreground">
                       No brief research linked to this video yet.
@@ -944,6 +975,15 @@ export default function PipelineView() {
                               await refetchLinkedResearch();
                             }}
                           />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            title="Edit"
+                            onClick={() => { setShowAddResearch(false); setEditingResearch(item); }}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
                           <Button
                             size="icon"
                             variant="ghost"

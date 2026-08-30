@@ -838,6 +838,71 @@ export async function updateBriefTopicTranscriptStrength(id: string, strength: S
   if (error) throw error;
 }
 
+export async function updateFormatReferenceTranscript(
+  id: string,
+  input: { channel_name?: string; video_title?: string; transcript?: string },
+  channelId: string,
+) {
+  const { data, error } = await supabase
+    .from('format_reference_transcripts')
+    .update(input)
+    .eq('id', id)
+    .eq('channel_id', channelId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateBriefTopicTranscript(
+  id: string,
+  input: { channel_name?: string; video_title?: string; transcript?: string },
+  channelId: string,
+) {
+  const payload: Record<string, any> = { ...input };
+  if (typeof input.transcript === 'string') {
+    payload.char_count = input.transcript.length;
+    payload.estimated_tokens = Math.max(1, Math.round(input.transcript.length / 4));
+  }
+  const { data, error } = await supabase
+    .from('brief_topic_transcripts')
+    .update(payload)
+    .eq('id', id)
+    .eq('channel_id', channelId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateAlternativeSource(
+  id: string,
+  input: {
+    title?: string;
+    source_type?: string | null;
+    source_author?: string | null;
+    url?: string | null;
+    content?: string;
+    notes?: string | null;
+  },
+  channelId: string,
+): Promise<AlternativeSource> {
+  const payload: Record<string, any> = { ...input };
+  if (typeof input.content === 'string') {
+    payload.char_count = input.content.length;
+    payload.estimated_tokens = Math.max(1, Math.round(input.content.length / 4));
+  }
+  const { data, error } = await supabase
+    .from('alternative_sources')
+    .update(payload)
+    .eq('id', id)
+    .eq('channel_id', channelId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as AlternativeSource;
+}
+
 export async function updateSourceFileStrength(id: string, strength: ScriptStrength, channelId: string): Promise<void> {
   const { error } = await supabase
     .from('source_files')
