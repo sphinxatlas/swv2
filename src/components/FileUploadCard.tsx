@@ -180,9 +180,11 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
     switch (status) {
       case "indexed": return <CheckCircle2 className="w-3.5 h-3.5 text-success" />;
       case "processing": return <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />;
+      case "failed": return <AlertCircle className="w-3.5 h-3.5 text-destructive" />;
       default: return <AlertCircle className="w-3.5 h-3.5 text-warning" />;
     }
   };
+
 
   return (
     <div className="rounded-lg border border-border bg-card p-5">
