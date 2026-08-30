@@ -1,12 +1,12 @@
-import { Library, ScrollText, Sparkles, Feather, BookOpen } from "lucide-react";
+import { Library, ScrollText, Sparkles, Video, BookOpen } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useChannel } from "@/contexts/ChannelContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const navItems = [
+  { to: "/briefs", label: "Videos", icon: Video },
   { to: "/", label: "Source Library", icon: Library },
-  { to: "/briefs", label: "Topic Briefs", icon: Feather },
   { to: "/transcripts", label: "Secondary Sources", icon: ScrollText },
 ];
 

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { MultiSelectChips, type MultiSelectOption } from "@/components/MultiSelectChips";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   getTopicBriefs,
   createTopicBrief,
@@ -18,6 +19,7 @@ import {
   duplicateTopicBrief,
   type CreateBriefInput,
   TARGET_LENGTH_OPTIONS,
+  PIPELINE_STEPS,
   getFormatReferenceTranscripts,
   saveFormatReferenceTranscript,
   getBriefTopicTranscripts,
@@ -26,8 +28,10 @@ import {
   linkFormatReferencesToBrief,
   linkTopicTranscriptsToBrief,
   linkAlternativeSourcesToBrief,
+  getBriefLinks,
+  getPipelineStepsForBriefs,
 } from "@/lib/api";
-import { Plus, Trash2, ArrowRight, FileText, GitCompare, Clock, Copy } from "lucide-react";
+import { Plus, Trash2, FileText, GitCompare, Clock, Copy, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useChannel } from "@/contexts/ChannelContext";
@@ -180,12 +184,38 @@ export default function TopicBriefs() {
   const [selectedAltIds, setSelectedAltIds] = useState<string[]>([]);
   const [showFormatAdd, setShowFormatAdd] = useState(false);
   const [showTopicAdd, setShowTopicAdd] = useState(false);
+  const [newVideoOpen, setNewVideoOpen] = useState(false);
+  const [newVideoTitle, setNewVideoTitle] = useState("");
+  const [creatingVideo, setCreatingVideo] = useState(false);
 
   const { data: briefs = [], refetch } = useQuery({
     queryKey: ["topic-briefs", channelId],
     queryFn: () => getTopicBriefs(channelId!),
     enabled: !!channelId,
   });
+
+  const briefIds = useMemo(() => (briefs as any[]).map((b) => b.id), [briefs]);
+  const { data: stepRows = [] } = useQuery({
+    queryKey: ["pipeline-steps-for-briefs", channelId, briefIds],
+    queryFn: () => getPipelineStepsForBriefs(briefIds),
+    enabled: !!channelId && briefIds.length > 0,
+  });
+  const furthestStepByBrief = useMemo(() => {
+    const order = new Map(PIPELINE_STEPS.map((s, i) => [s.type as string, i]));
+    const labels = new Map(PIPELINE_STEPS.map((s) => [s.type as string, s.label]));
+    const best = new Map<string, number>();
+    for (const row of stepRows as { brief_id: string; step_type: string }[]) {
+      const idx = order.get(row.step_type);
+      if (idx === undefined) continue;
+      if (idx > (best.get(row.brief_id) ?? -1)) best.set(row.brief_id, idx);
+    }
+    const result = new Map<string, string>();
+    for (const [briefId, idx] of best) {
+      const type = PIPELINE_STEPS[idx].type;
+      result.set(briefId, labels.get(type) ?? type);
+    }
+    return result;
+  }, [stepRows]);
   const { data: formatRefs = [], refetch: refetchFormatRefs } = useQuery({
     queryKey: ["format-references", channelId],
     queryFn: () => getFormatReferenceTranscripts(channelId!),
@@ -264,7 +294,66 @@ export default function TopicBriefs() {
     }
   };
 
+  const handleNewVideo = async () => {
+    if (!newVideoTitle.trim()) {
+      toast.error("Video title is required");
+      return;
+    }
+    setCreatingVideo(true);
+    try {
+      const created = await createTopicBrief(
+        {
+          title: newVideoTitle.trim(),
+          angle_note: "",
+          target_minutes: 10,
+          target_min_words: 1400,
+          target_max_words: 1600,
+          comparison_mode: false,
+          characters: [],
+          focus_areas: [],
+          priority_sources: [],
+        },
+        channelId!,
+      );
+      toast.success("Video created");
+      setNewVideoOpen(false);
+      setNewVideoTitle("");
+      refetch();
+      navigate(`/briefs/${created.id}`);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setCreatingVideo(false);
+    }
+  };
+
+  const handleEdit = async (brief: any) => {
+    try {
+      const links = await getBriefLinks(brief.id);
+      setForm({
+        title: brief.title ?? "",
+        angle_note: brief.angle_note ?? "",
+        target_minutes: brief.target_minutes ?? 10,
+        target_min_words: brief.target_min_words ?? 1400,
+        target_max_words: brief.target_max_words ?? 1600,
+        comparison_mode: !!brief.comparison_mode,
+        characters: brief.characters ?? [],
+        focus_areas: brief.focus_areas ?? [],
+        priority_sources: brief.priority_sources ?? [],
+      });
+      setSelectedFormatIds(links.formatIds);
+      setSelectedTopicIds(links.topicIds);
+      setSelectedAltIds(links.altIds);
+      setEditingBriefId(brief.id);
+      setShowForm(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load brief");
+    }
+  };
+
   const handleDelete = async (id: string) => {
+    if (!window.confirm("Delete this video and all its pipeline data? This cannot be undone.")) return;
     try {
       await deleteTopicBrief(id, channelId!);
       toast.success("Brief deleted");
@@ -321,19 +410,45 @@ export default function TopicBriefs() {
 
   return (
     <Layout>
-      <div className="p-8 max-w-4xl">
+      <div className="p-8 max-w-6xl">
         <div className="flex items-start justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-mono font-bold text-foreground mb-2">Topic Briefs</h1>
+            <h1 className="text-2xl font-mono font-bold text-foreground mb-2">Videos</h1>
             <p className="text-sm text-muted-foreground">
-              Define your video topics. Each brief drives a full research and script generation pipeline.
+              One workspace per video. Sources, brief, and pipeline live inside each video.
             </p>
           </div>
-          <Button onClick={() => setShowForm(true)} className="gap-1.5" disabled={showForm}>
+          <Button onClick={() => setNewVideoOpen(true)} className="gap-1.5">
             <Plus className="w-4 h-4" />
-            New Brief
+            New Video
           </Button>
         </div>
+
+        <Dialog open={newVideoOpen} onOpenChange={setNewVideoOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>New Video</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Video Title</Label>
+              <Input
+                autoFocus
+                placeholder="Video title"
+                value={newVideoTitle}
+                onChange={(e) => setNewVideoTitle(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleNewVideo(); }}
+                className="bg-secondary border-border"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setNewVideoOpen(false)} disabled={creatingVideo}>Cancel</Button>
+              <Button onClick={handleNewVideo} disabled={creatingVideo}>
+                {creatingVideo ? "Creating..." : "Create Video"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
 
         {showForm && (
           <div className="border border-primary/30 rounded-lg p-5 mb-6 bg-card">
@@ -621,76 +736,92 @@ export default function TopicBriefs() {
         {briefs.length === 0 && !showForm ? (
           <div className="border border-dashed border-border rounded-lg p-12 text-center">
             <FileText className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground mb-4">No topic briefs yet. Create one to start generating scripts.</p>
-            <Button onClick={() => setShowForm(true)} variant="outline" className="gap-1.5">
+            <p className="text-sm text-muted-foreground mb-4">No videos yet. Create one to start generating scripts.</p>
+            <Button onClick={() => setNewVideoOpen(true)} variant="outline" className="gap-1.5">
               <Plus className="w-4 h-4" />
-              Create Your First Brief
+              Create Your First Video
             </Button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {briefs.map((brief: any) => (
-              <div
-                key={brief.id}
-                className={cn(
-                  "group flex items-start gap-4 p-4 rounded-lg border border-border bg-card",
-                  "hover:border-primary/30 transition-colors cursor-pointer"
-                )}
-                onClick={() => navigate(`/briefs/${brief.id}`)}
-              >
-                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  {brief.comparison_mode ? (
-                    <GitCompare className="w-4 h-4 text-primary" />
-                  ) : (
-                    <FileText className="w-4 h-4 text-primary" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {briefs.map((brief: any) => {
+              const furthest = furthestStepByBrief.get(brief.id) ?? "Not started";
+              const lengthLabel = TARGET_LENGTH_OPTIONS.find((o) => o.minutes === brief.target_minutes)?.label
+                ?? (brief.target_minutes ? `${brief.target_minutes} min` : null);
+              return (
+                <div
+                  key={brief.id}
+                  className={cn(
+                    "group flex flex-col p-4 rounded-lg border border-border bg-card",
+                    "hover:border-primary/30 transition-colors cursor-pointer"
                   )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-mono text-sm font-semibold text-foreground truncate">{brief.title}</h3>
-                    {brief.comparison_mode && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium shrink-0">
-                        Comparison
-                      </span>
-                    )}
+                  onClick={() => navigate(`/briefs/${brief.id}`)}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      {brief.comparison_mode ? (
+                        <GitCompare className="w-4 h-4 text-primary" />
+                      ) : (
+                        <FileText className="w-4 h-4 text-primary" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-mono text-sm font-semibold text-foreground truncate">{brief.title}</h3>
+                        {brief.comparison_mode && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium shrink-0">
+                            Comparison
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <p className="text-xs text-muted-foreground/60">
+                          {new Date(brief.created_at).toLocaleDateString()}
+                        </p>
+                        {lengthLabel && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
+                            <Clock className="w-3 h-3" />
+                            {lengthLabel}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  {brief.angle_note && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{brief.angle_note}</p>
-                  )}
-                  <div className="flex items-center gap-2 mt-2 flex-wrap">
-                    <p className="text-xs text-muted-foreground/60">
-                      {new Date(brief.created_at).toLocaleDateString()}
-                    </p>
-                    {brief.target_minutes && (
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
-                        <Clock className="w-3 h-3" />
-                        {brief.target_minutes} min
-                      </Badge>
-                    )}
+                  <p className="text-xs text-muted-foreground mt-3">
+                    Furthest step: <span className="text-foreground/80">{furthest}</span>
+                  </p>
+                  <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs gap-1"
+                      onClick={(e) => { e.stopPropagation(); handleEdit(brief); }}
+                    >
+                      <Pencil className="w-3 h-3" />
+                      Edit brief
+                    </Button>
+                    <div className="flex-1" />
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      title="Duplicate brief inputs"
+                      onClick={(e) => { e.stopPropagation(); handleDuplicate(brief.id); }}
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-destructive"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(brief.id); }}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7"
-                    title="Duplicate brief inputs"
-                    onClick={(e) => { e.stopPropagation(); handleDuplicate(brief.id); }}
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7 text-destructive"
-                    onClick={(e) => { e.stopPropagation(); handleDelete(brief.id); }}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -399,6 +399,29 @@ export async function duplicateTopicBrief(briefId: string, channelId: string) {
   };
 }
 
+export async function getPipelineStepsForBriefs(briefIds: string[]) {
+  if (briefIds.length === 0) return [] as { brief_id: string; step_type: string }[];
+  const { data, error } = await supabase
+    .from("pipeline_outputs")
+    .select("brief_id, step_type")
+    .in("brief_id", briefIds);
+  if (error) throw error;
+  return data as { brief_id: string; step_type: string }[];
+}
+
+export async function getBriefLinks(briefId: string) {
+  const [{ data: formatLinks }, { data: topicLinks }, { data: altLinks }] = await Promise.all([
+    supabase.from("brief_format_reference_links").select("transcript_id").eq("brief_id", briefId),
+    supabase.from("brief_topic_transcript_links").select("transcript_id").eq("brief_id", briefId),
+    supabase.from("brief_alternative_source_links" as any).select("alternative_source_id").eq("brief_id", briefId),
+  ]);
+  return {
+    formatIds: (formatLinks || []).map((r: any) => r.transcript_id),
+    topicIds: (topicLinks || []).map((r: any) => r.transcript_id),
+    altIds: ((altLinks as any[]) || []).map((r: any) => r.alternative_source_id),
+  };
+}
+
 export async function getPipelineOutputs(briefId: string) {
   const { data, error } = await supabase
     .from("pipeline_outputs")
