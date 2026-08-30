@@ -46,12 +46,15 @@ export interface SourceEntryFormProps {
   onSave: (input: { channel_name: string; video_title: string; transcript: string }) => Promise<void>;
   onCancel: () => void;
   busy: boolean;
+  initial?: { channel_name?: string; video_title?: string; transcript?: string } | null;
+  mode?: "create" | "edit";
 }
 
-export function SourceEntryForm({ onSave, onCancel, busy }: SourceEntryFormProps) {
-  const [channel, setChannel] = useState("");
-  const [title, setTitle] = useState("");
-  const [transcript, setTranscript] = useState("");
+export function SourceEntryForm({ onSave, onCancel, busy, initial, mode }: SourceEntryFormProps) {
+  const isEdit = mode === "edit" || !!initial;
+  const [channel, setChannel] = useState(initial?.channel_name ?? "");
+  const [title, setTitle] = useState(initial?.video_title ?? "");
+  const [transcript, setTranscript] = useState(initial?.transcript ?? "");
 
   const handleSave = async () => {
     if (!channel.trim() || !title.trim() || !transcript.trim()) {
