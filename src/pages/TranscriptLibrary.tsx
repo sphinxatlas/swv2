@@ -279,7 +279,8 @@ function TranscriptSection({ section }: { section: Section }) {
               ))}
             </TableBody>
           </Table>
-        </div>
+          </div>
+        </>
       )}
 
       {viewing && (
