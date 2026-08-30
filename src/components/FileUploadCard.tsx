@@ -273,7 +273,13 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
                     </>
                   )}
                 </div>
+                {file.status === "failed" && (file as any).processing_error && (
+                  <p className="mt-1 text-[11px] leading-snug text-destructive">
+                    {(file as any).processing_error}
+                  </p>
+                )}
               </div>
+
               {renamingId === file.id ? (
                 <>
                   <Button
