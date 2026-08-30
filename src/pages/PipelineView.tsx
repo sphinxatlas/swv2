@@ -35,16 +35,14 @@ import {
   getSourceFilesForBrief,
   getBriefLinks,
   getBriefTopicTranscriptLinks,
-  getFormatReferenceTranscripts,
-  getBriefTopicTranscripts,
-  getAlternativeSources,
   saveBriefTopicTranscript,
   updateBriefTopicTranscriptStrength,
+  updateTopicBrief,
   linkFormatReferencesToBrief,
   linkTopicTranscriptsToBrief,
   linkAlternativeSourcesToBrief,
 } from "@/lib/api";
-import { MultiSelectChips, type MultiSelectOption } from "@/components/MultiSelectChips";
+import { BriefForm } from "@/components/BriefForm";
 import { SourceEntryForm, QualitySelect } from "@/components/SourceEntryForm";
 import { parseEvidenceTable } from "@/lib/parseEvidenceTable";
 import { EvidenceTableView } from "@/components/pipeline/EvidenceTableView";
