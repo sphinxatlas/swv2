@@ -736,76 +736,92 @@ export default function TopicBriefs() {
         {briefs.length === 0 && !showForm ? (
           <div className="border border-dashed border-border rounded-lg p-12 text-center">
             <FileText className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground mb-4">No topic briefs yet. Create one to start generating scripts.</p>
-            <Button onClick={() => setShowForm(true)} variant="outline" className="gap-1.5">
+            <p className="text-sm text-muted-foreground mb-4">No videos yet. Create one to start generating scripts.</p>
+            <Button onClick={() => setNewVideoOpen(true)} variant="outline" className="gap-1.5">
               <Plus className="w-4 h-4" />
-              Create Your First Brief
+              Create Your First Video
             </Button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {briefs.map((brief: any) => (
-              <div
-                key={brief.id}
-                className={cn(
-                  "group flex items-start gap-4 p-4 rounded-lg border border-border bg-card",
-                  "hover:border-primary/30 transition-colors cursor-pointer"
-                )}
-                onClick={() => navigate(`/briefs/${brief.id}`)}
-              >
-                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  {brief.comparison_mode ? (
-                    <GitCompare className="w-4 h-4 text-primary" />
-                  ) : (
-                    <FileText className="w-4 h-4 text-primary" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {briefs.map((brief: any) => {
+              const furthest = furthestStepByBrief.get(brief.id) ?? "Not started";
+              const lengthLabel = TARGET_LENGTH_OPTIONS.find((o) => o.minutes === brief.target_minutes)?.label
+                ?? (brief.target_minutes ? `${brief.target_minutes} min` : null);
+              return (
+                <div
+                  key={brief.id}
+                  className={cn(
+                    "group flex flex-col p-4 rounded-lg border border-border bg-card",
+                    "hover:border-primary/30 transition-colors cursor-pointer"
                   )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-mono text-sm font-semibold text-foreground truncate">{brief.title}</h3>
-                    {brief.comparison_mode && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium shrink-0">
-                        Comparison
-                      </span>
-                    )}
+                  onClick={() => navigate(`/briefs/${brief.id}`)}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      {brief.comparison_mode ? (
+                        <GitCompare className="w-4 h-4 text-primary" />
+                      ) : (
+                        <FileText className="w-4 h-4 text-primary" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-mono text-sm font-semibold text-foreground truncate">{brief.title}</h3>
+                        {brief.comparison_mode && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium shrink-0">
+                            Comparison
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <p className="text-xs text-muted-foreground/60">
+                          {new Date(brief.created_at).toLocaleDateString()}
+                        </p>
+                        {lengthLabel && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
+                            <Clock className="w-3 h-3" />
+                            {lengthLabel}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  {brief.angle_note && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{brief.angle_note}</p>
-                  )}
-                  <div className="flex items-center gap-2 mt-2 flex-wrap">
-                    <p className="text-xs text-muted-foreground/60">
-                      {new Date(brief.created_at).toLocaleDateString()}
-                    </p>
-                    {brief.target_minutes && (
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
-                        <Clock className="w-3 h-3" />
-                        {brief.target_minutes} min
-                      </Badge>
-                    )}
+                  <p className="text-xs text-muted-foreground mt-3">
+                    Furthest step: <span className="text-foreground/80">{furthest}</span>
+                  </p>
+                  <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs gap-1"
+                      onClick={(e) => { e.stopPropagation(); handleEdit(brief); }}
+                    >
+                      <Pencil className="w-3 h-3" />
+                      Edit brief
+                    </Button>
+                    <div className="flex-1" />
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      title="Duplicate brief inputs"
+                      onClick={(e) => { e.stopPropagation(); handleDuplicate(brief.id); }}
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-destructive"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(brief.id); }}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7"
-                    title="Duplicate brief inputs"
-                    onClick={(e) => { e.stopPropagation(); handleDuplicate(brief.id); }}
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7 text-destructive"
-                    onClick={(e) => { e.stopPropagation(); handleDelete(brief.id); }}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
