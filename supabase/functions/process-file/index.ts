@@ -146,8 +146,57 @@ serve(async (req) => {
 
     if (downloadError || !fileData) throw new Error("Failed to download file");
 
-    const text = await fileData.text();
+    const buffer = await fileData.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    const isPdf =
+      bytes.length >= 5 &&
+      bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 &&
+      bytes[3] === 0x46 && bytes[4] === 0x2d; // "%PDF-"
+
+    let text: string;
+    let pageCount = 0;
+
+    if (isPdf) {
+      try {
+        const pdf = await getDocumentProxy(bytes);
+        const result = await extractText(pdf, { mergePages: true });
+        pageCount = result.totalPages ?? 0;
+        text = normalizePdfText(
+          Array.isArray(result.text) ? result.text.join("\n\n") : String(result.text ?? ""),
+        );
+      } catch (e) {
+        const message = `PDF extraction failed: ${e instanceof Error ? e.message : String(e)}`;
+        console.error("[process-file]", message);
+        await supabase
+          .from("source_files")
+          .update({ status: "failed", processing_error: message })
+          .eq("id", fileId);
+        return new Response(
+          JSON.stringify({ success: false, error: message }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      const avgPerPage = pageCount > 0 ? text.length / pageCount : text.length;
+      if (text.length < 500 || avgPerPage < 100) {
+        const message =
+          `This PDF produced almost no extractable text (${text.length} characters across ${pageCount} page(s)). ` +
+          `It is most likely a scanned or image-only document and requires OCR before it can be indexed.`;
+        await supabase
+          .from("source_files")
+          .update({ status: "failed", processing_error: message })
+          .eq("id", fileId);
+        return new Response(
+          JSON.stringify({ success: false, error: message }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    } else {
+      text = new TextDecoder("utf-8").decode(bytes);
+    }
+
     const chunks = chunkText(text);
+
 
     // Delete old chunks
     await supabase.from("file_chunks").delete().eq("file_id", fileId);
