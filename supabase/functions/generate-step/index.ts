@@ -2452,13 +2452,11 @@ serve(async (req) => {
 
     // ── CREATIVE BRIEF STEP ──
     if (stepType === "creative_brief") {
-      if (formatRefs.length === 0) {
-        throw new Error("No format reference transcripts linked to this brief. Please add at least one format reference in the Transcript Library before generating the Creative Brief.");
-      }
-
-      const formatRefBlock = formatRefs
-        .map((r: any) => `### Format Reference: "${r.video_title}" by ${r.channel_name}\nIMPORTANT: This is from a different subject. Use for structure and positioning only — never for {{SUBJECT_LABEL}} content.\n\n${r.transcript}`)
-        .join("\n\n---\n\n");
+      const formatRefBlock = formatRefs.length === 0
+        ? "No format reference provided. Derive structure and positioning from the Script Instructions guidance alone."
+        : formatRefs
+            .map((r: any) => `### Format Reference: "${r.video_title}" by ${r.channel_name}\nIMPORTANT: This is from a different subject. Use for structure and positioning only — never for {{SUBJECT_LABEL}} content.\n\n${r.transcript}`)
+            .join("\n\n---\n\n");
 
       const topicTranscriptBlock = topicTranscripts.length > 0
         ? truncateTopicTranscripts(topicTranscripts, "creative_brief")
