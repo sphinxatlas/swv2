@@ -245,6 +245,8 @@ serve(async (req) => {
         char_count: charCount,
         estimated_tokens: estimatedTokens,
         processing_error: null,
+        extraction_method: isPdf ? "pdf" : "text",
+        page_count: isPdf ? pageCount : null,
 
       })
       .eq("id", fileId);
