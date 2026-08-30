@@ -779,6 +779,45 @@ export async function getAlternativeSources(channelId: string): Promise<Alternat
   return (data || []) as AlternativeSource[];
 }
 
+// ── Secondary Source Usage (which videos link each entry) ──
+export interface SecondarySourceUsage {
+  topicTranscripts: Record<string, string[]>;
+  alternativeSources: Record<string, string[]>;
+  formatReferences: Record<string, string[]>;
+}
+
+export async function getSecondarySourceUsage(channelId: string): Promise<SecondarySourceUsage> {
+  const { data: briefs, error } = await supabase
+    .from('topic_briefs')
+    .select('id, title')
+    .eq('channel_id', channelId);
+  if (error) throw error;
+  const titleById = new Map((briefs || []).map((b) => [b.id as string, b.title as string]));
+  const briefIds = (briefs || []).map((b) => b.id as string);
+  const usage: SecondarySourceUsage = { topicTranscripts: {}, alternativeSources: {}, formatReferences: {} };
+  if (briefIds.length === 0) return usage;
+
+  const [topicLinks, altLinks, fmtLinks] = await Promise.all([
+    supabase.from('brief_topic_transcript_links').select('brief_id, transcript_id').in('brief_id', briefIds),
+    supabase.from('brief_alternative_source_links' as any).select('brief_id, alternative_source_id').in('brief_id', briefIds),
+    supabase.from('brief_format_reference_links').select('brief_id, transcript_id').in('brief_id', briefIds),
+  ]);
+  if (topicLinks.error) throw topicLinks.error;
+  if (altLinks.error) throw altLinks.error;
+  if (fmtLinks.error) throw fmtLinks.error;
+
+  const add = (map: Record<string, string[]>, key: string, briefId: string) => {
+    const title = titleById.get(briefId);
+    if (!title) return;
+    if (!map[key]) map[key] = [];
+    if (!map[key].includes(title)) map[key].push(title);
+  };
+  for (const l of topicLinks.data || []) add(usage.topicTranscripts, l.transcript_id, l.brief_id);
+  for (const l of (altLinks.data || []) as any[]) add(usage.alternativeSources, l.alternative_source_id, l.brief_id);
+  for (const l of fmtLinks.data || []) add(usage.formatReferences, l.transcript_id, l.brief_id);
+  return usage;
+}
+
 export async function saveAlternativeSource(input: {
   title: string;
   content: string;
