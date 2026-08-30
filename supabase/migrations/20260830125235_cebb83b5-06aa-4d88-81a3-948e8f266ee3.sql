@@ -1,0 +1,1 @@
+ALTER TABLE public.source_files ADD COLUMN IF NOT EXISTS processing_error text;
