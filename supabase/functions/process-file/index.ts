@@ -116,6 +116,24 @@ function chunkText(text: string): string[] {
   return final;
 }
 
+// PDF extractor output has no reliable paragraph structure — rebuild it so
+// chunkText's blank-line splitting works. Only applied to PDFs.
+function normalizePdfText(raw: string): string {
+  return raw
+    .replace(/\f/g, "")
+    // de-hyphenate across line breaks
+    .replace(/-\n(?=[a-z])/g, "")
+    // protect real paragraph breaks
+    .replace(/\n{2,}/g, "\u0000")
+    // single newlines inside a paragraph become spaces
+    .replace(/\n/g, " ")
+    .replace(/\u0000/g, "\n\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
