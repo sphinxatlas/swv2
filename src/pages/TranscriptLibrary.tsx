@@ -19,9 +19,12 @@ import {
   deleteAlternativeSource,
   updateBriefTopicTranscriptStrength,
   updateAlternativeSourceStrength,
+  updateFormatReferenceTranscript,
+  updateBriefTopicTranscript,
+  updateAlternativeSource,
   type ScriptStrength,
 } from "@/lib/api";
-import { Plus, Trash2, Eye, Download } from "lucide-react";
+import { Plus, Trash2, Eye, Download, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { SourceDetailModal } from "@/components/SourceDetailModal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -35,11 +38,13 @@ function TranscriptSection({ section }: { section: Section }) {
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [viewing, setViewing] = useState<any | null>(null);
+  const [editing, setEditing] = useState<any | null>(null);
 
   const queryKey = section === "format" ? "format-references" : "topic-transcripts";
   const fetchFn = section === "format" ? getFormatReferenceTranscripts : getBriefTopicTranscripts;
   const saveFn = section === "format" ? saveFormatReferenceTranscript : saveBriefTopicTranscript;
   const deleteFn = section === "format" ? deleteFormatReferenceTranscript : deleteBriefTopicTranscript;
+  const updateFn = section === "format" ? updateFormatReferenceTranscript : updateBriefTopicTranscript;
 
   const { data: items = [], refetch } = useQuery({
     queryKey: [queryKey, channelId],
@@ -60,6 +65,20 @@ function TranscriptSection({ section }: { section: Section }) {
       await saveFn(input, channelId!);
       toast.success("Transcript saved");
       setShowForm(false);
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleEditSave = async (input: { channel_name: string; video_title: string; transcript: string }) => {
+    setBusy(true);
+    try {
+      await updateFn(editing.id, input, channelId!);
+      toast.success("Changes saved");
+      setEditing(null);
       refetch();
     } catch (err: any) {
       toast.error(err.message || "Failed to save");
@@ -112,6 +131,20 @@ function TranscriptSection({ section }: { section: Section }) {
         <SourceEntryForm onSave={handleSave} onCancel={() => setShowForm(false)} busy={busy} />
       )}
 
+      {editing && (
+        <SourceEntryForm
+          mode="edit"
+          initial={{
+            channel_name: editing.channel_name,
+            video_title: editing.video_title,
+            transcript: editing.transcript,
+          }}
+          onSave={handleEditSave}
+          onCancel={() => setEditing(null)}
+          busy={busy}
+        />
+      )}
+
       {items.length === 0 ? (
         <div className="border border-dashed border-border rounded-lg p-8 text-center text-sm text-muted-foreground">
           No transcripts saved yet.
@@ -153,6 +186,9 @@ function TranscriptSection({ section }: { section: Section }) {
                     <div className="flex items-center gap-1">
                       <Button size="icon" variant="ghost" className="h-7 w-7" title="View" onClick={() => setViewing(item)}>
                         <Eye className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Edit" onClick={() => { setShowForm(false); setEditing(item); }}>
+                        <Pencil className="w-3.5 h-3.5" />
                       </Button>
                       <Button
                         size="icon"
@@ -209,6 +245,7 @@ function AlternativeSourcesSection() {
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [viewing, setViewing] = useState<any | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [sourceType, setSourceType] = useState("");
   const [sourceAuthor, setSourceAuthor] = useState("");
@@ -221,6 +258,43 @@ function AlternativeSourcesSection() {
     queryFn: () => getAlternativeSources(channelId!),
     enabled: !!channelId,
   });
+
+  const startEdit = (item: any) => {
+    setShowForm(false);
+    setEditingId(item.id);
+    setTitle(item.title || "");
+    setSourceType(item.source_type || "");
+    setSourceAuthor(item.source_author || "");
+    setUrl(item.url || "");
+    setContent(item.content || "");
+    setNotes(item.notes || "");
+  };
+
+  const handleUpdate = async () => {
+    if (!title.trim() || !content.trim()) {
+      toast.error("Title and pasted text are required");
+      return;
+    }
+    setBusy(true);
+    try {
+      await updateAlternativeSource(editingId!, {
+        title: title.trim(),
+        content: content.trim(),
+        source_type: sourceType.trim() || null,
+        source_author: sourceAuthor.trim() || null,
+        url: url.trim() || null,
+        notes: notes.trim() || null,
+      }, channelId!);
+      toast.success("Changes saved");
+      reset();
+      setEditingId(null);
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const reset = () => {
     setTitle("");
@@ -295,7 +369,7 @@ function AlternativeSourcesSection() {
         </Button>
       )}
 
-      {showForm && (
+      {(showForm || editingId) && (
         <div className="border border-primary/30 rounded-lg p-4 mb-4 bg-card space-y-3">
           <div>
             <Label className="text-xs text-muted-foreground">
@@ -379,13 +453,14 @@ function AlternativeSourcesSection() {
               onClick={() => {
                 reset();
                 setShowForm(false);
+                setEditingId(null);
               }}
               disabled={busy}
             >
               Cancel
             </Button>
-            <Button size="sm" onClick={handleSave} disabled={busy}>
-              {busy ? "Saving..." : "Save Alternative Source"}
+            <Button size="sm" onClick={editingId ? handleUpdate : handleSave} disabled={busy}>
+              {busy ? "Saving..." : editingId ? "Save changes" : "Save Alternative Source"}
             </Button>
           </div>
         </div>
@@ -436,6 +511,9 @@ function AlternativeSourcesSection() {
                     <div className="flex items-center gap-1">
                       <Button size="icon" variant="ghost" className="h-7 w-7" title="View" onClick={() => setViewing(item)}>
                         <Eye className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Edit" onClick={() => startEdit(item)}>
+                        <Pencil className="w-3.5 h-3.5" />
                       </Button>
                       <Button
                         size="icon"
