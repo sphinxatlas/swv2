@@ -226,6 +226,109 @@ export default function PipelineView() {
   const briefBooks = sourceFiles.filter((f: any) => f.brief_id === briefId && f.file_type === "book");
   const briefTranscripts = sourceFiles.filter((f: any) => f.brief_id === briefId && f.file_type === "transcript");
 
+  // ── Sources section: linked + channel-level material ──
+  const { data: linkedResearch = [], refetch: refetchLinkedResearch } = useQuery({
+    queryKey: ["brief-topic-transcript-links", briefId],
+    queryFn: () => getBriefTopicTranscriptLinks(briefId!),
+    enabled: !!briefId,
+  });
+  const { data: briefLinks, refetch: refetchBriefLinks } = useQuery({
+    queryKey: ["brief-links", briefId],
+    queryFn: () => getBriefLinks(briefId!),
+    enabled: !!briefId,
+  });
+  const { data: channelFormatRefs = [] } = useQuery({
+    queryKey: ["format-references", channelId],
+    queryFn: () => getFormatReferenceTranscripts(channelId!),
+    enabled: !!channelId,
+  });
+  const { data: channelResearch = [], refetch: refetchChannelResearch } = useQuery({
+    queryKey: ["topic-transcripts", channelId],
+    queryFn: () => getBriefTopicTranscripts(channelId!),
+    enabled: !!channelId,
+  });
+  const { data: channelAltSources = [] } = useQuery({
+    queryKey: ["alternative-sources", channelId],
+    queryFn: () => getAlternativeSources(channelId!),
+    enabled: !!channelId,
+  });
+
+  const linkedFormatIds: string[] = briefLinks?.formatIds ?? [];
+  const linkedAltIds: string[] = briefLinks?.altIds ?? [];
+  const linkedResearchIds: string[] = (linkedResearch as any[]).map((r) => r.id);
+
+  const formatOptions: MultiSelectOption[] = (channelFormatRefs as any[]).map((r) => ({
+    value: r.id,
+    label: r.video_title,
+    sublabel: r.channel_name,
+  }));
+  const altOptions: MultiSelectOption[] = (channelAltSources as any[]).map((r) => ({
+    value: r.id,
+    label: r.title,
+    sublabel: [r.source_type || r.source_author, r.script_strength ? `Quality: ${r.script_strength}` : null]
+      .filter(Boolean)
+      .join(" · ") || undefined,
+  }));
+
+  const channelBooksCount = sourceFiles.filter((f: any) => !f.brief_id && f.file_type === "book").length;
+  const channelRecordingsCount = sourceFiles.filter((f: any) => !f.brief_id && f.file_type === "transcript").length;
+  const governingDocs = [
+    { label: "Script Instructions", present: sourceFiles.some((f: any) => !f.brief_id && (f.file_type === "instructions" || f.file_type === "script_strategy")) },
+    { label: "Anti-AI Guide", present: sourceFiles.some((f: any) => !f.brief_id && f.file_type === "anti_ai_guide") },
+    { label: "Host Persona", present: sourceFiles.some((f: any) => !f.brief_id && f.file_type === "host_persona") },
+    { label: "Voice Pass", present: sourceFiles.some((f: any) => !f.brief_id && f.file_type === "melty_voice_pass") },
+  ];
+
+  const handleUnlinkResearch = async (id: string) => {
+    try {
+      await linkTopicTranscriptsToBrief(briefId!, linkedResearchIds.filter((x) => x !== id));
+      await Promise.all([refetchLinkedResearch(), refetchBriefLinks()]);
+      toast.success("Unlinked from this video");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to unlink");
+    }
+  };
+
+  const handleAddResearch = async (input: { channel_name: string; video_title: string; transcript: string }) => {
+    setSavingResearch(true);
+    try {
+      const created = await saveBriefTopicTranscript(input, channelId!);
+      await linkTopicTranscriptsToBrief(briefId!, [...linkedResearchIds, created.id]);
+      await Promise.all([refetchLinkedResearch(), refetchBriefLinks(), refetchChannelResearch()]);
+      setShowAddResearch(false);
+      toast.success("Brief research added and linked");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save");
+    } finally {
+      setSavingResearch(false);
+    }
+  };
+
+  const handleFormatLinkChange = async (vals: string[]) => {
+    if (vals.length > 2) {
+      toast.error("Maximum 2 format references");
+      return;
+    }
+    try {
+      await linkFormatReferencesToBrief(briefId!, vals);
+      await refetchBriefLinks();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update links");
+    }
+  };
+
+  const handleAltLinkChange = async (vals: string[]) => {
+    try {
+      await linkAlternativeSourcesToBrief(briefId!, vals);
+      await refetchBriefLinks();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update links");
+    }
+  };
+
+  const sourcesOpen = briefSourcesOpen ?? outputs.length === 0;
+
+
   const getStepOutput = (step: PipelineStepType) =>
     outputs.find((o) => o.step_type === step);
 
