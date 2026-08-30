@@ -66,9 +66,11 @@ export function SourceEntryForm({ onSave, onCancel, busy, initial, mode }: Sourc
       video_title: title.trim(),
       transcript: transcript.trim(),
     });
-    setChannel("");
-    setTitle("");
-    setTranscript("");
+    if (!isEdit) {
+      setChannel("");
+      setTitle("");
+      setTranscript("");
+    }
   };
 
   return (
@@ -106,7 +108,7 @@ export function SourceEntryForm({ onSave, onCancel, busy, initial, mode }: Sourc
           Cancel
         </Button>
         <Button size="sm" onClick={handleSave} disabled={busy}>
-          {busy ? "Saving..." : "Save Source"}
+          {busy ? "Saving..." : isEdit ? "Save changes" : "Save Source"}
         </Button>
       </div>
     </div>
