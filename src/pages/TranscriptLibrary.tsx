@@ -22,14 +22,61 @@ import {
   updateFormatReferenceTranscript,
   updateBriefTopicTranscript,
   updateAlternativeSource,
+  getSecondarySourceUsage,
   type ScriptStrength,
 } from "@/lib/api";
 import { Plus, Trash2, Eye, Download, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { SourceDetailModal } from "@/components/SourceDetailModal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { SourceEntryForm, QualitySelect, QUALITY_HELPER_TEXT } from "@/components/SourceEntryForm";
 import { useChannel } from "@/contexts/ChannelContext";
+
+function UsageBadges({ titles }: { titles: string[] }) {
+  if (titles.length === 0) {
+    return <span className="text-xs text-warning">Not linked to any video</span>;
+  }
+  return (
+    <div className="flex flex-wrap gap-1">
+      {titles.map((t) => (
+        <Badge key={t} variant="secondary" className="text-[10px] font-normal">
+          {t}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function UsageFilter({
+  usageMap,
+  value,
+  onChange,
+}: {
+  usageMap: Record<string, string[]>;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const titles = Array.from(new Set(Object.values(usageMap).flat())).sort();
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <span className="text-xs text-muted-foreground">Used by:</span>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="h-8 w-56 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All videos</SelectItem>
+          {titles.map((t) => (
+            <SelectItem key={t} value={t}>
+              {t}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
 
 type Section = "format" | "topic";
 
