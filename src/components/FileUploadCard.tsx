@@ -274,7 +274,15 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
 
 
   return (
-    <div className="rounded-lg border border-border bg-card p-5">
+    <div
+      onDragOver={(e) => { e.preventDefault(); if (!uploading) setDragOver(true); }}
+      onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+      onDrop={handleDrop}
+      className={cn(
+        "rounded-lg border bg-card p-5 transition-colors",
+        dragOver ? "border-primary bg-primary/5 ring-1 ring-primary/40" : "border-border",
+      )}
+    >
       <div className="flex items-start justify-between mb-4">
         <div>
           <div className="flex items-center gap-2">
