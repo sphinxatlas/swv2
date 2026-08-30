@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MultiSelectChips, type MultiSelectOption } from "@/components/MultiSelectChips";
+import { TagInput } from "@/components/TagInput";
 import {
   TARGET_LENGTH_OPTIONS,
   getFormatReferenceTranscripts,
@@ -281,16 +282,11 @@ export function BriefForm({ brief, onSave, onCancel, busy, submitLabel }: BriefF
         <p className="text-[11px] text-muted-foreground/70 mb-1">
           People or entities central to this video. Used to build retrieval queries.
         </p>
-        <Input
+        <TagInput
+          values={form.characters || []}
+          onChange={(vals) => updateForm("characters", vals)}
           placeholder=""
-          value={(form.characters || []).join(", ")}
-          onChange={(e) =>
-            updateForm(
-              "characters",
-              e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-            )
-          }
-          className="bg-secondary border-border mt-1"
+          className="mt-1"
         />
       </div>
 
@@ -300,16 +296,11 @@ export function BriefForm({ brief, onSave, onCancel, busy, submitLabel }: BriefF
         <p className="text-[11px] text-muted-foreground/70 mb-1">
           Key themes, moments, or topics this video covers.
         </p>
-        <Input
+        <TagInput
+          values={form.focus_areas || []}
+          onChange={(vals) => updateForm("focus_areas", vals)}
           placeholder=""
-          value={(form.focus_areas || []).join(", ")}
-          onChange={(e) =>
-            updateForm(
-              "focus_areas",
-              e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-            )
-          }
-          className="bg-secondary border-border mt-1"
+          className="mt-1"
         />
       </div>
 
