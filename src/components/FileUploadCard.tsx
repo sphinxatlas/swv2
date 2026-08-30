@@ -278,6 +278,19 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
                     {(file as any).processing_error}
                   </p>
                 )}
+                {file.status === "indexed" && (file as any).extraction_method === "pdf" && (() => {
+                  const pages = Number((file as any).page_count) || 0;
+                  const chars = Number((file as any).char_count) || 0;
+                  const perPage = pages > 0 ? Math.round(chars / pages) : 0;
+                  const lowYield = pages > 0 && perPage < 800;
+                  return (
+                    <p className={`mt-1 text-[11px] leading-snug ${lowYield ? "text-warning" : "text-muted-foreground"}`}>
+                      {`${pages.toLocaleString()} pages, ${chars.toLocaleString()} chars, ${perPage.toLocaleString()} chars/page`}
+                      {lowYield ? " — low yield, check the document extracted fully" : ""}
+                    </p>
+                  );
+                })()}
+
               </div>
 
               {renamingId === file.id ? (
