@@ -282,16 +282,11 @@ export function BriefForm({ brief, onSave, onCancel, busy, submitLabel }: BriefF
         <p className="text-[11px] text-muted-foreground/70 mb-1">
           People or entities central to this video. Used to build retrieval queries.
         </p>
-        <Input
+        <TagInput
+          values={form.characters || []}
+          onChange={(vals) => updateForm("characters", vals)}
           placeholder=""
-          value={(form.characters || []).join(", ")}
-          onChange={(e) =>
-            updateForm(
-              "characters",
-              e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-            )
-          }
-          className="bg-secondary border-border mt-1"
+          className="mt-1"
         />
       </div>
 
