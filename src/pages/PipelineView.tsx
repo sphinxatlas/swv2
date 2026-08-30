@@ -46,7 +46,6 @@ import {
 } from "@/lib/api";
 import { MultiSelectChips, type MultiSelectOption } from "@/components/MultiSelectChips";
 import { SourceEntryForm, QualitySelect } from "@/components/SourceEntryForm";
-import { Label as UILabel } from "@/components/ui/label";
 import { parseEvidenceTable } from "@/lib/parseEvidenceTable";
 import { EvidenceTableView } from "@/components/pipeline/EvidenceTableView";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,6 +61,8 @@ import {
   Wand2,
   Lightbulb,
   AlertTriangle,
+  Plus,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useChannel } from "@/contexts/ChannelContext";
