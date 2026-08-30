@@ -300,7 +300,7 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
             <input
               type="file"
               accept={accept}
-              multiple={fileType !== "instructions"}
+              multiple={multiple}
               onChange={handleUpload}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               disabled={uploading}
