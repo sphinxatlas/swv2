@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { Upload, FileText, Loader2, CheckCircle2, AlertCircle, Trash2, Eye, Download, Pencil, Check, X, ClipboardPaste } from "lucide-react";
+import { Upload, FileText, Loader2, CheckCircle2, AlertCircle, Trash2, Eye, Download, Pencil, Check, X, ClipboardPaste, HelpCircle } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,6 +32,7 @@ interface FileUploadCardProps {
   onRefresh: () => void;
   badge?: string;
   briefId?: string;
+  compactHelp?: boolean;
 }
 
 type QueueState = "queued" | "uploading" | "indexing" | "done" | "failed";
@@ -48,7 +50,7 @@ const QUEUE_LABELS: Record<QueueState, string> = {
   failed: "Failed",
 };
 
-export function FileUploadCard({ fileType, title, description, accept = ".txt,.md,.pdf", files, onRefresh, badge, briefId }: FileUploadCardProps) {
+export function FileUploadCard({ fileType, title, description, accept = ".txt,.md,.pdf", files, onRefresh, badge, briefId, compactHelp = false }: FileUploadCardProps) {
   const { channelId } = useChannel();
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState<string | null>(null);
@@ -283,19 +285,35 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
         dragOver ? "border-primary bg-primary/5 ring-1 ring-primary/40" : "border-border",
       )}
     >
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-mono text-sm font-semibold text-foreground">{title}</h3>
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 mb-4">
+        <div className="min-w-0 flex-1 basis-56">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <h3 className="font-mono text-sm font-semibold text-foreground truncate">{title}</h3>
+            {compactHelp && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label={`About ${title}`}
+                    className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="bottom" align="start" className="w-72 text-xs text-muted-foreground">
+                  {description}
+                </PopoverContent>
+              </Popover>
+            )}
             {badge && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
+              <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
                 {badge}
               </span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          {!compactHelp && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 ml-auto">
           <div className="relative">
             <input
               type="file"

@@ -25,7 +25,7 @@ export function PipelineSidebar({ brief, activeStep, setActiveStep, generating, 
         className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-4 transition-colors"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
-        Back to Briefs
+        Back to Videos
       </button>
 
       {brief && (
