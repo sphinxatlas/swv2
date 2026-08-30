@@ -34,17 +34,16 @@ import {
   setEvidencePointApproval,
   getSourceFilesForBrief,
   getBriefLinks,
-  getBriefTopicTranscriptLinks,
-  getFormatReferenceTranscripts,
   getBriefTopicTranscripts,
-  getAlternativeSources,
+  getBriefTopicTranscriptLinks,
   saveBriefTopicTranscript,
   updateBriefTopicTranscriptStrength,
+  updateTopicBrief,
   linkFormatReferencesToBrief,
   linkTopicTranscriptsToBrief,
   linkAlternativeSourcesToBrief,
 } from "@/lib/api";
-import { MultiSelectChips, type MultiSelectOption } from "@/components/MultiSelectChips";
+import { BriefForm } from "@/components/BriefForm";
 import { SourceEntryForm, QualitySelect } from "@/components/SourceEntryForm";
 import { parseEvidenceTable } from "@/lib/parseEvidenceTable";
 import { EvidenceTableView } from "@/components/pipeline/EvidenceTableView";
@@ -144,6 +143,8 @@ function splitMeltyVoicePassOutput(text: string): { scriptBody: string; changeLo
 export default function PipelineView() {
   const { briefId } = useParams<{ briefId: string }>();
   const [briefSourcesOpen, setBriefSourcesOpen] = useState<boolean | null>(null);
+  const [briefOpen, setBriefOpen] = useState<boolean | null>(null);
+  const [savingBrief, setSavingBrief] = useState(false);
   const [showAddResearch, setShowAddResearch] = useState(false);
   const [savingResearch, setSavingResearch] = useState(false);
   const { channelId, setChannelId } = useChannel();
@@ -237,38 +238,14 @@ export default function PipelineView() {
     queryFn: () => getBriefLinks(briefId!),
     enabled: !!briefId,
   });
-  const { data: channelFormatRefs = [] } = useQuery({
-    queryKey: ["format-references", channelId],
-    queryFn: () => getFormatReferenceTranscripts(channelId!),
-    enabled: !!channelId,
-  });
   const { data: channelResearch = [], refetch: refetchChannelResearch } = useQuery({
     queryKey: ["topic-transcripts", channelId],
     queryFn: () => getBriefTopicTranscripts(channelId!),
     enabled: !!channelId,
   });
-  const { data: channelAltSources = [] } = useQuery({
-    queryKey: ["alternative-sources", channelId],
-    queryFn: () => getAlternativeSources(channelId!),
-    enabled: !!channelId,
-  });
 
-  const linkedFormatIds: string[] = briefLinks?.formatIds ?? [];
-  const linkedAltIds: string[] = briefLinks?.altIds ?? [];
   const linkedResearchIds: string[] = (linkedResearch as any[]).map((r) => r.id);
 
-  const formatOptions: MultiSelectOption[] = (channelFormatRefs as any[]).map((r) => ({
-    value: r.id,
-    label: r.video_title,
-    sublabel: r.channel_name,
-  }));
-  const altOptions: MultiSelectOption[] = (channelAltSources as any[]).map((r) => ({
-    value: r.id,
-    label: r.title,
-    sublabel: [r.source_type || r.source_author, r.script_strength ? `Quality: ${r.script_strength}` : null]
-      .filter(Boolean)
-      .join(" · ") || undefined,
-  }));
 
   const channelBooksCount = sourceFiles.filter((f: any) => !f.brief_id && f.file_type === "book").length;
   const channelRecordingsCount = sourceFiles.filter((f: any) => !f.brief_id && f.file_type === "transcript").length;
@@ -304,29 +281,25 @@ export default function PipelineView() {
     }
   };
 
-  const handleFormatLinkChange = async (vals: string[]) => {
-    if (vals.length > 2) {
-      toast.error("Maximum 2 format references");
-      return;
-    }
+  const handleSaveBrief = async (payload: any, links: { formatIds: string[]; topicIds: string[]; altIds: string[] }) => {
+    setSavingBrief(true);
     try {
-      await linkFormatReferencesToBrief(briefId!, vals);
-      await refetchBriefLinks();
+      await updateTopicBrief(briefId!, payload, channelId!);
+      await linkFormatReferencesToBrief(briefId!, links.formatIds);
+      await linkTopicTranscriptsToBrief(briefId!, links.topicIds);
+      await linkAlternativeSourcesToBrief(briefId!, links.altIds);
+      await Promise.all([refetchBrief(), refetchBriefLinks(), refetchLinkedResearch()]);
+      toast.success("Brief saved");
+      setBriefOpen(false);
     } catch (err: any) {
-      toast.error(err.message || "Failed to update links");
-    }
-  };
-
-  const handleAltLinkChange = async (vals: string[]) => {
-    try {
-      await linkAlternativeSourcesToBrief(briefId!, vals);
-      await refetchBriefLinks();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update links");
+      toast.error(err.message || "Failed to save brief");
+    } finally {
+      setSavingBrief(false);
     }
   };
 
   const sourcesOpen = briefSourcesOpen ?? outputs.length === 0;
+  const briefSectionOpen = briefOpen ?? !((brief?.angle_note ?? "") as string).trim();
 
 
   const getStepOutput = (step: PipelineStepType) =>
@@ -838,6 +811,34 @@ export default function PipelineView() {
             </div>
           </div>
 
+          {/* Brief */}
+          <Collapsible open={briefSectionOpen} onOpenChange={setBriefOpen}>
+            <CollapsibleTrigger className="flex w-full items-center gap-2 border-b border-border px-6 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+              <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${briefSectionOpen ? "" : "-rotate-90"}`} />
+              <span className="shrink-0">Brief</span>
+              {!briefSectionOpen && (
+                <span className="flex min-w-0 items-center gap-2 text-left">
+                  <span className="shrink-0 font-mono text-foreground">{brief?.title}</span>
+                  <span className="truncate text-muted-foreground/70">
+                    {((brief?.angle_note ?? "") as string).slice(0, 200)}
+                  </span>
+                </span>
+              )}
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="border-b border-border px-6 py-4">
+                {brief && (
+                  <BriefForm
+                    brief={brief}
+                    busy={savingBrief}
+                    onSave={handleSaveBrief}
+                    onCancel={() => setBriefOpen(false)}
+                  />
+                )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
           {/* Sources */}
           <Collapsible open={sourcesOpen} onOpenChange={setBriefSourcesOpen}>
             <CollapsibleTrigger className="flex w-full items-center gap-2 border-b border-border px-6 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
@@ -931,47 +932,6 @@ export default function PipelineView() {
                   )}
                 </div>
 
-                {/* Linked from channel */}
-                <div className="rounded-lg border border-border bg-card p-5 space-y-4">
-                  <h3 className="font-mono text-sm font-semibold text-foreground">Linked from channel</h3>
-
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Format References</Label>
-                    <p className="text-[11px] text-muted-foreground/70 mb-2">
-                      Used for argument structure and positioning only — never as a source of content. Optional but recommended; max 2.
-                    </p>
-                    <MultiSelectChips
-                      options={formatOptions}
-                      selected={linkedFormatIds}
-                      onChange={handleFormatLinkChange}
-                      placeholder={formatOptions.length === 0 ? "No format references available" : "Select format references…"}
-                      emptyText="No format references available."
-                      searchable
-                      searchPlaceholder="Search format references..."
-                      emptySearchMessage="No matching sources found."
-                    />
-                    {linkedFormatIds.length >= 2 && (
-                      <p className="text-xs text-muted-foreground mt-1">Maximum 2 format references selected.</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Channel Research</Label>
-                    <p className="text-[11px] text-muted-foreground/70 mb-2">
-                      Channel-level secondary sources. Used as context and angle support, never as claim-grade evidence. No maximum.
-                    </p>
-                    <MultiSelectChips
-                      options={altOptions}
-                      selected={linkedAltIds}
-                      onChange={handleAltLinkChange}
-                      placeholder={altOptions.length === 0 ? "No channel research available" : "Select channel research…"}
-                      emptyText="No channel research yet. Add some in the Secondary Source Library."
-                      searchable
-                      searchPlaceholder="Search channel research..."
-                      emptySearchMessage="No matching sources found."
-                    />
-                  </div>
-                </div>
 
                 {/* Inherited from channel */}
                 <div className="rounded-lg border border-border bg-secondary/30 p-4">

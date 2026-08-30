@@ -33,6 +33,21 @@ interface FileUploadCardProps {
   briefId?: string;
 }
 
+type QueueState = "queued" | "uploading" | "indexing" | "done" | "failed";
+interface QueueItem {
+  name: string;
+  state: QueueState;
+  error?: string;
+}
+
+const QUEUE_LABELS: Record<QueueState, string> = {
+  queued: "Queued",
+  uploading: "Uploading",
+  indexing: "Indexing",
+  done: "Done",
+  failed: "Failed",
+};
+
 export function FileUploadCard({ fileType, title, description, accept = ".txt,.md,.pdf", files, onRefresh, badge, briefId }: FileUploadCardProps) {
   const { channelId } = useChannel();
   const [uploading, setUploading] = useState(false);
@@ -42,6 +57,8 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState<string>("");
   const [renameSaving, setRenameSaving] = useState(false);
+  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [dragOver, setDragOver] = useState(false);
 
   // Paste-text dialog state
   const [pasteOpen, setPasteOpen] = useState(false);
@@ -74,29 +91,99 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
 
   const pasteSubmitDisabled = pasteSaving || !pasteName.trim() || !pasteText.trim();
 
+  const multiple = fileType !== "instructions";
+
+  const runUpload = useCallback(async (selected: File[]) => {
+    if (!selected.length) return;
+    const batch = multiple ? selected : selected.slice(0, 1);
+    const single = batch.length === 1;
+
+    setUploading(true);
+    // The inline queue only appears for real batches; a single file keeps the
+    // original toast-driven behaviour.
+    setQueue(single ? [] : batch.map((f) => ({ name: f.name, state: "queued" as QueueState })));
+
+    const setItem = (idx: number, patch: Partial<QueueItem>) =>
+      setQueue((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+
+    let indexed = 0;
+    let failed = 0;
+
+    for (let i = 0; i < batch.length; i++) {
+      const file = batch[i];
+      try {
+        if (!single) setItem(i, { state: "uploading", error: undefined });
+        const uploaded = await uploadSourceFile(file, fileType, channelId!, briefId ?? null);
+        if (single) toast.success(`Uploaded ${file.name}`);
+
+        // Auto-process
+        if (!single) setItem(i, { state: "indexing" });
+        setProcessing(uploaded.id);
+        await processFile(uploaded.id);
+        setProcessing(null);
+        if (single) toast.success(`Indexed ${file.name} (chunked for search)`);
+        if (!single) setItem(i, { state: "done" });
+        indexed++;
+      } catch (err: any) {
+        setProcessing(null);
+        failed++;
+        const message = err?.message || "Upload failed";
+        if (single) {
+          toast.error(message);
+        } else {
+          setItem(i, { state: "failed", error: message });
+        }
+      }
+    }
+
+    onRefresh();
+    setUploading(false);
+    setProcessing(null);
+
+    if (!single) {
+      if (failed === 0) toast.success(`${indexed} files indexed`);
+      else if (indexed === 0) toast.error(`${failed} failed`);
+      else toast.warning(`${indexed} indexed, ${failed} failed`);
+    }
+  }, [fileType, onRefresh, channelId, briefId, multiple]);
+
   const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (!fileList?.length) return;
+    const picked = Array.from(fileList);
+    e.target.value = "";
+    await runUpload(picked);
+  }, [runUpload]);
 
-    setUploading(true);
-    try {
-      for (const file of Array.from(fileList)) {
-        const uploaded = await uploadSourceFile(file, fileType, channelId!, briefId ?? null);
-        toast.success(`Uploaded ${file.name}`);
-        
-        // Auto-process
-        setProcessing(uploaded.id);
-        await processFile(uploaded.id);
-        toast.success(`Indexed ${file.name} (chunked for search)`);
-      }
-      onRefresh();
-    } catch (err: any) {
-      toast.error(err.message || "Upload failed");
-    } finally {
-      setUploading(false);
-      setProcessing(null);
+  const acceptsFile = useCallback((file: File) => {
+    const exts = accept.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+    if (exts.length === 0) return true;
+    const name = file.name.toLowerCase();
+    return exts.some((ext) =>
+      ext.startsWith(".")
+        ? name.endsWith(ext)
+        : ext.endsWith("/*")
+          ? file.type.startsWith(ext.slice(0, -1))
+          : file.type === ext,
+    );
+  }, [accept]);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (uploading) return;
+    const dropped = Array.from(e.dataTransfer.files || []);
+    if (!dropped.length) return;
+    const allowed = dropped.filter(acceptsFile);
+    if (allowed.length === 0) {
+      toast.error(`Unsupported file type. Accepted: ${accept}`);
+      return;
     }
-  }, [fileType, onRefresh, channelId, briefId]);
+    if (allowed.length < dropped.length) {
+      toast.warning(`${dropped.length - allowed.length} file(s) skipped — unsupported type`);
+    }
+    await runUpload(allowed);
+  }, [acceptsFile, accept, runUpload, uploading]);
 
   const handleDelete = async (file: SourceFile) => {
     try {
@@ -187,7 +274,15 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
 
 
   return (
-    <div className="rounded-lg border border-border bg-card p-5">
+    <div
+      onDragOver={(e) => { e.preventDefault(); if (!uploading) setDragOver(true); }}
+      onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+      onDrop={handleDrop}
+      className={cn(
+        "rounded-lg border bg-card p-5 transition-colors",
+        dragOver ? "border-primary bg-primary/5 ring-1 ring-primary/40" : "border-border",
+      )}
+    >
       <div className="flex items-start justify-between mb-4">
         <div>
           <div className="flex items-center gap-2">
@@ -205,7 +300,7 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
             <input
               type="file"
               accept={accept}
-              multiple={fileType !== "instructions"}
+              multiple={multiple}
               onChange={handleUpload}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               disabled={uploading}
@@ -227,6 +322,48 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
           </Button>
         </div>
       </div>
+
+      {queue.length > 0 && (
+        <div className="mb-4 rounded-md border border-border bg-secondary/40 p-3 space-y-1.5">
+          <p className="text-[11px] font-medium text-muted-foreground">
+            {uploading
+              ? `Processing ${queue.filter((q) => q.state === "done" || q.state === "failed").length + 1} of ${queue.length}`
+              : `${queue.filter((q) => q.state === "done").length} of ${queue.length} indexed`}
+          </p>
+          {queue.map((item, i) => (
+            <div key={`${item.name}-${i}`} className="flex items-start gap-2 text-xs">
+              <div className="mt-0.5 shrink-0">
+                {item.state === "uploading" || item.state === "indexing" ? (
+                  <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+                ) : item.state === "done" ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-success" />
+                ) : item.state === "failed" ? (
+                  <AlertCircle className="w-3.5 h-3.5 text-destructive" />
+                ) : (
+                  <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="truncate font-mono text-foreground">{item.name}</span>
+                  <span
+                    className={cn(
+                      "ml-auto shrink-0 text-[11px]",
+                      item.state === "failed" ? "text-destructive" : "text-muted-foreground",
+                    )}
+                  >
+                    {QUEUE_LABELS[item.state]}
+                  </span>
+                </div>
+                {item.state === "failed" && item.error && (
+                  <p className="text-[11px] leading-snug text-destructive">{item.error}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
 
       {files.length === 0 ? (
         <div className="border border-dashed border-border rounded-md p-6 text-center">
