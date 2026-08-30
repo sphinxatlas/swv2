@@ -33,6 +33,21 @@ interface FileUploadCardProps {
   briefId?: string;
 }
 
+type QueueState = "queued" | "uploading" | "indexing" | "done" | "failed";
+interface QueueItem {
+  name: string;
+  state: QueueState;
+  error?: string;
+}
+
+const QUEUE_LABELS: Record<QueueState, string> = {
+  queued: "Queued",
+  uploading: "Uploading",
+  indexing: "Indexing",
+  done: "Done",
+  failed: "Failed",
+};
+
 export function FileUploadCard({ fileType, title, description, accept = ".txt,.md,.pdf", files, onRefresh, badge, briefId }: FileUploadCardProps) {
   const { channelId } = useChannel();
   const [uploading, setUploading] = useState(false);
@@ -42,6 +57,8 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState<string>("");
   const [renameSaving, setRenameSaving] = useState(false);
+  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [dragOver, setDragOver] = useState(false);
 
   // Paste-text dialog state
   const [pasteOpen, setPasteOpen] = useState(false);
