@@ -1750,7 +1750,7 @@ const deriveRetrievalQueryPack = (
 
   // Character queries (only if characters provided)
   const characterQueries = characters.length > 0
-    ? dedupeStrings(characters.map((c: string) => `${compressPhrase(c, 3)} characterization`).filter((q: string) => q.trim().length > 0), 8)
+    ? dedupeStrings(characters.map((c: string) => compressPhrase(c, 3)).filter((q: string) => q.trim().length > 0), 8)
     : [];
 
   // Build seeded subqueries from available optional fields
