@@ -28,11 +28,25 @@ import {
   refineHookOption,
   type HookOption,
   type PipelineStepType,
+  type ScriptStrength,
   getEvidencePoints,
   replaceEvidencePoints,
   setEvidencePointApproval,
   getSourceFilesForBrief,
+  getBriefLinks,
+  getBriefTopicTranscriptLinks,
+  getFormatReferenceTranscripts,
+  getBriefTopicTranscripts,
+  getAlternativeSources,
+  saveBriefTopicTranscript,
+  updateBriefTopicTranscriptStrength,
+  linkFormatReferencesToBrief,
+  linkTopicTranscriptsToBrief,
+  linkAlternativeSourcesToBrief,
 } from "@/lib/api";
+import { MultiSelectChips, type MultiSelectOption } from "@/components/MultiSelectChips";
+import { SourceEntryForm, QualitySelect } from "@/components/SourceEntryForm";
+import { Label as UILabel } from "@/components/ui/label";
 import { parseEvidenceTable } from "@/lib/parseEvidenceTable";
 import { EvidenceTableView } from "@/components/pipeline/EvidenceTableView";
 import { supabase } from "@/integrations/supabase/client";
