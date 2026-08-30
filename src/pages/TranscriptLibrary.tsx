@@ -93,20 +93,20 @@ function InlineAddForm({ onSave, onCancel, busy }: InlineFormProps) {
   return (
     <div className="border border-primary/30 rounded-lg p-4 mb-4 bg-card space-y-3">
       <div>
-        <Label className="text-xs text-muted-foreground">Channel Name</Label>
+        <Label className="text-xs text-muted-foreground">Source or Publisher</Label>
         <Input
           value={channel}
           onChange={(e) => setChannel(e.target.value)}
-          placeholder="e.g., Nerdwriter1"
+          placeholder="e.g., Harvard JCHS, Nerdwriter1, r/REBubble"
           className="bg-secondary border-border mt-1"
         />
       </div>
       <div>
-        <Label className="text-xs text-muted-foreground">Video Title</Label>
+        <Label className="text-xs text-muted-foreground">Title</Label>
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g., Why This Movie Works"
+          placeholder="e.g., The State of the Nation's Housing 2025"
           className="bg-secondary border-border mt-1"
         />
       </div>
@@ -115,7 +115,7 @@ function InlineAddForm({ onSave, onCancel, busy }: InlineFormProps) {
         <Textarea
           value={transcript}
           onChange={(e) => setTranscript(e.target.value)}
-          placeholder="Paste the full transcript here..."
+          placeholder="Paste the full text here..."
           rows={10}
           className="bg-secondary border-border resize-none mt-1 text-xs font-mono"
         />
@@ -151,10 +151,10 @@ function TranscriptSection({ section }: { section: Section }) {
 
   const label =
     section === "format"
-      ? "Videos from a different subject, used for argument structure and angle positioning only. Never used as a source of content for your videos."
-      : "Videos covering similar topics to your videos. Used as research leads and supplementary knowledge per brief. Never cited directly in scripts.";
+      ? "Material from a different subject, used for argument structure, pacing, and angle positioning only. Never a source of content for your videos."
+      : "Secondary material attached to one brief: research packs, articles, reports, transcripts, thread summaries. Research leads and supplementary knowledge only. Never cited directly in scripts.";
 
-  const addLabel = section === "format" ? "Add Format Reference" : "Add Topic Transcript";
+  const addLabel = section === "format" ? "Add Format Reference" : "Add Brief Research";
 
   const handleSave = async (input: { channel_name: string; video_title: string; transcript: string }) => {
     setBusy(true);
@@ -192,7 +192,7 @@ function TranscriptSection({ section }: { section: Section }) {
     URL.revokeObjectURL(url);
   };
 
-  const sectionLabel = section === "format" ? "Format Reference" : "Topic Transcript";
+  const sectionLabel = section === "format" ? "Format Reference" : "Brief Research";
 
   return (
     <div>
@@ -223,8 +223,8 @@ function TranscriptSection({ section }: { section: Section }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Channel</TableHead>
-                <TableHead>Video Title</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead>Title</TableHead>
                 {section === "topic" && <TableHead className="w-32">Quality</TableHead>}
                 <TableHead>Date Added</TableHead>
                 <TableHead className="w-16"></TableHead>
@@ -384,9 +384,7 @@ function AlternativeSourcesSection() {
   return (
     <div>
       <p className="text-xs text-muted-foreground mb-4">
-        Paste any source text that is not a primary source here, such as Reddit threads, YouTube comments, blogs,
-        forums, websites, meme research, or fan discussions. These sources help with audience
-        insight, humor, fandom language, and angle inspiration. They are not treated as primary sources.
+        Reusable secondary material for this channel across briefs: research packs, articles, threads, forums, blogs, comment summaries. Helps with audience insight, framing, and angle inspiration. Never treated as a primary source.
       </p>
       <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
         <strong>{QUALITY_HELPER_TEXT}</strong>
@@ -598,16 +596,16 @@ export default function TranscriptLibrary() {
         <div className="mb-6">
           <h1 className="text-2xl font-mono font-bold text-foreground mb-2">Secondary Source Library</h1>
           <p className="text-sm text-muted-foreground">
-            Reusable secondary sources for angle research, creative transfer, and topic briefs.
-            Primary sources still come from the main Source Library.
+            Non-citable material: research, commentary, and format study. Tiered by quality.
+            Shapes framing and never backs a claim alone. Primary evidence lives in the Source Library.
           </p>
         </div>
 
         <Tabs defaultValue="format">
           <TabsList>
             <TabsTrigger value="format">Format References</TabsTrigger>
-            <TabsTrigger value="topic">Topic Transcripts</TabsTrigger>
-            <TabsTrigger value="alternative">Alternative Sources</TabsTrigger>
+            <TabsTrigger value="topic">Brief Research</TabsTrigger>
+            <TabsTrigger value="alternative">Channel Research</TabsTrigger>
           </TabsList>
           <TabsContent value="format" className="mt-6">
             <TranscriptSection section="format" />
