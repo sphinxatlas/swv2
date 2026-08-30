@@ -143,6 +143,8 @@ function splitMeltyVoicePassOutput(text: string): { scriptBody: string; changeLo
 export default function PipelineView() {
   const { briefId } = useParams<{ briefId: string }>();
   const [briefSourcesOpen, setBriefSourcesOpen] = useState<boolean | null>(null);
+  const [briefOpen, setBriefOpen] = useState<boolean | null>(null);
+  const [savingBrief, setSavingBrief] = useState(false);
   const [showAddResearch, setShowAddResearch] = useState(false);
   const [savingResearch, setSavingResearch] = useState(false);
   const { channelId, setChannelId } = useChannel();
