@@ -811,6 +811,34 @@ export default function PipelineView() {
             </div>
           </div>
 
+          {/* Brief */}
+          <Collapsible open={briefSectionOpen} onOpenChange={setBriefOpen}>
+            <CollapsibleTrigger className="flex w-full items-center gap-2 border-b border-border px-6 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+              <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${briefSectionOpen ? "" : "-rotate-90"}`} />
+              <span className="shrink-0">Brief</span>
+              {!briefSectionOpen && (
+                <span className="flex min-w-0 items-center gap-2 text-left">
+                  <span className="shrink-0 font-mono text-foreground">{brief?.title}</span>
+                  <span className="truncate text-muted-foreground/70">
+                    {((brief?.angle_note ?? "") as string).slice(0, 200)}
+                  </span>
+                </span>
+              )}
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="border-b border-border px-6 py-4">
+                {brief && (
+                  <BriefForm
+                    brief={brief}
+                    busy={savingBrief}
+                    onSave={handleSaveBrief}
+                    onCancel={() => setBriefOpen(false)}
+                  />
+                )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
           {/* Sources */}
           <Collapsible open={sourcesOpen} onOpenChange={setBriefSourcesOpen}>
             <CollapsibleTrigger className="flex w-full items-center gap-2 border-b border-border px-6 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
