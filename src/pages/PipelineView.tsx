@@ -845,14 +845,25 @@ export default function PipelineView() {
             <CollapsibleTrigger className="flex w-full items-center gap-2 border-b border-border px-6 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
               <ChevronDown className={`h-3.5 w-3.5 transition-transform ${sourcesOpen ? "" : "-rotate-90"}`} />
               Sources
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="About Sources"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <HelpCircle className="h-3.5 w-3.5" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="bottom" align="start" className="w-72 text-xs text-muted-foreground">
+                  Everything this video runs on. Uploads here belong to this video only.
+                </PopoverContent>
+              </Popover>
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="border-b border-border px-6 py-4 space-y-6">
-                <p className="text-xs text-muted-foreground">
-                  Everything this video runs on. Uploads here belong to this video only.
-                </p>
-
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 xl:grid-cols-2">
                   <FileUploadCard
                     fileType="book"
                     title="Primary Documents (this video)"
@@ -860,6 +871,7 @@ export default function PipelineView() {
                     files={briefBooks}
                     onRefresh={refetchSourceFiles}
                     briefId={briefId!}
+                    compactHelp
                   />
                   <FileUploadCard
                     fileType="transcript"
@@ -868,17 +880,31 @@ export default function PipelineView() {
                     files={briefTranscripts}
                     onRefresh={refetchSourceFiles}
                     briefId={briefId!}
+                    compactHelp
                   />
                 </div>
 
                 {/* Brief Research (this video) */}
                 <div className="rounded-lg border border-border bg-card p-5">
                   <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="font-mono text-sm font-semibold text-foreground">Brief Research (this video)</h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Research leads and supplementary material linked to this video. Never cited directly in scripts.
-                      </p>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <h3 className="font-mono text-sm font-semibold text-foreground truncate">Brief Research (this video)</h3>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              aria-label="About Brief Research"
+                              className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              <HelpCircle className="w-3.5 h-3.5" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent side="bottom" align="start" className="w-72 text-xs text-muted-foreground">
+                            Research leads and supplementary material linked to this video. Never cited directly in scripts.
+                          </PopoverContent>
+                        </Popover>
+                      </div>
                     </div>
                     {!showAddResearch && (
                       <Button size="sm" variant="outline" className="gap-1.5 shrink-0" onClick={() => setShowAddResearch(true)}>
