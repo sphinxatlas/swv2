@@ -311,6 +311,7 @@ function AlternativeSourcesSection() {
   const [busy, setBusy] = useState(false);
   const [viewing, setViewing] = useState<any | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [usageFilter, setUsageFilter] = useState("all");
   const [title, setTitle] = useState("");
   const [sourceType, setSourceType] = useState("");
   const [sourceAuthor, setSourceAuthor] = useState("");
@@ -323,6 +324,16 @@ function AlternativeSourcesSection() {
     queryFn: () => getAlternativeSources(channelId!),
     enabled: !!channelId,
   });
+
+  const { data: usage } = useQuery({
+    queryKey: ["secondary-source-usage", channelId],
+    queryFn: () => getSecondarySourceUsage(channelId!),
+    enabled: !!channelId,
+  });
+  const usageMap = usage?.alternativeSources ?? {};
+  const filteredItems = usageFilter === "all"
+    ? items
+    : items.filter((item) => (usageMap[item.id] || []).includes(usageFilter));
 
   const startEdit = (item: any) => {
     setShowForm(false);
