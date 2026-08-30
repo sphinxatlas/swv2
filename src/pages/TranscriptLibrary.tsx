@@ -547,24 +547,30 @@ function AlternativeSourcesSection() {
           No alternative sources saved yet.
         </div>
       ) : (
-        <div className="border border-border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead className="w-32">Quality</TableHead>
-                <TableHead>Date Added</TableHead>
-                <TableHead className="w-16"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium align-top">
-                    <div>{item.title}</div>
-                  </TableCell>
+        <>
+          <UsageFilter usageMap={usageMap} value={usageFilter} onChange={setUsageFilter} />
+          <div className="border border-border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Used by</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead className="w-32">Quality</TableHead>
+                  <TableHead>Date Added</TableHead>
+                  <TableHead className="w-16"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredItems.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium align-top">
+                      <div>{item.title}</div>
+                    </TableCell>
+                    <TableCell className="align-top">
+                      <UsageBadges titles={usageMap[item.id] || []} />
+                    </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {item.source_type || "—"}
                   </TableCell>
