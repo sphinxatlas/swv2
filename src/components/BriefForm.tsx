@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MultiSelectChips, type MultiSelectOption } from "@/components/MultiSelectChips";
+import { TagInput } from "@/components/TagInput";
 import {
   TARGET_LENGTH_OPTIONS,
   getFormatReferenceTranscripts,
