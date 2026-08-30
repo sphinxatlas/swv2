@@ -33,6 +33,10 @@ interface FileUploadCardProps {
   badge?: string;
   briefId?: string;
   compactHelp?: boolean;
+  // Optional per-file scope badge (e.g. "Channel-wide" or a video title).
+  // When provided, renders a small badge on each file row. Omit on cards that
+  // should not be badged (governing documents).
+  scopeLabelFor?: (file: SourceFile) => string | undefined;
 }
 
 type QueueState = "queued" | "uploading" | "indexing" | "done" | "failed";
@@ -50,7 +54,7 @@ const QUEUE_LABELS: Record<QueueState, string> = {
   failed: "Failed",
 };
 
-export function FileUploadCard({ fileType, title, description, accept = ".txt,.md,.pdf", files, onRefresh, badge, briefId, compactHelp = false }: FileUploadCardProps) {
+export function FileUploadCard({ fileType, title, description, accept = ".txt,.md,.pdf", files, onRefresh, badge, briefId, compactHelp = false, scopeLabelFor }: FileUploadCardProps) {
   const { channelId } = useChannel();
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState<string | null>(null);
@@ -422,6 +426,11 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
                   ) : (
                     <>
                       <span className="flex-1 truncate text-foreground text-xs font-mono">{file.name}</span>
+                      {scopeLabelFor?.(file) ? (
+                        <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium whitespace-nowrap">
+                          {scopeLabelFor(file)}
+                        </span>
+                      ) : null}
                       <span className="text-xs text-muted-foreground shrink-0">
                         {file.file_size ? `${(file.file_size / 1024).toFixed(0)}KB` : ""}
                       </span>

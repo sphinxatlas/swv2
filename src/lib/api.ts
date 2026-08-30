@@ -230,6 +230,23 @@ export async function getSourceFiles(channelId: string) {
   return data;
 }
 
+// Every source file in the channel (channel-wide + per-video), joined to the
+// owning brief's title so the Source Library can label each file by video.
+// Read-only view; uploads are never performed through this helper.
+export type ChannelSourceFile = SourceFile & {
+  topic_briefs?: { title: string } | null;
+};
+
+export async function getAllChannelSourceFiles(channelId: string): Promise<ChannelSourceFile[]> {
+  const { data, error } = await supabase
+    .from("source_files")
+    .select("*, topic_briefs(title)")
+    .eq("channel_id", channelId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as ChannelSourceFile[];
+}
+
 // Channel-level corpus plus this brief's own attached sources.
 export async function getSourceFilesForBrief(channelId: string, briefId: string) {
   const { data, error } = await supabase
