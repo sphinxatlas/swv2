@@ -22,14 +22,61 @@ import {
   updateFormatReferenceTranscript,
   updateBriefTopicTranscript,
   updateAlternativeSource,
+  getSecondarySourceUsage,
   type ScriptStrength,
 } from "@/lib/api";
 import { Plus, Trash2, Eye, Download, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { SourceDetailModal } from "@/components/SourceDetailModal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { SourceEntryForm, QualitySelect, QUALITY_HELPER_TEXT } from "@/components/SourceEntryForm";
 import { useChannel } from "@/contexts/ChannelContext";
+
+function UsageBadges({ titles }: { titles: string[] }) {
+  if (titles.length === 0) {
+    return <span className="text-xs text-warning">Not linked to any video</span>;
+  }
+  return (
+    <div className="flex flex-wrap gap-1">
+      {titles.map((t) => (
+        <Badge key={t} variant="secondary" className="text-[10px] font-normal">
+          {t}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function UsageFilter({
+  usageMap,
+  value,
+  onChange,
+}: {
+  usageMap: Record<string, string[]>;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const titles = Array.from(new Set(Object.values(usageMap).flat())).sort();
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <span className="text-xs text-muted-foreground">Used by:</span>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="h-8 w-56 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All videos</SelectItem>
+          {titles.map((t) => (
+            <SelectItem key={t} value={t}>
+              {t}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
 
 type Section = "format" | "topic";
 
@@ -39,6 +86,7 @@ function TranscriptSection({ section }: { section: Section }) {
   const [busy, setBusy] = useState(false);
   const [viewing, setViewing] = useState<any | null>(null);
   const [editing, setEditing] = useState<any | null>(null);
+  const [usageFilter, setUsageFilter] = useState("all");
 
   const queryKey = section === "format" ? "format-references" : "topic-transcripts";
   const fetchFn = section === "format" ? getFormatReferenceTranscripts : getBriefTopicTranscripts;
@@ -51,6 +99,16 @@ function TranscriptSection({ section }: { section: Section }) {
     queryFn: () => fetchFn(channelId!),
     enabled: !!channelId,
   });
+
+  const { data: usage } = useQuery({
+    queryKey: ["secondary-source-usage", channelId],
+    queryFn: () => getSecondarySourceUsage(channelId!),
+    enabled: !!channelId,
+  });
+  const usageMap = section === "format" ? usage?.formatReferences ?? {} : usage?.topicTranscripts ?? {};
+  const filteredItems = usageFilter === "all"
+    ? items
+    : items.filter((item: any) => (usageMap[item.id] || []).includes(usageFilter));
 
   const label =
     section === "format"
@@ -150,25 +208,31 @@ function TranscriptSection({ section }: { section: Section }) {
           No transcripts saved yet.
         </div>
       ) : (
-        <div className="border border-border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Source</TableHead>
-                <TableHead>Title</TableHead>
-                {section === "topic" && <TableHead className="w-32">Quality</TableHead>}
-                <TableHead>Date Added</TableHead>
-                <TableHead className="w-16"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item: any) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium align-top">{item.channel_name}</TableCell>
-                  <TableCell className="align-top">
-                    <div>{item.video_title}</div>
-                  </TableCell>
-                  {section === "topic" && (
+        <>
+          <UsageFilter usageMap={usageMap} value={usageFilter} onChange={setUsageFilter} />
+          <div className="border border-border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Used by</TableHead>
+                  {section === "topic" && <TableHead className="w-32">Quality</TableHead>}
+                  <TableHead>Date Added</TableHead>
+                  <TableHead className="w-16"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredItems.map((item: any) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium align-top">{item.channel_name}</TableCell>
+                    <TableCell className="align-top">
+                      <div>{item.video_title}</div>
+                    </TableCell>
+                    <TableCell className="align-top">
+                      <UsageBadges titles={usageMap[item.id] || []} />
+                    </TableCell>
+                    {section === "topic" && (
                     <TableCell>
                       <QualitySelect
                         value={item.script_strength}
@@ -215,7 +279,8 @@ function TranscriptSection({ section }: { section: Section }) {
               ))}
             </TableBody>
           </Table>
-        </div>
+          </div>
+        </>
       )}
 
       {viewing && (
@@ -246,6 +311,7 @@ function AlternativeSourcesSection() {
   const [busy, setBusy] = useState(false);
   const [viewing, setViewing] = useState<any | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [usageFilter, setUsageFilter] = useState("all");
   const [title, setTitle] = useState("");
   const [sourceType, setSourceType] = useState("");
   const [sourceAuthor, setSourceAuthor] = useState("");
@@ -258,6 +324,16 @@ function AlternativeSourcesSection() {
     queryFn: () => getAlternativeSources(channelId!),
     enabled: !!channelId,
   });
+
+  const { data: usage } = useQuery({
+    queryKey: ["secondary-source-usage", channelId],
+    queryFn: () => getSecondarySourceUsage(channelId!),
+    enabled: !!channelId,
+  });
+  const usageMap = usage?.alternativeSources ?? {};
+  const filteredItems = usageFilter === "all"
+    ? items
+    : items.filter((item) => (usageMap[item.id] || []).includes(usageFilter));
 
   const startEdit = (item: any) => {
     setShowForm(false);
@@ -471,24 +547,30 @@ function AlternativeSourcesSection() {
           No alternative sources saved yet.
         </div>
       ) : (
-        <div className="border border-border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead className="w-32">Quality</TableHead>
-                <TableHead>Date Added</TableHead>
-                <TableHead className="w-16"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium align-top">
-                    <div>{item.title}</div>
-                  </TableCell>
+        <>
+          <UsageFilter usageMap={usageMap} value={usageFilter} onChange={setUsageFilter} />
+          <div className="border border-border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Used by</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead className="w-32">Quality</TableHead>
+                  <TableHead>Date Added</TableHead>
+                  <TableHead className="w-16"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredItems.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium align-top">
+                      <div>{item.title}</div>
+                    </TableCell>
+                    <TableCell className="align-top">
+                      <UsageBadges titles={usageMap[item.id] || []} />
+                    </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {item.source_type || "—"}
                   </TableCell>
@@ -538,7 +620,8 @@ function AlternativeSourcesSection() {
               ))}
             </TableBody>
           </Table>
-        </div>
+          </div>
+        </>
       )}
 
       {viewing && (
