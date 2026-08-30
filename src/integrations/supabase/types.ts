@@ -438,10 +438,12 @@ export type Database = {
           char_count: number | null
           created_at: string
           estimated_tokens: number | null
+          extraction_method: string | null
           file_size: number | null
           file_type: Database["public"]["Enums"]["source_file_type"]
           id: string
           name: string
+          page_count: number | null
           processing_error: string | null
           script_strength: string | null
           status: string
@@ -453,10 +455,12 @@ export type Database = {
           char_count?: number | null
           created_at?: string
           estimated_tokens?: number | null
+          extraction_method?: string | null
           file_size?: number | null
           file_type: Database["public"]["Enums"]["source_file_type"]
           id?: string
           name: string
+          page_count?: number | null
           processing_error?: string | null
           script_strength?: string | null
           status?: string
@@ -468,10 +472,12 @@ export type Database = {
           char_count?: number | null
           created_at?: string
           estimated_tokens?: number | null
+          extraction_method?: string | null
           file_size?: number | null
           file_type?: Database["public"]["Enums"]["source_file_type"]
           id?: string
           name?: string
+          page_count?: number | null
           processing_error?: string | null
           script_strength?: string | null
           status?: string
