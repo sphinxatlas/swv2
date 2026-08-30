@@ -91,29 +91,99 @@ export function FileUploadCard({ fileType, title, description, accept = ".txt,.m
 
   const pasteSubmitDisabled = pasteSaving || !pasteName.trim() || !pasteText.trim();
 
+  const multiple = fileType !== "instructions";
+
+  const runUpload = useCallback(async (selected: File[]) => {
+    if (!selected.length) return;
+    const batch = multiple ? selected : selected.slice(0, 1);
+    const single = batch.length === 1;
+
+    setUploading(true);
+    // The inline queue only appears for real batches; a single file keeps the
+    // original toast-driven behaviour.
+    setQueue(single ? [] : batch.map((f) => ({ name: f.name, state: "queued" as QueueState })));
+
+    const setItem = (idx: number, patch: Partial<QueueItem>) =>
+      setQueue((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+
+    let indexed = 0;
+    let failed = 0;
+
+    for (let i = 0; i < batch.length; i++) {
+      const file = batch[i];
+      try {
+        if (!single) setItem(i, { state: "uploading", error: undefined });
+        const uploaded = await uploadSourceFile(file, fileType, channelId!, briefId ?? null);
+        if (single) toast.success(`Uploaded ${file.name}`);
+
+        // Auto-process
+        if (!single) setItem(i, { state: "indexing" });
+        setProcessing(uploaded.id);
+        await processFile(uploaded.id);
+        setProcessing(null);
+        if (single) toast.success(`Indexed ${file.name} (chunked for search)`);
+        if (!single) setItem(i, { state: "done" });
+        indexed++;
+      } catch (err: any) {
+        setProcessing(null);
+        failed++;
+        const message = err?.message || "Upload failed";
+        if (single) {
+          toast.error(message);
+        } else {
+          setItem(i, { state: "failed", error: message });
+        }
+      }
+    }
+
+    onRefresh();
+    setUploading(false);
+    setProcessing(null);
+
+    if (!single) {
+      if (failed === 0) toast.success(`${indexed} files indexed`);
+      else if (indexed === 0) toast.error(`${failed} failed`);
+      else toast.warning(`${indexed} indexed, ${failed} failed`);
+    }
+  }, [fileType, onRefresh, channelId, briefId, multiple]);
+
   const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (!fileList?.length) return;
+    const picked = Array.from(fileList);
+    e.target.value = "";
+    await runUpload(picked);
+  }, [runUpload]);
 
-    setUploading(true);
-    try {
-      for (const file of Array.from(fileList)) {
-        const uploaded = await uploadSourceFile(file, fileType, channelId!, briefId ?? null);
-        toast.success(`Uploaded ${file.name}`);
-        
-        // Auto-process
-        setProcessing(uploaded.id);
-        await processFile(uploaded.id);
-        toast.success(`Indexed ${file.name} (chunked for search)`);
-      }
-      onRefresh();
-    } catch (err: any) {
-      toast.error(err.message || "Upload failed");
-    } finally {
-      setUploading(false);
-      setProcessing(null);
+  const acceptsFile = useCallback((file: File) => {
+    const exts = accept.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+    if (exts.length === 0) return true;
+    const name = file.name.toLowerCase();
+    return exts.some((ext) =>
+      ext.startsWith(".")
+        ? name.endsWith(ext)
+        : ext.endsWith("/*")
+          ? file.type.startsWith(ext.slice(0, -1))
+          : file.type === ext,
+    );
+  }, [accept]);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (uploading) return;
+    const dropped = Array.from(e.dataTransfer.files || []);
+    if (!dropped.length) return;
+    const allowed = dropped.filter(acceptsFile);
+    if (allowed.length === 0) {
+      toast.error(`Unsupported file type. Accepted: ${accept}`);
+      return;
     }
-  }, [fileType, onRefresh, channelId, briefId]);
+    if (allowed.length < dropped.length) {
+      toast.warning(`${dropped.length - allowed.length} file(s) skipped — unsupported type`);
+    }
+    await runUpload(allowed);
+  }, [acceptsFile, accept, runUpload, uploading]);
 
   const handleDelete = async (file: SourceFile) => {
     try {
