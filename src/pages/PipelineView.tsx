@@ -932,47 +932,6 @@ export default function PipelineView() {
                   )}
                 </div>
 
-                {/* Linked from channel */}
-                <div className="rounded-lg border border-border bg-card p-5 space-y-4">
-                  <h3 className="font-mono text-sm font-semibold text-foreground">Linked from channel</h3>
-
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Format References</Label>
-                    <p className="text-[11px] text-muted-foreground/70 mb-2">
-                      Used for argument structure and positioning only — never as a source of content. Optional but recommended; max 2.
-                    </p>
-                    <MultiSelectChips
-                      options={formatOptions}
-                      selected={linkedFormatIds}
-                      onChange={handleFormatLinkChange}
-                      placeholder={formatOptions.length === 0 ? "No format references available" : "Select format references…"}
-                      emptyText="No format references available."
-                      searchable
-                      searchPlaceholder="Search format references..."
-                      emptySearchMessage="No matching sources found."
-                    />
-                    {linkedFormatIds.length >= 2 && (
-                      <p className="text-xs text-muted-foreground mt-1">Maximum 2 format references selected.</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Channel Research</Label>
-                    <p className="text-[11px] text-muted-foreground/70 mb-2">
-                      Channel-level secondary sources. Used as context and angle support, never as claim-grade evidence. No maximum.
-                    </p>
-                    <MultiSelectChips
-                      options={altOptions}
-                      selected={linkedAltIds}
-                      onChange={handleAltLinkChange}
-                      placeholder={altOptions.length === 0 ? "No channel research available" : "Select channel research…"}
-                      emptyText="No channel research yet. Add some in the Secondary Source Library."
-                      searchable
-                      searchPlaceholder="Search channel research..."
-                      emptySearchMessage="No matching sources found."
-                    />
-                  </div>
-                </div>
 
                 {/* Inherited from channel */}
                 <div className="rounded-lg border border-border bg-secondary/30 p-4">
