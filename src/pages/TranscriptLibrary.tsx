@@ -208,25 +208,31 @@ function TranscriptSection({ section }: { section: Section }) {
           No transcripts saved yet.
         </div>
       ) : (
-        <div className="border border-border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Source</TableHead>
-                <TableHead>Title</TableHead>
-                {section === "topic" && <TableHead className="w-32">Quality</TableHead>}
-                <TableHead>Date Added</TableHead>
-                <TableHead className="w-16"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item: any) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium align-top">{item.channel_name}</TableCell>
-                  <TableCell className="align-top">
-                    <div>{item.video_title}</div>
-                  </TableCell>
-                  {section === "topic" && (
+        <>
+          <UsageFilter usageMap={usageMap} value={usageFilter} onChange={setUsageFilter} />
+          <div className="border border-border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Used by</TableHead>
+                  {section === "topic" && <TableHead className="w-32">Quality</TableHead>}
+                  <TableHead>Date Added</TableHead>
+                  <TableHead className="w-16"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredItems.map((item: any) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium align-top">{item.channel_name}</TableCell>
+                    <TableCell className="align-top">
+                      <div>{item.video_title}</div>
+                    </TableCell>
+                    <TableCell className="align-top">
+                      <UsageBadges titles={usageMap[item.id] || []} />
+                    </TableCell>
+                    {section === "topic" && (
                     <TableCell>
                       <QualitySelect
                         value={item.script_strength}
