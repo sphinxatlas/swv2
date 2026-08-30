@@ -254,10 +254,6 @@ export default function TopicBriefs() {
       toast.error("Angle note is required");
       return;
     }
-    if (selectedFormatIds.length === 0) {
-      toast.error("At least one format reference video is required");
-      return;
-    }
     if (selectedFormatIds.length > 2) {
       toast.error("Maximum 2 format reference videos");
       return;
@@ -609,10 +605,10 @@ export default function TopicBriefs() {
               {/* Format Reference Videos */}
               <div className="pt-2 border-t border-border">
                 <Label className="text-xs text-muted-foreground">
-                  Format Reference Videos <span className="text-destructive">*</span>
+                  Format Reference Videos
                 </Label>
                 <p className="text-[11px] text-muted-foreground/70 mb-2">
-                  Format reference videos from a different subject. Used for argument structure and positioning only — never as a source of content for this video. Min 1, max 2.
+                  Format reference videos from a different subject. Used for argument structure and positioning only — never as a source of content for this video. Optional but recommended; max 2.
                 </p>
                 <div className="flex items-start gap-2">
                   <div className="flex-1 min-w-0">
