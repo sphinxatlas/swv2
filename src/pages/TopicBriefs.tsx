@@ -184,12 +184,38 @@ export default function TopicBriefs() {
   const [selectedAltIds, setSelectedAltIds] = useState<string[]>([]);
   const [showFormatAdd, setShowFormatAdd] = useState(false);
   const [showTopicAdd, setShowTopicAdd] = useState(false);
+  const [newVideoOpen, setNewVideoOpen] = useState(false);
+  const [newVideoTitle, setNewVideoTitle] = useState("");
+  const [creatingVideo, setCreatingVideo] = useState(false);
 
   const { data: briefs = [], refetch } = useQuery({
     queryKey: ["topic-briefs", channelId],
     queryFn: () => getTopicBriefs(channelId!),
     enabled: !!channelId,
   });
+
+  const briefIds = useMemo(() => (briefs as any[]).map((b) => b.id), [briefs]);
+  const { data: stepRows = [] } = useQuery({
+    queryKey: ["pipeline-steps-for-briefs", channelId, briefIds],
+    queryFn: () => getPipelineStepsForBriefs(briefIds),
+    enabled: !!channelId && briefIds.length > 0,
+  });
+  const furthestStepByBrief = useMemo(() => {
+    const order = new Map(PIPELINE_STEPS.map((s, i) => [s.type as string, i]));
+    const labels = new Map(PIPELINE_STEPS.map((s) => [s.type as string, s.label]));
+    const best = new Map<string, number>();
+    for (const row of stepRows as { brief_id: string; step_type: string }[]) {
+      const idx = order.get(row.step_type);
+      if (idx === undefined) continue;
+      if (idx > (best.get(row.brief_id) ?? -1)) best.set(row.brief_id, idx);
+    }
+    const result = new Map<string, string>();
+    for (const [briefId, idx] of best) {
+      const type = PIPELINE_STEPS[idx].type;
+      result.set(briefId, labels.get(type) ?? type);
+    }
+    return result;
+  }, [stepRows]);
   const { data: formatRefs = [], refetch: refetchFormatRefs } = useQuery({
     queryKey: ["format-references", channelId],
     queryFn: () => getFormatReferenceTranscripts(channelId!),
