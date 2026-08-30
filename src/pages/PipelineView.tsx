@@ -235,38 +235,14 @@ export default function PipelineView() {
     queryFn: () => getBriefLinks(briefId!),
     enabled: !!briefId,
   });
-  const { data: channelFormatRefs = [] } = useQuery({
-    queryKey: ["format-references", channelId],
-    queryFn: () => getFormatReferenceTranscripts(channelId!),
-    enabled: !!channelId,
-  });
   const { data: channelResearch = [], refetch: refetchChannelResearch } = useQuery({
     queryKey: ["topic-transcripts", channelId],
     queryFn: () => getBriefTopicTranscripts(channelId!),
     enabled: !!channelId,
   });
-  const { data: channelAltSources = [] } = useQuery({
-    queryKey: ["alternative-sources", channelId],
-    queryFn: () => getAlternativeSources(channelId!),
-    enabled: !!channelId,
-  });
 
-  const linkedFormatIds: string[] = briefLinks?.formatIds ?? [];
-  const linkedAltIds: string[] = briefLinks?.altIds ?? [];
   const linkedResearchIds: string[] = (linkedResearch as any[]).map((r) => r.id);
 
-  const formatOptions: MultiSelectOption[] = (channelFormatRefs as any[]).map((r) => ({
-    value: r.id,
-    label: r.video_title,
-    sublabel: r.channel_name,
-  }));
-  const altOptions: MultiSelectOption[] = (channelAltSources as any[]).map((r) => ({
-    value: r.id,
-    label: r.title,
-    sublabel: [r.source_type || r.source_author, r.script_strength ? `Quality: ${r.script_strength}` : null]
-      .filter(Boolean)
-      .join(" · ") || undefined,
-  }));
 
   const channelBooksCount = sourceFiles.filter((f: any) => !f.brief_id && f.file_type === "book").length;
   const channelRecordingsCount = sourceFiles.filter((f: any) => !f.brief_id && f.file_type === "transcript").length;
